@@ -1,28 +1,60 @@
-import { View, Text, Pressable, ScrollView } from 'react-native'
+import { View, Text, Pressable, ScrollView, Dimensions } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
+
+// 3열 정사각 셀 크기를 픽셀로 직접 계산 (네이티브에서 aspectRatio+% 조합이 높이를 못 잡는 문제 회피)
+const SCREEN_W = Dimensions.get('window').width
+const GRID_GAP = 6
+const CELL = Math.floor((SCREEN_W - 40 - GRID_GAP * 2) / 3) // 40 = 좌우 패딩(20*2)
 
 export default function Gallery({ vm }) {
   return (
     <View style={s('padding:8px 20px 110px')}>
-      <View style={s('flex-direction:row;align-items:baseline;justify-content:space-between;margin:6px 2px 4px')}>
+      <View style={s('margin:6px 2px 4px')}>
         <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px')}>기록</Text>
-        <Text style={s('font-size:11.3px;color:#9DB2BD')}>168개</Text>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s('gap:7px;padding:8px 2px 12px')}>
+      {/* 폴더 탭 — 선택된 폴더가 앞으로, 나머지는 뒤로 넘어가 겹치는 느낌 */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ alignItems: 'flex-end', paddingTop: 16, paddingHorizontal: 4 }}
+      >
         {vm.galleryTabs.map((t, i) => (
-          <Pressable key={i} onPress={t.pick} style={s(`flex:0 0 auto;padding:8px 15px;border-radius:999px;border:1px solid ${t.border};background:${t.bg}`)}>
-            <Text style={s(`font-size:12.3px;font-weight:700;color:${t.color}`)}>{t.label}</Text>
+          <Pressable
+            key={i}
+            onPress={t.pick}
+            style={{
+              marginLeft: i === 0 ? 0 : -14,
+              zIndex: t.sel ? 30 : 20 - i,
+              elevation: t.sel ? 6 : 0,
+              paddingHorizontal: 24,
+              height: t.sel ? 50 : 40,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              borderWidth: 1,
+              borderBottomWidth: 0,
+              borderColor: t.sel ? t.bg : '#F1DDE7',
+              backgroundColor: t.sel ? t.bg : '#FBEDF3',
+              ...(t.sel
+                ? { shadowColor: '#000', shadowOffset: { width: 0, height: -3 }, shadowOpacity: 0.12, shadowRadius: 7 }
+                : {}),
+            }}
+          >
+            <Text style={{ fontSize: t.sel ? 16 : 13.5, fontWeight: '800', color: t.sel ? '#fff' : '#C39BB0' }}>{t.label}</Text>
           </Pressable>
         ))}
       </ScrollView>
+      {/* 폴더 몸통 — 탭이 얹혀 있는 서랍 느낌 */}
+      <View style={{ height: 8, backgroundColor: '#FBEDF3', borderRadius: 4, marginTop: -2, marginBottom: 14 }} />
 
       {vm.isCards && (
         <View style={s('flex-direction:row;flex-wrap:wrap;justify-content:space-between;row-gap:12px')}>
           {vm.galleryMedia.map((g, i) => (
             <Pressable key={i} onPress={g.open} style={[s('background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:26px;overflow:hidden;'), { width: '48.5%' }]}>
-              <View style={s(`height:120px;position:relative;background-color:${g.tone};background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.35) 0 9px,transparent 9px 18px);display:flex;align-items:center;justify-content:center`)}>
+              <View style={[{ height: 120, position: 'relative', backgroundColor: g.tone, alignItems: 'center', justifyContent: 'center' }]}>
                 <Text style={s('font-family:ui-monospace,Menlo,monospace;font-size:11px;color:rgba(23,48,59,0.4);padding:0 8px;text-align:center')}>{g.ph}</Text>
                 {g.isVideo && (
                   <View style={s('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
@@ -40,9 +72,13 @@ export default function Gallery({ vm }) {
       )}
 
       {vm.isGrid && (
-        <View style={s('flex-direction:row;flex-wrap:wrap;justify-content:space-between;row-gap:6px')}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: GRID_GAP }}>
           {vm.galleryMedia.map((g, i) => (
-            <Pressable key={i} onPress={g.open} style={[s(`aspect-ratio:1;border-radius:12px;overflow:hidden;position:relative;background-color:${g.tone};background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.35) 0 8px,transparent 8px 16px)`), { width: '32%' }]}>
+            <Pressable
+              key={i}
+              onPress={g.open}
+              style={{ width: CELL, height: CELL, borderRadius: 12, overflow: 'hidden', position: 'relative', backgroundColor: g.tone }}
+            >
               {g.isVideo && (
                 <View style={s('position:absolute;right:5px;top:5px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center')}>
                   <Svg viewBox="0 0 24 24" width={11} height={11} fill="#fff" stroke="none" style={{ marginLeft: 1 }}>

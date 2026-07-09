@@ -107,7 +107,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
   const members = [M.mom, M.dad, M.ji, M.do, M.gm]
   members.forEach((m, i) => { m.slotId = 'prof-' + i })
 
-  const N = members.length, BOX = 296, C = BOX / 2, R = 104, AV = 60
+  const N = members.length, BOX = 296, C = BOX / 2, R = 114, AV = 60
   const active = (((st.activeMood ?? 0) % N) + N) % N
   const ringMembers = members.map((m, i) => {
     const ang = -Math.PI / 2 + (i * 2 * Math.PI) / N
@@ -155,6 +155,8 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     { title: '김장하는 날', date: '작년 11월', by: M.gm, type: 'photo', hearts: 8, tone: '#FFE0EC', ph: '김장 사진' },
     { title: '도윤이 목욕', date: '4월 22일', by: M.mom, type: 'photo', hearts: 10, tone: '#FFE0EC', ph: '목욕 사진' },
     { title: '벚꽃 구경', date: '4월 5일', by: M.dad, type: 'photo', hearts: 14, tone: '#FFE0EC', ph: '벚꽃 사진' },
+    { title: '도윤이 블록놀이', date: '4월 12일', by: M.do, type: 'photo', hearts: 9, tone: '#FFE0EC', ph: '블록놀이 사진' },
+    { title: '도윤이 첫 낮잠', date: '3월 30일', by: M.do, type: 'video', hearts: 13, tone: '#FFE0EC', ph: '낮잠 영상' },
   ]
   const media = gbase.map((g) => ({ ...g, isVideo: g.type === 'video', open: () => setState({ screen: 'media', media: g, mediaLiked: false }) }))
   const gFilter = st.galleryFilter || 'all'
