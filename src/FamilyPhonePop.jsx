@@ -4,6 +4,7 @@ import { s } from './lib/style.js'
 import { Flower6 } from './components/Flower.jsx'
 import Nav from './components/Nav.jsx'
 import Login from './screens/Login.jsx'
+import SpaceSelect from './screens/SpaceSelect.jsx'
 import Signup from './screens/Signup.jsx'
 import Space from './screens/Space.jsx'
 import CreateSpace from './screens/CreateSpace.jsx'
@@ -272,6 +273,9 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     isMembers: scr === 'members',
     isQna: scr === 'qna', isProfile: scr === 'profile',
     isSignup: scr === 'signup', isSpace: scr === 'space', isCreateSpace: scr === 'createSpace', isJoinSpace: scr === 'joinSpace',
+    isSpaceSelect: scr === 'spaceSelect',
+    mySpaces: joinGroups.map((g) => ({ ...g, pick: () => go('home') })),
+    goSpaceSelect: () => go('spaceSelect'),
     isMoodHistory: scr === 'moodhistory', readMedia: st.editPost !== 'media',
     showNav: ['home', 'dict', 'gallery', 'members', 'qna'].indexOf(scr) !== -1,
     members, words, media, days, events, dictGroups,
@@ -359,7 +363,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     videoTabBg: ut === 'video' ? '#FFF0F5' : 'transparent',
     videoTabColor: ut === 'video' ? '#FF5E8A' : '#9DB2BD',
     uploadHint: ut === 'photo' ? '사진을 선택하세요' : '영상을 선택하세요',
-    enter: () => go('signup'), enterJoin: () => go('joinSpace'),
+    enter: () => go('spaceSelect'), enterJoin: () => go('joinSpace'),
     goSpace: () => go('space'), goCreate: () => go('createSpace'), goJoin: () => go('joinSpace'), finishOnboard: () => go('home'), goLogin: () => go('login'), goSignupBack: () => go('signup'),
     linkSheetOpen: !!st.linkSheetOpen, openLinkSheet: () => setState({ linkSheetOpen: true }), closeLinkSheet: () => setState({ linkSheetOpen: false }),
     goHome: () => go('home'), goDict: () => go('dict'),
@@ -379,7 +383,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
   }
 
   const Screen =
-    vm.isLogin ? Login : vm.isSignup ? Signup : vm.isSpace ? Space : vm.isCreateSpace ? CreateSpace :
+    vm.isLogin ? Login : vm.isSpaceSelect ? SpaceSelect : vm.isSignup ? Signup : vm.isSpace ? Space : vm.isCreateSpace ? CreateSpace :
     vm.isJoinSpace ? JoinSpace : vm.isHome ? Home : vm.isDict ? Dict : vm.isWord ? Word :
     vm.isGallery ? Gallery : vm.isMedia ? Media : vm.isMoodHistory ? MoodHistory :
     vm.isQnaHistory ? QnaHistory : vm.isQna ? Qna : vm.isUpload ? Upload :
