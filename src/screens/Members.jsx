@@ -1,0 +1,75 @@
+import { View, Text, Image, Pressable } from 'react-native'
+import Svg, { Path, Circle } from 'react-native-svg'
+import { s } from '../lib/style.js'
+import signature from '../../assets/img/signature.png'
+
+export default function Members({ vm }) {
+  return (
+    <View style={s('padding:8px 20px 110px')}>
+      {vm.membersFromLink && (
+        <Pressable onPress={vm.back} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#17303B;margin:6px 2px 10px')}>
+          <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#17303B">
+            <Path d="M14.5 5 L7.5 12 L14.5 19" />
+          </Svg>
+        </Pressable>
+      )}
+      <View style={s('display:flex;align-items:center;gap:12px;margin:6px 2px 14px')}>
+        <Image source={signature} style={{ width: 74, height: 42 }} resizeMode="cover" />
+        <View style={s('flex:1')}>
+          <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px')}>우리 가족</Text>
+          <Text style={s('font-size:11.3px;color:#6A7E88;margin-top:2px')}>5명이 함께하고 있어요</Text>
+        </View>
+        <Pressable onPress={vm.openInvite} style={s('width:44px;height:44px;border-radius:14px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;box-shadow:0 8px 18px rgba(255,94,138,0.32)')}>
+          <Svg viewBox="0 0 24 24" width={22} height={22} fill="none" stroke="#fff" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+            <Circle cx="10" cy="8" r="3.2" />
+            <Path d="M4 19 C4 15.5 6.8 13.8 10 13.8 C11 13.8 12 14 12.8 14.3" />
+            <Path d="M18 13 v6" />
+            <Path d="M15 16 h6" />
+          </Svg>
+        </Pressable>
+      </View>
+
+      <Pressable onPress={vm.goProfileEdit} style={s('display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:14px 16px;cursor:pointer;margin-bottom:12px')}>
+        <View style={s('width:52px;height:52px;border-radius:50%;background:#FF5E8A;display:flex;align-items:center;justify-content:center;flex:0 0 auto')}>
+          <Text style={s('color:#fff;font-weight:800;font-size:16.5px')}>서</Text>
+        </View>
+        <View style={s('flex:1')}>
+          <Text style={s('font-size:13.5px;font-weight:800;color:#17303B')}>내 프로필 설정하기</Text>
+          <Text style={s('font-size:11px;color:#9DB2BD;margin-top:2px')}>사진 · 이름 · 오늘의 한마디</Text>
+        </View>
+        <Svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#D9C3CC" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={s('flex:0 0 auto')}>
+          <Path d="M9 6 L15 12 L9 18" />
+        </Svg>
+      </Pressable>
+
+      <Text style={s('margin:22px 2px 12px;font-size:13.1px;font-weight:800;color:#17303B')}>구성원 5명</Text>
+      <View style={s('display:flex;flex-direction:column;gap:10px')}>
+        {vm.members.map((m, i) => (
+          <View key={i} style={s('display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:10px 16px;')}>
+            <View style={s(`width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:${m.c}`)}>
+              <Text style={s('color:#fff;font-weight:700;font-size:14.8px')}>{m.ini}</Text>
+            </View>
+            <View style={s('flex:1;min-width:0')}>
+              <View style={s('flex-direction:row;align-items:center;gap:6px')}><Text style={s('font-size:13.1px;font-weight:700;color:#17303B')}>{m.name}</Text><Text style={s('font-size:10.5px;color:#B7C3CC')}>{m.role}</Text></View>
+              <Text numberOfLines={1} style={s('font-size:11.5px;color:#5A6D77;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{m.mood} {m.emoji}</Text>
+            </View>
+            {m.admin && <Text style={s('font-size:11px;font-weight:700;color:#FF5E8A;background:#FFF0F5;padding:4px 10px;border-radius:999px;flex:0 0 auto')}>관리자</Text>}
+          </View>
+        ))}
+        <View style={s('display:flex;align-items:center;gap:14px;background:#F3FAFE;border:1.5px dashed #C7E7F7;border-radius:24px;padding:14px 16px')}>
+          <View style={s('width:46px;height:46px;border-radius:50%;background:#FFF0F5;display:flex;align-items:center;justify-content:center;color:#9DB2BD;flex:0 0 auto')}>
+            <Svg viewBox="0 0 24 24" width={22} height={22} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#9DB2BD">
+              <Circle cx="12" cy="9" r="3.2" />
+              <Path d="M5.5 19 C5.5 15.5 8.5 13.8 12 13.8 C15.5 13.8 18.5 15.5 18.5 19" />
+            </Svg>
+          </View>
+          <View style={s('flex:1')}>
+            <Text style={s('font-size:12.6px;font-weight:700;color:#17303B')}>삼촌 (김민재)</Text>
+            <Text style={s('font-size:11px;color:#9DB2BD;margin-top:1px')}>초대 대기 중</Text>
+          </View>
+          <Text style={s('font-size:11px;font-weight:700;color:#FF5E8A;background:#FFF0F5;padding:4px 10px;border-radius:999px')}>대기중</Text>
+        </View>
+      </View>
+    </View>
+  )
+}

@@ -1,20 +1,20 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, Platform } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
+import FamilyPhonePop from './src/FamilyPhonePop'
+
+let initialScreen = 'login'
+let variant = 'grid'
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  const p = new URLSearchParams(window.location.search)
+  initialScreen = p.get('screen') || 'login'
+  variant = p.get('variant') || 'grid'
+}
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF6FB' }}>
+      <StatusBar style="dark" />
+      <FamilyPhonePop variant={variant} initialScreen={initialScreen} />
+    </SafeAreaView>
+  )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

@@ -1,0 +1,27 @@
+import { View, Text, Pressable } from 'react-native'
+import Svg, { Path, Rect } from 'react-native-svg'
+import { s } from '../lib/style.js'
+
+export default function InviteSheet({ vm }) {
+  return (
+    <Pressable onPress={vm.closeInvite} style={s('position:absolute;inset:0;background:rgba(23,48,59,0.5);z-index:45;display:flex;align-items:flex-end;animation:sfade .18s ease')}>
+      <Pressable onPress={vm.stopEvt} style={s('width:100%;background:#fff;border-radius:26px 26px 0 0;padding:20px 20px 30px;animation:sheetup .26s cubic-bezier(.4,0,.2,1)')}>
+        <View style={s('width:40px;height:4px;border-radius:2px;background:#EADCE2;margin:0 auto 18px')}></View>
+        <Text style={s('font-size:15.7px;font-weight:800;color:#17303B')}>새 가족 초대하기</Text>
+        <Text style={s('font-size:11.5px;color:#9DB2BD;margin-top:5px;margin-bottom:20px')}>카카오톡이나 링크로 가족을 초대해보세요</Text>
+        <View style={s('display:flex;align-items:center;gap:12px;background:#FEE500;border-radius:16px;padding:15px 16px;cursor:pointer')}>
+          <View style={s('width:36px;height:36px;border-radius:11px;background:#3C1E1E;display:flex;align-items:center;justify-content:center;flex:0 0 auto')}>
+            <Text style={s('color:#FEE500;font-size:17px;font-weight:800')}>K</Text>
+          </View>
+          <View style={s('flex:1')}><Text style={s('font-size:13.5px;font-weight:800;color:#3C1E1E')}>카카오톡으로 초대</Text><Text style={s('font-size:11px;color:#7A5C2E;margin-top:1px')}>친구 목록에서 바로 보내기</Text></View>
+          <Svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#3C1E1E" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={s('flex:0 0 auto')}><Path d="M9 6 L15 12 L9 18" /></Svg>
+        </View>
+        <View style={s('display:flex;align-items:center;gap:12px;background:#FFF6FB;border:1px solid #FFE1EC;border-radius:16px;padding:15px 16px;margin-top:10px;cursor:pointer')}>
+          <View style={s('width:36px;height:36px;border-radius:11px;background:#FFF0F5;display:flex;align-items:center;justify-content:center;color:#FF5E8A;flex:0 0 auto')}><Svg viewBox="0 0 24 24" width={19} height={19} fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" color="#FF5E8A"><Path d="M9.5 14.5 L14.5 9.5" /><Path d="M11 7.5 L12.7 5.8 A3 3 0 0 1 18 11 L16.5 13" /><Path d="M13 16.5 L11.3 18.2 A3 3 0 0 1 6 15 L7.5 11" /></Svg></View>
+          <View style={s('flex:1')}><Text style={s('font-size:13.5px;font-weight:800;color:#17303B')}>초대 링크 복사</Text><Text style={s('font-size:11px;color:#9DB2BD;margin-top:1px')}>우리끼리.app/join/서연네</Text></View>
+          <Svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#D9C3CC" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={s('flex:0 0 auto')}><Rect x={8} y={8} width={12} height={12} rx={2.5} /><Path d="M16 8 V6 a2 2 0 0 0 -2 -2 H6 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 2 2 h2" /></Svg>
+        </View>
+      </Pressable>
+    </Pressable>
+  )
+}
