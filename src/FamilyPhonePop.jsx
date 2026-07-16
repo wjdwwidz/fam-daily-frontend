@@ -3,7 +3,10 @@ import { View, ScrollView } from 'react-native'
 import { s } from './lib/style.js'
 import { Flower6 } from './components/Flower.jsx'
 import Nav from './components/Nav.jsx'
-import { api, setToken, clearToken } from './lib/api.js'
+import { createAuthActions } from './state/authActions.js'
+import { createGroupActions } from './state/groupActions.js'
+import { createWordActions } from './state/wordActions.js'
+import { createQnaActions } from './state/qnaActions.js'
 import Login from './screens/Login.jsx'
 import Auth from './screens/Auth.jsx'
 import SpaceSelect from './screens/SpaceSelect.jsx'
@@ -39,6 +42,13 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
   const go = (sc) => setState((p) => (sc === cur0(p) ? {} : { screen: sc, _hist: [...(p._hist || []), cur0(p)] }))
   const navTo = (patch) => setState((p) => ({ ...patch, _hist: [...(p._hist || []), cur0(p)] }))
 
+  // 도메인별 액션 (인증/그룹/단어/문답) — 공유 컨텍스트 주입
+  const ctx = { st, setState, ref, go, navTo }
+  const { afterAuth, doSignup, doLogin, logout, kakaoLogin, socialLogin } = createAuthActions(ctx)
+  const { doCreateGroup, doJoinGroup } = createGroupActions(ctx, afterAuth)
+  const { loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, saveWord, deleteWord } = createWordActions(ctx)
+  const { loadQna, submitAnswer, submitQuestion } = createQnaActions(ctx)
+
   useEffect(() => {
     const t = setInterval(() => setState((s2) => ({ activeMood: (s2.activeMood ?? 0) + 1 })), 2600)
     return () => clearInterval(t)
@@ -69,50 +79,6 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
   const onCommentKey = () => addComment()
 
   const toggleMenu = (which) => setState((s2) => ({ menuOpen: s2.menuOpen === which ? null : which }))
-
-  const startEditWord = () => { const w = st.word || words[0]; setState({ menuOpen: null, editPost: 'word', wordDraft: { ...w } }) }
-  const startAddWord = () => navTo({ screen: 'word', menuOpen: null, editPost: 'word', word: { by: { ini: '엄', c: '#FF5E8A' } }, wordDraft: { term: '', reading: '', meaning: '', example: '' } })
-  const onWordTerm = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, term: text } }))
-  const onWordReading = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, reading: text } }))
-  const onWordMeaning = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, meaning: text } }))
-  const onWordExample = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, example: text } }))
-  const removeWordPhoto = () => setState((s2) => ({ wordDraft: { ...s2.wordDraft, photo: null } }))
-  const saveWord = async () => {
-    const draft = ref.current.wordDraft || {}
-    const term = (draft.term || '').trim()
-    const meaning = (draft.meaning || '').trim()
-    if (!term || !meaning) return // 단어·뜻 필수
-    const groupId = ref.current.currentGroup?.id
-    const editingId = ref.current.word && ref.current.word.id
-    const body = {
-      term,
-      reading: (draft.reading || '').trim(),
-      meaning,
-      example: (draft.example || '').trim(),
-      photoUrl: draft.photo || undefined,
-    }
-    setState({ actionLoading: true })
-    try {
-      if (editingId) await api.updateWord(editingId, body)
-      else await api.createWord(groupId, body)
-      await loadWords(groupId)
-      setState({ actionLoading: false, editPost: null, word: null, wordDraft: {}, screen: 'dict' })
-    } catch (e) {
-      setState({ actionLoading: false, authError: e.message })
-    }
-  }
-  const deleteWord = async () => {
-    const id = ref.current.word?.id
-    const groupId = ref.current.currentGroup?.id
-    setState({ menuOpen: null })
-    if (id) {
-      try {
-        await api.deleteWord(id)
-        await loadWords(groupId)
-      } catch {}
-    }
-    go('dict')
-  }
 
   const startEditMedia = () => { const m = st.media || media[0]; setState({ menuOpen: null, editPost: 'media', mediaDraft: { ...m } }) }
   const onMediaTitle = (text) => setState((s2) => ({ mediaDraft: { ...s2.mediaDraft, title: text } }))
@@ -151,149 +117,6 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
       text: a.text,
     }
   }
-  // 현재 그룹의 단어 불러오기
-  const loadWords = async (groupId) => {
-    if (!groupId) return
-    setState({ wordsLoading: true })
-    try {
-      const list = await api.listWords(groupId)
-      setState({ groupWords: list, wordsLoading: false })
-    } catch {
-      setState({ groupWords: [], wordsLoading: false })
-    }
-  }
-  // 현재 그룹의 문답(오늘의 질문 + 지난 질문 목록) 불러오기
-  const loadQna = async (groupId) => {
-    if (!groupId) return
-    setState({ qnaLoading: true })
-    try {
-      const [current, list] = await Promise.all([api.currentQuestion(groupId), api.listQuestions(groupId)])
-      setState({ qnaCurrent: current, qnaList: list, qnaLoading: false })
-    } catch {
-      setState({ qnaCurrent: null, qnaList: null, qnaLoading: false })
-    }
-  }
-
-  const afterAuth = async () => {
-    try {
-      const groups = await api.listGroups()
-      setState({ groups, groupsLoading: false })
-    } catch {
-      setState({ groups: [], groupsLoading: false })
-    }
-    // 초대 링크로 들어왔으면 로그인 후 바로 참여(코드 입력) 화면으로
-    const next = ref.current.authNext || 'spaceSelect'
-    setState({ authNext: null })
-    go(next)
-  }
-  const doSignup = async () => {
-    const { authEmail, authPassword, authName } = ref.current
-    if (!authEmail || !authPassword || !authName) {
-      setState({ authError: '이메일·비밀번호·이름을 모두 입력하세요.' })
-      return
-    }
-    setState({ authLoading: true, authError: null })
-    try {
-      const r = await api.signup(authEmail.trim(), authPassword, authName.trim())
-      await setToken(r.accessToken)
-      setState({ authLoading: false, me: r.user, groupsLoading: true })
-      await afterAuth()
-    } catch (e) {
-      setState({ authLoading: false, authError: e.message })
-    }
-  }
-  const doLogin = async () => {
-    const { authEmail, authPassword } = ref.current
-    if (!authEmail || !authPassword) {
-      setState({ authError: '이메일·비밀번호를 입력하세요.' })
-      return
-    }
-    setState({ authLoading: true, authError: null })
-    try {
-      const r = await api.login(authEmail.trim(), authPassword)
-      await setToken(r.accessToken)
-      setState({ authLoading: false, me: r.user, groupsLoading: true })
-      await afterAuth()
-    } catch (e) {
-      setState({ authLoading: false, authError: e.message })
-    }
-  }
-  const logout = async () => {
-    await clearToken()
-    setState({ me: null, groups: [], authEmail: '', authPassword: '', authName: '' })
-    go('login')
-  }
-  // 카카오 로그인 (실제 OAuth) — 인앱 브라우저 → 백엔드 → 딥링크로 토큰 수신
-  const kakaoLogin = async () => {
-    setState({ authLoading: true, authError: null })
-    try {
-      const token = await api.kakaoLogin()
-      if (!token) {
-        setState({ authLoading: false })
-        return
-      }
-      const me = await api.me()
-      setState({ authLoading: false, me, groupsLoading: true })
-      await afterAuth()
-    } catch (e) {
-      setState({ authLoading: false, authError: e.message })
-    }
-  }
-
-  // 구글 등 아직 미연동 소셜 — 임시 데모 계정 로그인(테스트용)
-  const socialLogin = async (provider) => {
-    const email = provider === '카카오' ? 'kakao-demo@urikkiri.app' : 'google-demo@urikkiri.app'
-    const password = 'demo-pass-1234'
-    const name = `${provider} 사용자`
-    setState({ authLoading: true, authError: null })
-    try {
-      let r
-      try {
-        r = await api.login(email, password)
-      } catch {
-        r = await api.signup(email, password, name)
-      }
-      await setToken(r.accessToken)
-      setState({ authLoading: false, me: r.user, groupsLoading: true })
-      await afterAuth()
-    } catch (e) {
-      setState({ authLoading: false, authError: e.message })
-    }
-  }
-  const doCreateGroup = async () => {
-    const name = (ref.current.createName || '').trim()
-    const nickname = (ref.current.createNickname || '').trim()
-    if (!name || !nickname) {
-      setState({ createNameErr: !name, createNickErr: !nickname })
-      return
-    }
-    setState({ actionLoading: true, actionError: null, createNameErr: false, createNickErr: false })
-    try {
-      await api.createGroup(name, nickname)
-      setState({ actionLoading: false, createName: '', createNickname: '' })
-      await afterAuth()
-    } catch (e) {
-      setState({ actionLoading: false, actionError: e.message })
-    }
-  }
-  const doJoinGroup = async () => {
-    let code = (ref.current.joinCode || '').trim()
-    if (code.includes('/')) code = code.split('/').pop()
-    const nickname = (ref.current.joinNickname || '').trim()
-    if (!code || !nickname) {
-      setState({ joinCodeErr: !code, joinNickErr: !nickname })
-      return
-    }
-    setState({ actionLoading: true, actionError: null, joinCodeErr: false, joinNickErr: false })
-    try {
-      await api.joinGroup(code, nickname)
-      setState({ actionLoading: false, joinCode: '', joinNickname: '' })
-      await afterAuth()
-    } catch (e) {
-      setState({ actionLoading: false, actionError: e.message })
-    }
-  }
-
   const startEditCmt = (i, text) => setState({ editCmt: i, editCmtDraft: text })
   const onEditCmtInput = (text) => setState({ editCmtDraft: text })
   const saveCmt = (i) => {
@@ -654,17 +477,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     onAnswerInput: (text) => setState({ answerDraft: text }),
     openAnswer: () => setState({ answerOpen: true, answerDraft: '' }),
     closeAnswer: () => setState({ answerOpen: false }),
-    submitAnswer: async () => {
-      const text = (ref.current.answerDraft || '').trim()
-      const qid = ref.current.qnaCurrent?.question?.id
-      if (!text || !qid) { setState({ answerOpen: false }); return }
-      setState({ actionLoading: true })
-      try {
-        await api.answerQuestion(qid, text)
-        await loadQna(ref.current.currentGroup?.id)
-        setState({ actionLoading: false, answerOpen: false, answerDraft: '' })
-      } catch (e) { setState({ actionLoading: false, answerOpen: false, authError: e.message }) }
-    },
+    submitAnswer,
     // 새 질문 내기
     questionOpen: !!st.questionOpen,
     questionDraft: st.questionDraft ?? '',
@@ -672,17 +485,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     openQuestion: () => setState({ questionOpen: true, questionDraft: '' }),
     closeQuestion: () => setState({ questionOpen: false }),
     fillSuggestedQuestion: () => setState({ questionDraft: suggestQuestion() }),
-    submitQuestion: async () => {
-      const text = (ref.current.questionDraft || '').trim()
-      const groupId = ref.current.currentGroup?.id
-      if (!text || !groupId) { setState({ questionOpen: false }); return }
-      setState({ actionLoading: true })
-      try {
-        await api.createQuestion(groupId, text)
-        await loadQna(groupId)
-        setState({ actionLoading: false, questionOpen: false, questionDraft: '' })
-      } catch (e) { setState({ actionLoading: false, questionOpen: false, authError: e.message }) }
-    },
+    submitQuestion,
     goUpload: () => go('upload'),
     openTodayWord: () => navTo({ screen: 'word', word: words[0] }),
     setPhoto: () => setState({ uploadType: 'photo' }),
