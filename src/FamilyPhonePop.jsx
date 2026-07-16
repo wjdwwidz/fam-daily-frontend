@@ -7,6 +7,7 @@ import { createAuthActions } from './state/authActions.js'
 import { createGroupActions } from './state/groupActions.js'
 import { createWordActions } from './state/wordActions.js'
 import { createQnaActions } from './state/qnaActions.js'
+import { QUESTION_BANK } from './data/questionBank.js'
 import Login from './screens/Login.jsx'
 import Auth from './screens/Auth.jsx'
 import SpaceSelect from './screens/SpaceSelect.jsx'
@@ -165,11 +166,6 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
   const tailStyle = `position:absolute;left:${C}px;top:${C}px;width:0;height:0;transform:rotate(${-90 + (active * 360) / N}deg);z-index:3`
   const dotStyle = `position:absolute;left:0;top:-7px;width:14px;height:14px;border-radius:50%;transform:translateX(60px);background:${activeMember.c};box-shadow:0 2px 6px rgba(255,94,138,0.3)`
 
-  const wbase = [
-    { term: '응아', reading: '응아응아', meaning: '화장실 가고 싶다는 도윤이 신호', example: '"엄마 응아!" 하면 만사 제쳐두고 화장실로 직행해요 🚽', by: M.mom, date: '7월 5일', photo: true, ph: '도윤이 사진', hearts: 4, tint: '#FFF0F5' },
-    { term: '빠방', reading: '빠방!', meaning: '자동차, 특히 아빠 차를 부르는 말', example: '주차장만 가면 "빠방 빠방" 노래를 부른답니다 🚗', by: M.dad, date: '7월 3일', photo: true, ph: '아빠 차 앞에서', hearts: 3, tint: '#FFF0F5' },
-    { term: '까까', reading: '까까!', meaning: '과자나 간식을 달라는 말', example: '간식 시간마다 "까까 까까" 손을 내밀어요 🍪', by: M.ji, date: '6월 15일', photo: false, ph: '', hearts: 6, tint: '#FFF0F5' },
-  ]
   // 실제 그룹 단어(백엔드) → 화면용 형태로 변환
   const words = (st.groupWords || []).map((w) => {
     const obj = {
@@ -269,22 +265,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     : { id: null, no: '0/0', q: '', progress: '', answered: [], empty: true }
   const qListAll = (st.qnaList && st.qnaList.questions) || []
   const pastQs = qListAll.slice(1, 4).map((q) => ({ id: q.id, day: q.no, q: q.text, count: q.answerCount }))
-  const qBank = [
-    '요즘 가장 고마운 가족은 누구야?', '다시 태어나도 우리 가족으로 만나고 싶어?', '우리 집 최고의 요리 하나만 꼽는다면?',
-    '어릴 때 가장 기억에 남는 여행은?', '가족에게 아직 못 한 말이 있다면?', '요즘 가장 자주 듣는 노래는?',
-    '오늘 하루 중 가장 웃었던 순간은?', '내가 생각하는 우리 가족의 장점은?', '함께 가보고 싶은 여행지가 있다면?',
-    '스무 살의 나에게 한마디 한다면?', '요즘 가장 큰 고민은 뭐야?', '가족과 하고 싶은 새로운 취미가 있다면?',
-    '엄마·아빠에게 배우고 싶은 것은?', '최근에 새로 도전해 본 일이 있어?', '우리 가족만의 규칙이 있다면?',
-    '가장 좋아하는 계절과 그 이유는?', '어렸을 때 꿈은 무엇이었어?', '요즘 가장 행복한 순간은 언제야?',
-    '가족과 함께 본 최고의 영화는?', '내 인생의 첫 기억은 무엇일까?', '지금 가장 갖고 싶은 것은?',
-    '스트레스를 푸는 나만의 방법은?', '가족에게 가장 미안했던 일은?', '올해 꼭 이루고 싶은 목표는?',
-    '내가 제일 아끼는 물건은 뭐야?', '가족과 다시 하고 싶은 추억이 있다면?', '요즘 빠져 있는 것은 무엇이야?',
-    '가장 자신 있는 요리가 있다면?', '어떤 어른이 되고 싶었어?', '오늘 감사한 일 세 가지는?',
-    '내가 닮고 싶은 가족은 누구야?', '최근에 가장 감동받은 순간은?', '휴일이 생기면 뭘 하고 싶어?',
-    '어린 시절 우리 동네는 어땠어?', '가족에게 자주 하는 말버릇이 있어?', '내가 제일 좋아하는 우리 집 장소는?',
-    '요즘 배우고 있는 것이 있다면?', '가장 든든한 순간은 언제야?', '지금 나에게 필요한 응원은?',
-    '가족과 함께 웃었던 최근 일은?',
-  ]
+  const qBank = QUESTION_BANK
   const qnaHistory = qListAll.map((q) => ({ id: q.id, no: q.no, q: q.text, count: q.answerCount }))
   const qnaHistoryTotal = (st.qnaList && st.qnaList.total) || qnaHistory.length
   // 아직 등록된 질문 중에 없는 추천 질문 하나 (새 질문 제안용)
