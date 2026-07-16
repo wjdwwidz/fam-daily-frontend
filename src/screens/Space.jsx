@@ -6,7 +6,7 @@ import onboarding from '../../assets/img/onboarding.png'
 export default function Space({ vm }) {
   return (
     <View style={s('min-height:768px;display:flex;flex-direction:column;padding:72px 28px 40px;background:#FFF6FB;position:relative')}>
-      <Pressable onPress={vm.goSignupBack} style={s('position:absolute;top:18px;left:18px;width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#17303B')}>
+      <Pressable onPress={vm.back} style={s('position:absolute;top:18px;left:18px;width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#17303B')}>
         <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#17303B">
           <Path d="M14.5 5 L7.5 12 L14.5 19" />
         </Svg>

@@ -11,7 +11,7 @@ export default function Gallery({ vm }) {
   return (
     <View style={s('padding:8px 20px 110px')}>
       <View style={s('margin:6px 2px 4px')}>
-        <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px')}>기록</Text>
+        <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px')}>추억</Text>
       </View>
 
       {/* 폴더 탭 — 선택된 폴더가 앞으로, 나머지는 뒤로 넘어가 겹치는 느낌 */}
@@ -72,7 +72,7 @@ export default function Gallery({ vm }) {
       )}
 
       {vm.isGrid && (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: GRID_GAP }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: GRID_GAP, rowGap: GRID_GAP }}>
           {vm.galleryMedia.map((g, i) => (
             <Pressable
               key={i}
@@ -92,7 +92,7 @@ export default function Gallery({ vm }) {
       )}
 
       {vm.galleryEmpty && (
-        <Text style={s('text-align:center;padding:56px 20px;color:#B4C1CA;font-size:12.8px;line-height:1.7')}>아직 올린 기록이 없어요.{'\n'}첫 추억을 남겨보세요 🌱</Text>
+        <Text style={s('text-align:center;padding:56px 20px;color:#B4C1CA;font-size:12.8px;line-height:1.7')}>아직 올린 추억이 없어요.{'\n'}첫 추억을 남겨보세요</Text>
       )}
     </View>
   )

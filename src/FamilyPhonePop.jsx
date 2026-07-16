@@ -3,7 +3,9 @@ import { View, ScrollView } from 'react-native'
 import { s } from './lib/style.js'
 import { Flower6 } from './components/Flower.jsx'
 import Nav from './components/Nav.jsx'
+import { api, setToken, clearToken } from './lib/api.js'
 import Login from './screens/Login.jsx'
+import Auth from './screens/Auth.jsx'
 import SpaceSelect from './screens/SpaceSelect.jsx'
 import Signup from './screens/Signup.jsx'
 import Space from './screens/Space.jsx'
@@ -22,6 +24,7 @@ import Members from './screens/Members.jsx'
 import Profile from './screens/Profile.jsx'
 import LinkSheet from './overlays/LinkSheet.jsx'
 import AnswerSheet from './overlays/AnswerSheet.jsx'
+import QuestionSheet from './overlays/QuestionSheet.jsx'
 import AddEventSheet from './overlays/AddEventSheet.jsx'
 import InviteSheet from './overlays/InviteSheet.jsx'
 import SearchOverlay from './overlays/SearchOverlay.jsx'
@@ -31,7 +34,10 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
   const ref = useRef(st)
   ref.current = st
   const setState = (patch) => setRaw((prev) => ({ ...prev, ...(typeof patch === 'function' ? patch(prev) : patch) }))
-  const go = (sc) => setState({ screen: sc })
+  // 뒤로가기 히스토리 스택. 화면 전환 시 이전 화면을 쌓고, back()에서 pop.
+  const cur0 = (p) => p.screen || initialScreen || 'login'
+  const go = (sc) => setState((p) => (sc === cur0(p) ? {} : { screen: sc, _hist: [...(p._hist || []), cur0(p)] }))
+  const navTo = (patch) => setState((p) => ({ ...patch, _hist: [...(p._hist || []), cur0(p)] }))
 
   useEffect(() => {
     const t = setInterval(() => setState((s2) => ({ activeMood: (s2.activeMood ?? 0) + 1 })), 2600)
@@ -65,20 +71,228 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
   const toggleMenu = (which) => setState((s2) => ({ menuOpen: s2.menuOpen === which ? null : which }))
 
   const startEditWord = () => { const w = st.word || words[0]; setState({ menuOpen: null, editPost: 'word', wordDraft: { ...w } }) }
-  const startAddWord = () => setState({ screen: 'word', menuOpen: null, editPost: 'word', word: { by: { ini: '엄', c: '#FF5E8A' } }, wordDraft: { term: '', reading: '', meaning: '', example: '' } })
+  const startAddWord = () => navTo({ screen: 'word', menuOpen: null, editPost: 'word', word: { by: { ini: '엄', c: '#FF5E8A' } }, wordDraft: { term: '', reading: '', meaning: '', example: '' } })
   const onWordTerm = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, term: text } }))
   const onWordReading = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, reading: text } }))
   const onWordMeaning = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, meaning: text } }))
   const onWordExample = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, example: text } }))
   const removeWordPhoto = () => setState((s2) => ({ wordDraft: { ...s2.wordDraft, photo: null } }))
-  const saveWord = () => setState((s2) => ({ word: { ...(s2.word || {}), ...s2.wordDraft }, editPost: null }))
-  const deleteWord = () => setState({ menuOpen: null, screen: 'dict' })
+  const saveWord = async () => {
+    const draft = ref.current.wordDraft || {}
+    const term = (draft.term || '').trim()
+    const meaning = (draft.meaning || '').trim()
+    if (!term || !meaning) return // 단어·뜻 필수
+    const groupId = ref.current.currentGroup?.id
+    const editingId = ref.current.word && ref.current.word.id
+    const body = {
+      term,
+      reading: (draft.reading || '').trim(),
+      meaning,
+      example: (draft.example || '').trim(),
+      photoUrl: draft.photo || undefined,
+    }
+    setState({ actionLoading: true })
+    try {
+      if (editingId) await api.updateWord(editingId, body)
+      else await api.createWord(groupId, body)
+      await loadWords(groupId)
+      setState({ actionLoading: false, editPost: null, word: null, wordDraft: {}, screen: 'dict' })
+    } catch (e) {
+      setState({ actionLoading: false, authError: e.message })
+    }
+  }
+  const deleteWord = async () => {
+    const id = ref.current.word?.id
+    const groupId = ref.current.currentGroup?.id
+    setState({ menuOpen: null })
+    if (id) {
+      try {
+        await api.deleteWord(id)
+        await loadWords(groupId)
+      } catch {}
+    }
+    go('dict')
+  }
 
   const startEditMedia = () => { const m = st.media || media[0]; setState({ menuOpen: null, editPost: 'media', mediaDraft: { ...m } }) }
   const onMediaTitle = (text) => setState((s2) => ({ mediaDraft: { ...s2.mediaDraft, title: text } }))
   const saveMedia = () => setState((s2) => ({ media: { ...(s2.media || {}), ...s2.mediaDraft }, editPost: null }))
   const deleteMedia = () => setState({ menuOpen: null, screen: 'gallery' })
   const cancelEdit = () => setState({ editPost: null })
+
+  // ---- 백엔드 연동: 인증 & 그룹 ----
+  const AVATAR_COLORS = ['#FF5E8A', '#4D7CFE', '#FF9F43', '#22C4A6', '#A66CFF']
+  const colorFor = (key) => {
+    const str = String(key || '')
+    let h = 0
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0
+    return AVATAR_COLORS[h % AVATAR_COLORS.length]
+  }
+  const fmtDate = (iso) => {
+    const m = String(iso || '').match(/^\d{4}-(\d{2})-(\d{2})/)
+    return m ? `${Number(m[1])}월 ${Number(m[2])}일` : ''
+  }
+  const fmtTime = (iso) => {
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return ''
+    let h = d.getHours()
+    const min = String(d.getMinutes()).padStart(2, '0')
+    const ap = h < 12 ? '오전' : '오후'
+    h = h % 12 || 12
+    return `${ap} ${h}:${min}`
+  }
+  // 백엔드 답변 → 화면 카드 형태
+  const answerCard = (a) => {
+    const key = a.author?.nickname || a.author?.name || '?'
+    return {
+      by: { name: a.author?.nickname || a.author?.name || '가족', ini: String(key).slice(0, 1), c: colorFor(key) },
+      time: fmtTime(a.createdAt),
+      likes: 0,
+      text: a.text,
+    }
+  }
+  // 현재 그룹의 단어 불러오기
+  const loadWords = async (groupId) => {
+    if (!groupId) return
+    setState({ wordsLoading: true })
+    try {
+      const list = await api.listWords(groupId)
+      setState({ groupWords: list, wordsLoading: false })
+    } catch {
+      setState({ groupWords: [], wordsLoading: false })
+    }
+  }
+  // 현재 그룹의 문답(오늘의 질문 + 지난 질문 목록) 불러오기
+  const loadQna = async (groupId) => {
+    if (!groupId) return
+    setState({ qnaLoading: true })
+    try {
+      const [current, list] = await Promise.all([api.currentQuestion(groupId), api.listQuestions(groupId)])
+      setState({ qnaCurrent: current, qnaList: list, qnaLoading: false })
+    } catch {
+      setState({ qnaCurrent: null, qnaList: null, qnaLoading: false })
+    }
+  }
+
+  const afterAuth = async () => {
+    try {
+      const groups = await api.listGroups()
+      setState({ groups, groupsLoading: false })
+    } catch {
+      setState({ groups: [], groupsLoading: false })
+    }
+    // 초대 링크로 들어왔으면 로그인 후 바로 참여(코드 입력) 화면으로
+    const next = ref.current.authNext || 'spaceSelect'
+    setState({ authNext: null })
+    go(next)
+  }
+  const doSignup = async () => {
+    const { authEmail, authPassword, authName } = ref.current
+    if (!authEmail || !authPassword || !authName) {
+      setState({ authError: '이메일·비밀번호·이름을 모두 입력하세요.' })
+      return
+    }
+    setState({ authLoading: true, authError: null })
+    try {
+      const r = await api.signup(authEmail.trim(), authPassword, authName.trim())
+      await setToken(r.accessToken)
+      setState({ authLoading: false, me: r.user, groupsLoading: true })
+      await afterAuth()
+    } catch (e) {
+      setState({ authLoading: false, authError: e.message })
+    }
+  }
+  const doLogin = async () => {
+    const { authEmail, authPassword } = ref.current
+    if (!authEmail || !authPassword) {
+      setState({ authError: '이메일·비밀번호를 입력하세요.' })
+      return
+    }
+    setState({ authLoading: true, authError: null })
+    try {
+      const r = await api.login(authEmail.trim(), authPassword)
+      await setToken(r.accessToken)
+      setState({ authLoading: false, me: r.user, groupsLoading: true })
+      await afterAuth()
+    } catch (e) {
+      setState({ authLoading: false, authError: e.message })
+    }
+  }
+  const logout = async () => {
+    await clearToken()
+    setState({ me: null, groups: [], authEmail: '', authPassword: '', authName: '' })
+    go('login')
+  }
+  // 카카오 로그인 (실제 OAuth) — 인앱 브라우저 → 백엔드 → 딥링크로 토큰 수신
+  const kakaoLogin = async () => {
+    setState({ authLoading: true, authError: null })
+    try {
+      const token = await api.kakaoLogin()
+      if (!token) {
+        setState({ authLoading: false })
+        return
+      }
+      const me = await api.me()
+      setState({ authLoading: false, me, groupsLoading: true })
+      await afterAuth()
+    } catch (e) {
+      setState({ authLoading: false, authError: e.message })
+    }
+  }
+
+  // 구글 등 아직 미연동 소셜 — 임시 데모 계정 로그인(테스트용)
+  const socialLogin = async (provider) => {
+    const email = provider === '카카오' ? 'kakao-demo@urikkiri.app' : 'google-demo@urikkiri.app'
+    const password = 'demo-pass-1234'
+    const name = `${provider} 사용자`
+    setState({ authLoading: true, authError: null })
+    try {
+      let r
+      try {
+        r = await api.login(email, password)
+      } catch {
+        r = await api.signup(email, password, name)
+      }
+      await setToken(r.accessToken)
+      setState({ authLoading: false, me: r.user, groupsLoading: true })
+      await afterAuth()
+    } catch (e) {
+      setState({ authLoading: false, authError: e.message })
+    }
+  }
+  const doCreateGroup = async () => {
+    const name = (ref.current.createName || '').trim()
+    const nickname = (ref.current.createNickname || '').trim()
+    if (!name || !nickname) {
+      setState({ createNameErr: !name, createNickErr: !nickname })
+      return
+    }
+    setState({ actionLoading: true, actionError: null, createNameErr: false, createNickErr: false })
+    try {
+      await api.createGroup(name, nickname)
+      setState({ actionLoading: false, createName: '', createNickname: '' })
+      await afterAuth()
+    } catch (e) {
+      setState({ actionLoading: false, actionError: e.message })
+    }
+  }
+  const doJoinGroup = async () => {
+    let code = (ref.current.joinCode || '').trim()
+    if (code.includes('/')) code = code.split('/').pop()
+    const nickname = (ref.current.joinNickname || '').trim()
+    if (!code || !nickname) {
+      setState({ joinCodeErr: !code, joinNickErr: !nickname })
+      return
+    }
+    setState({ actionLoading: true, actionError: null, joinCodeErr: false, joinNickErr: false })
+    try {
+      await api.joinGroup(code, nickname)
+      setState({ actionLoading: false, joinCode: '', joinNickname: '' })
+      await afterAuth()
+    } catch (e) {
+      setState({ actionLoading: false, actionError: e.message })
+    }
+  }
 
   const startEditCmt = (i, text) => setState({ editCmt: i, editCmtDraft: text })
   const onEditCmtInput = (text) => setState({ editCmtDraft: text })
@@ -133,7 +347,27 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     { term: '빠방', reading: '빠방!', meaning: '자동차, 특히 아빠 차를 부르는 말', example: '주차장만 가면 "빠방 빠방" 노래를 부른답니다 🚗', by: M.dad, date: '7월 3일', photo: true, ph: '아빠 차 앞에서', hearts: 3, tint: '#FFF0F5' },
     { term: '까까', reading: '까까!', meaning: '과자나 간식을 달라는 말', example: '간식 시간마다 "까까 까까" 손을 내밀어요 🍪', by: M.ji, date: '6월 15일', photo: false, ph: '', hearts: 6, tint: '#FFF0F5' },
   ]
-  const words = wbase.map((w) => ({ ...w, open: () => setState({ screen: 'word', word: w }) }))
+  // 실제 그룹 단어(백엔드) → 화면용 형태로 변환
+  const words = (st.groupWords || []).map((w) => {
+    const obj = {
+      id: w.id,
+      term: w.term,
+      reading: w.reading || '',
+      meaning: w.meaning || '',
+      example: w.example || '',
+      photo: !!w.photoUrl,
+      ph: '사진',
+      tint: '#FFF0F5',
+      date: fmtDate(w.createdAt),
+      by: {
+        name: w.author?.name || '',
+        ini: String(w.author?.nickname || w.author?.name || '?').slice(0, 1),
+        c: colorFor(w.author?.nickname || w.author?.name),
+      },
+    }
+    obj.open = () => navTo({ screen: 'word', word: obj })
+    return obj
+  })
 
   const CHO = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
   const BASE = { ㄲ: 'ㄱ', ㄸ: 'ㄷ', ㅃ: 'ㅂ', ㅆ: 'ㅅ', ㅉ: 'ㅈ' }
@@ -159,7 +393,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     { title: '도윤이 블록놀이', date: '4월 12일', by: M.do, type: 'photo', hearts: 9, tone: '#FFE0EC', ph: '블록놀이 사진' },
     { title: '도윤이 첫 낮잠', date: '3월 30일', by: M.do, type: 'video', hearts: 13, tone: '#FFE0EC', ph: '낮잠 영상' },
   ]
-  const media = gbase.map((g) => ({ ...g, isVideo: g.type === 'video', open: () => setState({ screen: 'media', media: g, mediaLiked: false }) }))
+  const media = gbase.map((g) => ({ ...g, isVideo: g.type === 'video', open: () => navTo({ screen: 'media', media: g, mediaLiked: false }) }))
   const gFilter = st.galleryFilter || 'all'
   const galleryMedia = gFilter === 'all' ? media : media.filter((m) => m.by && m.by.name === gFilter)
   const galleryTabs = [{ label: '전체', key: 'all', c: '#FF5E8A' }].concat(members.map((m) => ({ label: m.name, key: m.name, c: m.c }))).map((t) => {
@@ -199,21 +433,19 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     { d: 25, label: '제주도 가족여행', sub: '7.25 – 7.28 · 3박 4일', tag: 'D-18', c: '#4D7CFE' },
   ]
 
-  const todayQ = {
-    day: 12, no: '1/100',
-    q: '우리 가족 하면 가장 먼저 떠오르는 냄새는?',
-    progress: '5명 중 3명이 답했어요',
-    answered: [
-      { by: M.mom, time: '오전 8:20', likes: 4, text: '갓 지은 쌀밥 냄새 🍚 아침마다 밥솥 열 때 그 냄새가 제일 좋아.' },
-      { by: M.dad, time: '오전 9:05', likes: 2, text: '주말 아침에 원두 갈 때 나는 커피 향 ☕' },
-      { by: M.ji, time: '오후 3:40', likes: 5, text: '엄마 화장품 냄새! 안으면 포근해 🥰' },
-    ],
-  }
-  const pastQs = [
-    { day: 11, q: '요즘 가장 고마운 가족은 누구야?', count: 5 },
-    { day: 10, q: '다시 태어나도 우리 가족으로 만나고 싶어?', count: 4 },
-    { day: 9, q: '우리 집 최고의 요리 하나만 꼽는다면?', count: 5 },
-  ]
+  const qc = st.qnaCurrent
+  const todayQ = qc && qc.question
+    ? {
+        id: qc.question.id,
+        no: `${qc.no}/${qc.total}`,
+        q: qc.question.text,
+        progress: `${qc.memberCount}명 중 ${qc.answers.length}명이 답했어요`,
+        answered: qc.answers.map(answerCard),
+        empty: false,
+      }
+    : { id: null, no: '0/0', q: '', progress: '', answered: [], empty: true }
+  const qListAll = (st.qnaList && st.qnaList.questions) || []
+  const pastQs = qListAll.slice(1, 4).map((q) => ({ id: q.id, day: q.no, q: q.text, count: q.answerCount }))
   const qBank = [
     '요즘 가장 고마운 가족은 누구야?', '다시 태어나도 우리 가족으로 만나고 싶어?', '우리 집 최고의 요리 하나만 꼽는다면?',
     '어릴 때 가장 기억에 남는 여행은?', '가족에게 아직 못 한 말이 있다면?', '요즘 가장 자주 듣는 노래는?',
@@ -230,9 +462,15 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     '요즘 배우고 있는 것이 있다면?', '가장 든든한 순간은 언제야?', '지금 나에게 필요한 응원은?',
     '가족과 함께 웃었던 최근 일은?',
   ]
-  const totalQ = 100
-  const qnaHistory = []
-  for (let i = totalQ; i >= 1; i--) qnaHistory.push({ no: i, q: qBank[(i - 1) % qBank.length], count: 3 + ((i * 7) % 3) })
+  const qnaHistory = qListAll.map((q) => ({ id: q.id, no: q.no, q: q.text, count: q.answerCount }))
+  const qnaHistoryTotal = (st.qnaList && st.qnaList.total) || qnaHistory.length
+  // 아직 등록된 질문 중에 없는 추천 질문 하나 (새 질문 제안용)
+  const usedQ = new Set(qListAll.map((q) => q.q || q.text))
+  const suggestQuestion = () => {
+    const pool = qBank.filter((q) => !usedQ.has(q))
+    const src = pool.length ? pool : qBank
+    return src[(st.qnaCurrent?.total || 0) % src.length]
+  }
 
   const joinGroups = [
     { name: '서연이네 가족', sub: '5명 · 엄마가 초대했어요', avatars: [{ i: '엄', c: '#FF5E8A' }, { i: '아', c: '#4D7CFE' }, { i: '도', c: '#22C4A6' }, { i: '지', c: '#FF9F43' }, { i: '할', c: '#A66CFF' }] },
@@ -274,14 +512,53 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     isQna: scr === 'qna', isProfile: scr === 'profile',
     isSignup: scr === 'signup', isSpace: scr === 'space', isCreateSpace: scr === 'createSpace', isJoinSpace: scr === 'joinSpace',
     isSpaceSelect: scr === 'spaceSelect',
-    mySpaces: joinGroups.map((g) => ({ ...g, pick: () => go('home') })),
+    // 백엔드에서 불러온 실제 그룹 목록
+    mySpaces: (st.groups || []).map((g) => ({
+      name: g.name,
+      sub: `${g.memberCount}명 · 내 호칭 ${g.myNickname}`,
+      avatars: (g.members || []).map((m, i) => ({
+        i: String(m.nickname || m.name || '').slice(0, 1),
+        c: AVATAR_COLORS[i % AVATAR_COLORS.length],
+      })),
+      pick: () => { setState({ currentGroup: g, groupWords: [], qnaCurrent: null, qnaList: null }); go('home'); loadWords(g.id); loadQna(g.id) },
+    })),
+    currentGroup: st.currentGroup || null,
+    myNickname: st.currentGroup?.myNickname || '나',
+    groupsLoading: !!st.groupsLoading,
     goSpaceSelect: () => go('spaceSelect'),
+    // 인증
+    isAuth: scr === 'auth',
+    authMode: st.authMode || 'login',
+    authEmail: st.authEmail ?? '', authPassword: st.authPassword ?? '', authName: st.authName ?? '',
+    authError: st.authError || null, authLoading: !!st.authLoading,
+    authNotice: st.authNotice || null,
+    socialLogin,
+    kakaoLogin,
+    setAuthMode: (m) => setState({ authMode: m, authError: null }),
+    onAuthEmail: (t) => setState({ authEmail: t, authError: null }),
+    onAuthPassword: (t) => setState({ authPassword: t, authError: null }),
+    onAuthName: (t) => setState({ authName: t, authError: null }),
+    doSignup, doLogin, logout,
+    me: st.me || null,
+    // 그룹 만들기/참여 입력
+    createName: st.createName ?? '', createNickname: st.createNickname ?? '',
+    createNameErr: !!st.createNameErr, createNickErr: !!st.createNickErr,
+    onCreateName: (t) => setState({ createName: t, createNameErr: false }),
+    onCreateNickname: (t) => setState({ createNickname: t, createNickErr: false }),
+    doCreateGroup,
+    joinCode: st.joinCode ?? '', joinNickname: st.joinNickname ?? '',
+    joinCodeErr: !!st.joinCodeErr, joinNickErr: !!st.joinNickErr,
+    onJoinCode: (t) => setState({ joinCode: t, joinCodeErr: false }),
+    onJoinNickname: (t) => setState({ joinNickname: t, joinNickErr: false }),
+    doJoinGroup,
+    actionLoading: !!st.actionLoading, actionError: st.actionError || null,
     isMoodHistory: scr === 'moodhistory', readMedia: st.editPost !== 'media',
     showNav: ['home', 'dict', 'gallery', 'members', 'qna'].indexOf(scr) !== -1,
     members, words, media, days, events, dictGroups,
     galleryMedia, galleryTabs, galleryEmpty: galleryMedia.length === 0,
     todayQ, pastQs, joinList,
-    qnaHistory, qnaHistoryTotal: qnaHistory.length,
+    qnaHistory, qnaHistoryTotal,
+    qnaLoading: !!st.qnaLoading,
     isQnaHistory: scr === 'qnahistory',
     openQnaHistory: () => go('qnahistory'),
     ringMembers, activeMember, tailStyle, dotStyle,
@@ -363,27 +640,64 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     videoTabBg: ut === 'video' ? '#FFF0F5' : 'transparent',
     videoTabColor: ut === 'video' ? '#FF5E8A' : '#9DB2BD',
     uploadHint: ut === 'photo' ? '사진을 선택하세요' : '영상을 선택하세요',
-    enter: () => go('spaceSelect'), enterJoin: () => go('joinSpace'),
-    goSpace: () => go('space'), goCreate: () => go('createSpace'), goJoin: () => go('joinSpace'), finishOnboard: () => go('home'), goLogin: () => go('login'), goSignupBack: () => go('signup'),
+    enter: () => { setState({ authNext: null }); go('auth') },
+    enterJoin: () => { setState({ authNext: 'joinSpace' }); go('auth') },
+    goSpace: () => go('space'), goCreate: () => go('createSpace'), goJoin: () => go('joinSpace'), finishOnboard: () => go('spaceSelect'), goLogin: () => go('login'), goSignupBack: () => go('signup'),
     linkSheetOpen: !!st.linkSheetOpen, openLinkSheet: () => setState({ linkSheetOpen: true }), closeLinkSheet: () => setState({ linkSheetOpen: false }),
     goHome: () => go('home'), goDict: () => go('dict'),
     goGallery: () => go('gallery'),
-    goMembers: () => setState({ screen: 'members', membersFromLink: false }),
-    goMembersDeep: () => setState({ screen: 'members', membersFromLink: true }),
+    goMembers: () => navTo({ screen: 'members', membersFromLink: false }),
+    goMembersDeep: () => navTo({ screen: 'members', membersFromLink: true }),
     goCalendar: () => go('calendar'), goQna: () => go('qna'),
-    openAnswer: () => setState({ answerOpen: true }), closeAnswer: () => setState({ answerOpen: false }),
+    // 문답 답변 남기기 (오늘의 질문에 대해)
+    answerDraft: st.answerDraft ?? '',
+    onAnswerInput: (text) => setState({ answerDraft: text }),
+    openAnswer: () => setState({ answerOpen: true, answerDraft: '' }),
+    closeAnswer: () => setState({ answerOpen: false }),
+    submitAnswer: async () => {
+      const text = (ref.current.answerDraft || '').trim()
+      const qid = ref.current.qnaCurrent?.question?.id
+      if (!text || !qid) { setState({ answerOpen: false }); return }
+      setState({ actionLoading: true })
+      try {
+        await api.answerQuestion(qid, text)
+        await loadQna(ref.current.currentGroup?.id)
+        setState({ actionLoading: false, answerOpen: false, answerDraft: '' })
+      } catch (e) { setState({ actionLoading: false, answerOpen: false, authError: e.message }) }
+    },
+    // 새 질문 내기
+    questionOpen: !!st.questionOpen,
+    questionDraft: st.questionDraft ?? '',
+    onQuestionInput: (text) => setState({ questionDraft: text }),
+    openQuestion: () => setState({ questionOpen: true, questionDraft: '' }),
+    closeQuestion: () => setState({ questionOpen: false }),
+    fillSuggestedQuestion: () => setState({ questionDraft: suggestQuestion() }),
+    submitQuestion: async () => {
+      const text = (ref.current.questionDraft || '').trim()
+      const groupId = ref.current.currentGroup?.id
+      if (!text || !groupId) { setState({ questionOpen: false }); return }
+      setState({ actionLoading: true })
+      try {
+        await api.createQuestion(groupId, text)
+        await loadQna(groupId)
+        setState({ actionLoading: false, questionOpen: false, questionDraft: '' })
+      } catch (e) { setState({ actionLoading: false, questionOpen: false, authError: e.message }) }
+    },
     goUpload: () => go('upload'),
-    openTodayWord: () => setState({ screen: 'word', word: words[0] }),
+    openTodayWord: () => navTo({ screen: 'word', word: words[0] }),
     setPhoto: () => setState({ uploadType: 'photo' }),
     setVideo: () => setState({ uploadType: 'video' }),
-    back: () => {
-      const map = { word: 'dict', media: 'gallery', upload: 'home', members: 'home', moodhistory: 'home', qnahistory: 'qna' }
-      go(map[scr] || 'home')
-    },
+    back: () => setState((p) => {
+      const h = p._hist || []
+      if (h.length) return { screen: h[h.length - 1], _hist: h.slice(0, -1) }
+      // 히스토리가 없으면 화면별 기본 이전 화면으로 폴백
+      const map = { word: 'dict', media: 'gallery', upload: 'home', members: 'home', moodhistory: 'home', qnahistory: 'qna', spaceSelect: 'login', space: 'spaceSelect', createSpace: 'space', joinSpace: 'space', signup: 'login' }
+      return { screen: map[cur0(p)] || 'home' }
+    }),
   }
 
   const Screen =
-    vm.isLogin ? Login : vm.isSpaceSelect ? SpaceSelect : vm.isSignup ? Signup : vm.isSpace ? Space : vm.isCreateSpace ? CreateSpace :
+    vm.isLogin ? Login : vm.isAuth ? Auth : vm.isSpaceSelect ? SpaceSelect : vm.isSignup ? Signup : vm.isSpace ? Space : vm.isCreateSpace ? CreateSpace :
     vm.isJoinSpace ? JoinSpace : vm.isHome ? Home : vm.isDict ? Dict : vm.isWord ? Word :
     vm.isGallery ? Gallery : vm.isMedia ? Media : vm.isMoodHistory ? MoodHistory :
     vm.isQnaHistory ? QnaHistory : vm.isQna ? Qna : vm.isUpload ? Upload :
@@ -403,6 +717,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
 
       {vm.linkSheetOpen && <LinkSheet vm={vm} />}
       {vm.answerOpen && <AnswerSheet vm={vm} />}
+      {vm.questionOpen && <QuestionSheet vm={vm} />}
       {vm.addEventOpen && <AddEventSheet vm={vm} />}
       {vm.inviteOpen && <InviteSheet vm={vm} />}
       {vm.searchOpen && <SearchOverlay vm={vm} />}
