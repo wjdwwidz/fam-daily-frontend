@@ -8,6 +8,12 @@ import { createGroupActions } from './state/groupActions.js'
 import { createWordActions } from './state/wordActions.js'
 import { createQnaActions } from './state/qnaActions.js'
 import { QUESTION_BANK } from './data/questionBank.js'
+import { FAMILY, MOCK_GALLERY } from './data/mockFamily.js'
+import { CALENDAR_SINGLE, CALENDAR_RANGES, CALENDAR_EVENTS } from './data/mockCalendar.js'
+import { MOCK_JOIN_GROUPS } from './data/mockGroups.js'
+import { MOCK_MOOD_HISTORY } from './data/mockMood.js'
+import { seedComments } from './data/mockComments.js'
+import { EVENT_CATEGORIES } from './data/eventCategories.js'
 import Login from './screens/Login.jsx'
 import Auth from './screens/Auth.jsx'
 import SpaceSelect from './screens/SpaceSelect.jsx'
@@ -61,12 +67,6 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     setState({ myMoodSent: true })
   }
 
-  const seedComments = () => ({
-    '도윤이 첫 걸음마': [
-      { name: '도윤', ini: '도', c: '#22C4A6', text: '우와 나 잘 걷는다!!', when: '3일 전' },
-      { name: '할머니', ini: '할', c: '#A66CFF', text: '아이고 우리 강아지 다 컸네 🥰', when: '2일 전' },
-    ],
-  })
   const commentsFor = (key) => (st.commentsByKey || seedComments())[key] || []
   const addComment = () => {
     const key = st.media ? st.media.title : null
@@ -135,13 +135,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
   const v = variant === 'grid' ? 'grid' : 'cards'
   const scr = st.screen || initialScreen || 'login'
 
-  const M = {
-    mom: { name: '엄마', role: '김서연 · 관리자', ini: '엄', c: '#FF5E8A', admin: true, me: true, mood: '오늘 저녁은 김치찌개! 🍲', emoji: '😊' },
-    dad: { name: '아빠', role: '이준호', ini: '아', c: '#4D7CFE', admin: false, mood: '퇴근하고 바로 갈게~', emoji: '🚗' },
-    ji: { name: '지우', role: '딸 · 7살', ini: '지', c: '#FF9F43', admin: false, mood: '오늘 피아노 100점 받았어!', emoji: '🎹' },
-    do: { name: '도윤', role: '아들 · 3살', ini: '도', c: '#22C4A6', admin: false, mood: '까까 먹고 싶어용', emoji: '🍪' },
-    gm: { name: '할머니', role: '박옥분', ini: '할', c: '#A66CFF', admin: false, mood: '다들 밥은 챙겨 먹었니', emoji: '💗' },
-  }
+  const M = { ...FAMILY }
   if (st.myMoodSent && (st.myMood || '').trim()) M.mom = { ...M.mom, mood: st.myMood.trim(), emoji: '' }
   const members = [M.mom, M.dad, M.ji, M.do, M.gm]
   members.forEach((m, i) => { m.slotId = 'prof-' + i })
@@ -199,19 +193,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     dictGroups[gIdx[ch]].items.push(w)
   })
 
-  const gbase = [
-    { title: '제주도 가족여행', date: '6월 15일', by: M.dad, type: 'photo', hearts: 12, tone: '#FFE0EC', ph: '제주 바다 사진' },
-    { title: '도윤이 첫 걸음마', date: '6월 2일', by: M.mom, type: 'video', hearts: 18, tone: '#FFE0EC', ph: '첫 걸음마 영상' },
-    { title: '지우 학예회', date: '5월 28일', by: M.mom, type: 'photo', hearts: 9, tone: '#FFE0EC', ph: '학예회 사진' },
-    { title: '할머니 생신상', date: '5월 20일', by: M.dad, type: 'photo', hearts: 15, tone: '#FFE0EC', ph: '생신 사진' },
-    { title: '눈사람 만들기', date: '2월 3일', by: M.ji, type: 'video', hearts: 11, tone: '#FFE0EC', ph: '눈사람 영상' },
-    { title: '주말 나들이', date: '5월 11일', by: M.mom, type: 'photo', hearts: 7, tone: '#FFE0EC', ph: '공원 나들이' },
-    { title: '김장하는 날', date: '작년 11월', by: M.gm, type: 'photo', hearts: 8, tone: '#FFE0EC', ph: '김장 사진' },
-    { title: '도윤이 목욕', date: '4월 22일', by: M.mom, type: 'photo', hearts: 10, tone: '#FFE0EC', ph: '목욕 사진' },
-    { title: '벚꽃 구경', date: '4월 5일', by: M.dad, type: 'photo', hearts: 14, tone: '#FFE0EC', ph: '벚꽃 사진' },
-    { title: '도윤이 블록놀이', date: '4월 12일', by: M.do, type: 'photo', hearts: 9, tone: '#FFE0EC', ph: '블록놀이 사진' },
-    { title: '도윤이 첫 낮잠', date: '3월 30일', by: M.do, type: 'video', hearts: 13, tone: '#FFE0EC', ph: '낮잠 영상' },
-  ]
+  const gbase = MOCK_GALLERY
   const media = gbase.map((g) => ({ ...g, isVideo: g.type === 'video', open: () => navTo({ screen: 'media', media: g, mediaLiked: false }) }))
   const gFilter = st.galleryFilter || 'all'
   const galleryMedia = gFilter === 'all' ? media : media.filter((m) => m.by && m.by.name === gFilter)
@@ -229,8 +211,8 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     save: () => saveCmt(i),
   }))
 
-  const single = { 7: '#FF5E8A', 12: '#FF9F43', 18: '#A66CFF' }
-  const ranges = [{ start: 25, end: 28, c: '#4D7CFE' }]
+  const single = CALENDAR_SINGLE
+  const ranges = CALENDAR_RANGES
   const days = []
   for (let i = 0; i < 4; i++) days.push({ n: '', hasRange: false, rangeStyle: '', numBg: 'transparent', numColor: 'transparent', numWeight: 600, hasDot: false, dot: '' })
   for (let d = 1; d <= 31; d++) {
@@ -245,12 +227,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     }
     days.push({ n: d, hasRange: !!rg, rangeStyle, numBg: today ? '#FF5E8A' : 'transparent', numColor: today ? '#ffffff' : '#3F4E58', numWeight: today ? 800 : 600, hasDot: !rg && !!single[d], dot: single[d] || '' })
   }
-  const events = [
-    { d: 7, label: '온 가족 저녁식사 🍚', sub: '오후 7시 · 우리집', tag: '오늘', c: '#FF5E8A' },
-    { d: 12, label: '지우 피아노 콩쿠르', sub: '오전 10시 · 예술회관', tag: 'D-5', c: '#FF9F43' },
-    { d: 18, label: '할머니 생신 🎂', sub: '점심 · 한정식집', tag: 'D-11', c: '#A66CFF' },
-    { d: 25, label: '제주도 가족여행', sub: '7.25 – 7.28 · 3박 4일', tag: 'D-18', c: '#4D7CFE' },
-  ]
+  const events = CALENDAR_EVENTS
 
   const qc = st.qnaCurrent
   const todayQ = qc && qc.question
@@ -276,11 +253,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     return src[(st.qnaCurrent?.total || 0) % src.length]
   }
 
-  const joinGroups = [
-    { name: '서연이네 가족', sub: '5명 · 엄마가 초대했어요', avatars: [{ i: '엄', c: '#FF5E8A' }, { i: '아', c: '#4D7CFE' }, { i: '도', c: '#22C4A6' }, { i: '지', c: '#FF9F43' }, { i: '할', c: '#A66CFF' }] },
-    { name: '외갓집 대가족', sub: '8명 · 막내이모가 초대했어요', avatars: [{ i: '외', c: '#12B5F0' }, { i: '삼', c: '#FF7BA0' }, { i: '사', c: '#7BC86C' }, { i: '이', c: '#F5A623' }] },
-    { name: '아빠쪽 사촌들', sub: '6명 · 큰아빠가 초대했어요', avatars: [{ i: '큰', c: '#9B7BFF' }, { i: '작', c: '#FF8A5B' }, { i: '형', c: '#39B5A8' }] },
-  ]
+  const joinGroups = MOCK_JOIN_GROUPS
   const sj = st.selectedJoin ?? 0
   const joinList = joinGroups.map((g, i) => ({
     name: g.name, sub: g.sub, sel: i === sj,
@@ -293,13 +266,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
   const ut = st.uploadType
   const navC = (on) => (on ? '#FF5E8A' : '#A6B4BD')
 
-  const CATS = [
-    { label: '가족 모임', c: '#FF5E8A' },
-    { label: '기념일', c: '#A66CFF' },
-    { label: '학교·학원', c: '#FF9F43' },
-    { label: '여행', c: '#4D7CFE' },
-    { label: '병원', c: '#22C4A6' },
-  ]
+  const CATS = EVENT_CATEGORIES
   const selColor = st.newEventColor || CATS[0].c
   const eventCats = CATS.map((k) => ({
     label: k.label, c: k.c, sel: k.c === selColor,
@@ -391,22 +358,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     toggleMoodHistory: () => go('moodhistory'),
     moodHistoryLabel: st.moodHistoryOpen ? '접기' : '펼치기',
     moodHistoryChevron: st.moodHistoryOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-    moodHistory: [
-      { date: '오늘 · 7월 7일', items: [
-        { name: '엄마', ini: '엄', c: '#FF5E8A', when: '오후 6:12', text: '회의 끝! 이제 집가는 중 🌿' },
-        { name: '지우', ini: '지', c: '#FF9F43', when: '오후 4:30', text: '학교 끝나고 학원 가요' },
-      ] },
-      { date: '어제 · 7월 6일', items: [
-        { name: '엄마', ini: '엄', c: '#FF5E8A', when: '오전 8:02', text: '비 오니까 다들 우산 챙겨~ ☔' },
-        { name: '아빠', ini: '아', c: '#4D7CFE', when: '오후 7:41', text: '오늘 회식이라 조금 늦어요' },
-        { name: '할머니', ini: '할', c: '#A66CFF', when: '오후 1:15', text: '점심 맛있게들 먹었니' },
-      ] },
-      { date: '7월 5일', items: [
-        { name: '지우', ini: '지', c: '#FF9F43', when: '오후 3:20', text: '받아쓰기 다 맞았어!! 🎉' },
-        { name: '할머니', ini: '할', c: '#A66CFF', when: '오전 10:48', text: '김치 담갔으니 가져가렴' },
-        { name: '아빠', ini: '아', c: '#4D7CFE', when: '오전 7:30', text: '오늘도 화이팅! 다녀올게' },
-      ] },
-    ],
+    moodHistory: MOCK_MOOD_HISTORY,
     inviteOpen: !!st.inviteOpen,
     openInvite: () => setState({ inviteOpen: true }),
     closeInvite: () => setState({ inviteOpen: false }),
