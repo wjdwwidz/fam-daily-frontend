@@ -1,5 +1,6 @@
 import { SafeAreaView, Platform } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
+import { AppProvider } from './src/state/AppContext.jsx'
 import FamilyPhonePop from './src/FamilyPhonePop'
 
 let initialScreen = 'login'
@@ -14,7 +15,9 @@ export default function App() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF6FB' }}>
       <StatusBar style="dark" />
-      <FamilyPhonePop variant={variant} initialScreen={initialScreen} />
+      <AppProvider initialScreen={initialScreen}>
+        <FamilyPhonePop variant={variant} initialScreen={initialScreen} />
+      </AppProvider>
     </SafeAreaView>
   )
 }

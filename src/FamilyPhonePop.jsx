@@ -1,12 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
 import { View, ScrollView } from 'react-native'
 import { s } from './lib/style.js'
 import { Flower6 } from './components/Flower.jsx'
 import Nav from './components/Nav.jsx'
-import { createAuthActions } from './state/authActions.js'
-import { createGroupActions } from './state/groupActions.js'
-import { createWordActions } from './state/wordActions.js'
-import { createQnaActions } from './state/qnaActions.js'
+import { useApp } from './state/AppContext.jsx'
 import { QUESTION_BANK } from './data/questionBank.js'
 import { FAMILY, MOCK_GALLERY } from './data/mockFamily.js'
 import { CALENDAR_SINGLE, CALENDAR_RANGES, CALENDAR_EVENTS } from './data/mockCalendar.js'
@@ -40,26 +36,14 @@ import InviteSheet from './overlays/InviteSheet.jsx'
 import SearchOverlay from './overlays/SearchOverlay.jsx'
 
 export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'login' }) {
-  const [st, setRaw] = useState({ screen: undefined, uploadType: 'photo' })
-  const ref = useRef(st)
-  ref.current = st
-  const setState = (patch) => setRaw((prev) => ({ ...prev, ...(typeof patch === 'function' ? patch(prev) : patch) }))
-  // 뒤로가기 히스토리 스택. 화면 전환 시 이전 화면을 쌓고, back()에서 pop.
-  const cur0 = (p) => p.screen || initialScreen || 'login'
-  const go = (sc) => setState((p) => (sc === cur0(p) ? {} : { screen: sc, _hist: [...(p._hist || []), cur0(p)] }))
-  const navTo = (patch) => setState((p) => ({ ...patch, _hist: [...(p._hist || []), cur0(p)] }))
-
-  // 도메인별 액션 (인증/그룹/단어/문답) — 공유 컨텍스트 주입
-  const ctx = { st, setState, ref, go, navTo }
-  const { afterAuth, doSignup, doLogin, logout, kakaoLogin, socialLogin } = createAuthActions(ctx)
-  const { doCreateGroup, doJoinGroup } = createGroupActions(ctx, afterAuth)
-  const { loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, saveWord, deleteWord } = createWordActions(ctx)
-  const { loadQna, submitAnswer, submitQuestion } = createQnaActions(ctx)
-
-  useEffect(() => {
-    const t = setInterval(() => setState((s2) => ({ activeMood: (s2.activeMood ?? 0) + 1 })), 2600)
-    return () => clearInterval(t)
-  }, [])
+  // 상태·네비게이션·액션은 모두 컨텍스트에서
+  const {
+    st, setState, ref, go, navTo, back,
+    doSignup, doLogin, logout, kakaoLogin, socialLogin,
+    doCreateGroup, doJoinGroup,
+    loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, saveWord, deleteWord,
+    loadQna, submitAnswer, submitQuestion,
+  } = useApp()
 
   const sendMood = () => {
     const t = (st.myMood || '').trim()
@@ -423,13 +407,7 @@ export default function FamilyPhonePop({ variant = 'grid', initialScreen = 'logi
     openTodayWord: () => navTo({ screen: 'word', word: words[0] }),
     setPhoto: () => setState({ uploadType: 'photo' }),
     setVideo: () => setState({ uploadType: 'video' }),
-    back: () => setState((p) => {
-      const h = p._hist || []
-      if (h.length) return { screen: h[h.length - 1], _hist: h.slice(0, -1) }
-      // 히스토리가 없으면 화면별 기본 이전 화면으로 폴백
-      const map = { word: 'dict', media: 'gallery', upload: 'home', members: 'home', moodhistory: 'home', qnahistory: 'qna', spaceSelect: 'login', space: 'spaceSelect', createSpace: 'space', joinSpace: 'space', signup: 'login' }
-      return { screen: map[cur0(p)] || 'home' }
-    }),
+    back,
   }
 
   const Screen =
