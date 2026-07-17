@@ -16,43 +16,9 @@ export function createAuthActions({ ref, setState, go }) {
     go(next)
   }
 
-  const doSignup = async () => {
-    const { authEmail, authPassword, authName } = ref.current
-    if (!authEmail || !authPassword || !authName) {
-      setState({ authError: '이메일·비밀번호·이름을 모두 입력하세요.' })
-      return
-    }
-    setState({ authLoading: true, authError: null })
-    try {
-      const r = await api.signup(authEmail.trim(), authPassword, authName.trim())
-      await setToken(r.accessToken)
-      setState({ authLoading: false, me: r.user, groupsLoading: true })
-      await afterAuth()
-    } catch (e) {
-      setState({ authLoading: false, authError: e.message })
-    }
-  }
-
-  const doLogin = async () => {
-    const { authEmail, authPassword } = ref.current
-    if (!authEmail || !authPassword) {
-      setState({ authError: '이메일·비밀번호를 입력하세요.' })
-      return
-    }
-    setState({ authLoading: true, authError: null })
-    try {
-      const r = await api.login(authEmail.trim(), authPassword)
-      await setToken(r.accessToken)
-      setState({ authLoading: false, me: r.user, groupsLoading: true })
-      await afterAuth()
-    } catch (e) {
-      setState({ authLoading: false, authError: e.message })
-    }
-  }
-
   const logout = async () => {
     await clearToken()
-    setState({ me: null, groups: [], authEmail: '', authPassword: '', authName: '' })
+    setState({ me: null, groups: [] })
     go('login')
   }
 
@@ -73,26 +39,41 @@ export function createAuthActions({ ref, setState, go }) {
     }
   }
 
-  // 구글 등 아직 미연동 소셜 — 임시 데모 계정 로그인(테스트용)
-  const socialLogin = async (provider) => {
-    const email = provider === '카카오' ? 'kakao-demo@urikkiri.app' : 'google-demo@urikkiri.app'
-    const password = 'demo-pass-1234'
-    const name = `${provider} 사용자`
-    setState({ authLoading: true, authError: null })
+  // 구글 로그인 — 아직 미연동. 실제 구글 OAuth 붙이기 전까지 임시 안내만.
+  const googleLogin = async () => {
+    setState({ authError: '구글 로그인은 아직 준비 중이에요. 카카오로 시작해주세요.' })
+  }
+
+  // 프로필 저장: 이름(User) + 가족 내 호칭(Membership). 바뀐 것만 호출.
+  const saveProfile = async () => {
+    const cur = ref.current
+    const name = (cur.profileName ?? cur.me?.name ?? '').trim()
+    const nickname = (cur.profileNickname ?? cur.currentGroup?.myNickname ?? '').trim()
+    if (!name || !nickname) {
+      setState({ profileError: '이름과 호칭을 입력해주세요.' })
+      return
+    }
+    setState({ profileSaving: true, profileError: null })
     try {
-      let r
-      try {
-        r = await api.login(email, password)
-      } catch {
-        r = await api.signup(email, password, name)
+      if (name !== cur.me?.name) {
+        const me = await api.updateMe(name)
+        setState({ me })
       }
-      await setToken(r.accessToken)
-      setState({ authLoading: false, me: r.user, groupsLoading: true })
-      await afterAuth()
+      const gid = cur.currentGroup?.id
+      if (gid && nickname !== cur.currentGroup?.myNickname) {
+        await api.updateMyNickname(gid, nickname)
+        setState((p) => ({ currentGroup: { ...p.currentGroup, myNickname: nickname } }))
+        try {
+          const g = await api.getGroup(gid)
+          setState({ groupMembers: g.members || [] })
+        } catch {}
+      }
+      setState({ profileSaving: false, profileName: undefined, profileNickname: undefined })
+      go('members')
     } catch (e) {
-      setState({ authLoading: false, authError: e.message })
+      setState({ profileSaving: false, profileError: e.message })
     }
   }
 
-  return { afterAuth, doSignup, doLogin, logout, kakaoLogin, socialLogin }
+  return { afterAuth, logout, kakaoLogin, googleLogin, saveProfile }
 }

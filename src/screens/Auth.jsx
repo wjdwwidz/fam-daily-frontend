@@ -39,11 +39,11 @@ export default function Auth() {
           <Text style={s('font-size:14px;color:#6A7E88;margin-top:8px')}>가족과 함께할 계정을 만들어요</Text>
         </View>
 
-        <Pressable onPress={() => vm.socialLogin('카카오')} disabled={vm.authLoading} style={s(`height:56px;border-radius:16px;background:#FEE500;flex-direction:row;align-items:center;justify-content:center;gap:9px;margin-bottom:12px;opacity:${vm.authLoading ? 0.7 : 1}`)}>
+        <Pressable onPress={vm.kakaoLogin} disabled={vm.authLoading} style={s(`height:56px;border-radius:16px;background:#FEE500;flex-direction:row;align-items:center;justify-content:center;gap:9px;margin-bottom:12px;opacity:${vm.authLoading ? 0.7 : 1}`)}>
           <KakaoIcon />
           <Text style={s('font-size:15.5px;font-weight:700;color:#3C1E1E')}>카카오톡으로 시작하기</Text>
         </Pressable>
-        <Pressable onPress={() => vm.socialLogin('구글')} disabled={vm.authLoading} style={s(`height:56px;border-radius:16px;background:#fff;border:1px solid #E4E7EC;flex-direction:row;align-items:center;justify-content:center;gap:9px;opacity:${vm.authLoading ? 0.7 : 1}`)}>
+        <Pressable onPress={vm.googleLogin} disabled={vm.authLoading} style={s(`height:56px;border-radius:16px;background:#fff;border:1px solid #E4E7EC;flex-direction:row;align-items:center;justify-content:center;gap:9px;opacity:${vm.authLoading ? 0.7 : 1}`)}>
           <GoogleIcon />
           <Text style={s('font-size:15.5px;font-weight:700;color:#3C4149')}>Google로 시작하기</Text>
         </Pressable>

@@ -19,9 +19,6 @@ export async function kakaoLogin() {
 
 export const authApi = {
   kakaoLogin,
-  signup: (email, password, name) =>
-    request('/auth/signup', { method: 'POST', body: { email, password, name }, auth: false }),
-  login: (email, password) =>
-    request('/auth/login', { method: 'POST', body: { email, password }, auth: false }),
   me: () => request('/auth/me'),
+  updateMe: (name) => request('/auth/me', { method: 'PATCH', body: { name } }),
 }

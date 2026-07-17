@@ -1,7 +1,6 @@
 // 앱 전체 뷰모델 조립. app = useApp() 결과(상태·네비게이션·액션)를 받아
 // 화면들이 쓰는 vm 객체를 만든다. 화면은 useVm()으로 이걸 가져간다.
 import { QUESTION_BANK } from '../data/questionBank.js'
-import { FAMILY, MOCK_GALLERY } from '../data/mockFamily.js'
 import { CALENDAR_SINGLE, CALENDAR_RANGES, CALENDAR_EVENTS } from '../data/mockCalendar.js'
 import { MOCK_JOIN_GROUPS } from '../data/mockGroups.js'
 import { MOCK_MOOD_HISTORY } from '../data/mockMood.js'
@@ -46,17 +45,11 @@ export function buildVm(app) {
   const {
     st, setState, go, navTo, back,
     variant = 'grid', initialScreen = 'login',
-    doSignup, doLogin, logout, kakaoLogin, socialLogin,
-    doCreateGroup, doJoinGroup,
+    logout, kakaoLogin, googleLogin, saveProfile,
+    doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, saveWord, deleteWord,
     loadQna, submitAnswer, submitQuestion,
   } = app
-
-  const sendMood = () => {
-    const t = (st.myMood || '').trim()
-    if (!t) return
-    setState({ myMoodSent: true })
-  }
 
   const commentsFor = (key) => (st.commentsByKey || seedComments())[key] || []
   const addComment = () => {
@@ -72,7 +65,7 @@ export function buildVm(app) {
 
   const toggleMenu = (which) => setState((s2) => ({ menuOpen: s2.menuOpen === which ? null : which }))
 
-  const startEditMedia = () => { const m = st.media || media[0]; setState({ menuOpen: null, editPost: 'media', mediaDraft: { ...m } }) }
+  const startEditMedia = () => { const m = st.media || media[0] || {}; setState({ menuOpen: null, editPost: 'media', mediaDraft: { ...m } }) }
   const onMediaTitle = (text) => setState((s2) => ({ mediaDraft: { ...s2.mediaDraft, title: text } }))
   const saveMedia = () => setState((s2) => ({ media: { ...(s2.media || {}), ...s2.mediaDraft }, editPost: null }))
   const deleteMedia = () => setState({ menuOpen: null, screen: 'gallery' })
@@ -95,10 +88,32 @@ export function buildVm(app) {
   const v = variant === 'grid' ? 'grid' : 'cards'
   const scr = st.screen || initialScreen || 'login'
 
-  const M = { ...FAMILY }
-  if (st.myMoodSent && (st.myMood || '').trim()) M.mom = { ...M.mom, mood: st.myMood.trim(), emoji: '' }
-  const members = [M.mom, M.dad, M.ji, M.do, M.gm]
-  members.forEach((m, i) => { m.slotId = 'prof-' + i })
+  // 실제 그룹 구성원(백엔드) → 홈 링/멤버 화면용 형태.
+  // getGroup 로딩 전이면 그룹 목록의 요약 멤버로 폴백, 그것도 없으면 최소 '나' 하나.
+  const myId = st.me?.id
+  const myMood = st.myMoodSent && (st.myMood || '').trim() ? st.myMood.trim() : ''
+  const rawMembers = st.groupMembers || st.currentGroup?.members || []
+  const members = rawMembers.map((m, i) => {
+    const label = m.nickname || m.name || '가족' // 호칭 우선
+    const isMe = m.userId ? m.userId === myId : label === st.currentGroup?.myNickname
+    return {
+      name: label,
+      role: m.name || '', // 부제엔 실제 이름
+      ini: String(label).slice(0, 1),
+      c: colorFor(label),
+      admin: m.role === 'OWNER',
+      me: isMe,
+      mood: m.mood || (isMe ? myMood : ''),
+      emoji: m.moodEmoji || '',
+      slotId: 'prof-' + i,
+    }
+  })
+  if (members.length === 0) {
+    const label = st.currentGroup?.myNickname || st.me?.name || '나'
+    members.push({ name: label, role: st.me?.name || '', ini: String(label).slice(0, 1), c: colorFor(label), admin: true, me: true, mood: myMood, emoji: '', slotId: 'prof-0' })
+  }
+  const memberCount = st.groupMembers ? st.groupMembers.length : (st.currentGroup?.memberCount ?? members.length)
+  const myInitial = String(st.currentGroup?.myNickname || st.me?.name || '나').slice(0, 1)
 
   const N = members.length, BOX = 296, C = BOX / 2, R = 114, AV = 60
   const active = (((st.activeMood ?? 0) % N) + N) % N
@@ -150,7 +165,7 @@ export function buildVm(app) {
     dictGroups[gIdx[ch]].items.push(w)
   })
 
-  const gbase = MOCK_GALLERY
+  const gbase = [] // 추억(갤러리)은 백엔드 연동 전까지 빈 목록 (목업 제거)
   const media = gbase.map((g) => ({ ...g, isVideo: g.type === 'video', open: () => navTo({ screen: 'media', media: g, mediaLiked: false }) }))
   const gFilter = st.galleryFilter || 'all'
   const galleryMedia = gFilter === 'all' ? media : media.filter((m) => m.by && m.by.name === gFilter)
@@ -158,7 +173,7 @@ export function buildVm(app) {
     const sel = t.key === gFilter
     return { label: t.label, sel, bg: sel ? t.c : '#fff', color: sel ? '#fff' : '#6A7E88', border: sel ? t.c : '#FFE1EC', pick: () => setState({ galleryFilter: t.key }) }
   })
-  const curMedia = st.media || media[0]
+  const curMedia = st.media || media[0] || {}
   const cmts = commentsFor(curMedia.title).map((c, i) => ({
     ...c,
     editing: st.editCmt === i,
@@ -248,25 +263,41 @@ export function buildVm(app) {
         i: String(m.nickname || m.name || '').slice(0, 1),
         c: AVATAR_COLORS[i % AVATAR_COLORS.length],
       })),
-      pick: () => { setState({ currentGroup: g, groupWords: [], qnaCurrent: null, qnaList: null }); go('home'); loadWords(g.id); loadQna(g.id) },
+      pick: () => { setState({ currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null }); go('home'); loadMembers(g.id); loadWords(g.id); loadQna(g.id) },
     })),
     currentGroup: st.currentGroup || null,
     myNickname: st.currentGroup?.myNickname || '나',
+    myInitial,
+    memberCount,
+    // 그룹(가족) 이름 편집 — 방장만 연필 노출
+    canEditGroupName: st.currentGroup?.myRole === 'OWNER',
+    editingGroupName: !!st.editingGroupName,
+    groupNameDraft: st.groupNameDraft ?? (st.currentGroup?.name || ''),
+    groupNameSaving: !!st.groupNameSaving,
+    groupNameError: st.groupNameError || null,
+    startEditGroupName: () => setState({ editingGroupName: true, groupNameDraft: st.currentGroup?.name || '', groupNameError: null }),
+    onGroupNameDraft: (t) => setState({ groupNameDraft: t, groupNameError: null }),
+    saveGroupName,
+    cancelEditGroupName,
+    // 프로필 편집 (이름 + 가족 내 호칭)
+    profileName: st.profileName ?? (st.me?.name ?? ''),
+    profileNickname: st.profileNickname ?? (st.currentGroup?.myNickname ?? ''),
+    onProfileName: (t) => setState({ profileName: t, profileError: null }),
+    onProfileNickname: (t) => setState({ profileNickname: t, profileError: null }),
+    saveProfile,
+    profileSaving: !!st.profileSaving,
+    profileError: st.profileError || null,
     groupsLoading: !!st.groupsLoading,
     goSpaceSelect: () => go('spaceSelect'),
     // 인증
     isAuth: scr === 'auth',
     authMode: st.authMode || 'login',
-    authEmail: st.authEmail ?? '', authPassword: st.authPassword ?? '', authName: st.authName ?? '',
     authError: st.authError || null, authLoading: !!st.authLoading,
     authNotice: st.authNotice || null,
-    socialLogin,
     kakaoLogin,
+    googleLogin,
     setAuthMode: (m) => setState({ authMode: m, authError: null }),
-    onAuthEmail: (t) => setState({ authEmail: t, authError: null }),
-    onAuthPassword: (t) => setState({ authPassword: t, authError: null }),
-    onAuthName: (t) => setState({ authName: t, authError: null }),
-    doSignup, doLogin, logout,
+    logout,
     me: st.me || null,
     // 그룹 만들기/참여 입력
     createName: st.createName ?? '', createNickname: st.createNickname ?? '',
@@ -326,9 +357,9 @@ export function buildVm(app) {
     recentWords: words.slice(0, 3),
     todayWord: words[0],
     currentWord: st.word || words[0],
-    currentMedia: st.media || media[0],
+    currentMedia: st.media || media[0] || null,
     mediaLiked: !!st.mediaLiked,
-    mediaHearts: ((st.media || media[0]).hearts || 0) + (st.mediaLiked ? 1 : 0),
+    mediaHearts: ((st.media || media[0] || {}).hearts || 0) + (st.mediaLiked ? 1 : 0),
     toggleMediaLike: () => setState((s2) => ({ mediaLiked: !s2.mediaLiked })),
     likeBtnStyle: 'flex-direction:row;align-items:center;justify-content:center;gap:5px;height:32px;padding:0 13px;border-radius:16px;font-size:12.5px;font-weight:800;' + (st.mediaLiked ? 'background:#FF5E8A;color:#fff;border:1px solid #FF5E8A' : 'background:#FFF0F5;color:#FF5E8A;border:1px solid #FFD5E4'),
     comments: cmts,

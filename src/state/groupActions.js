@@ -37,5 +37,52 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     }
   }
 
-  return { doCreateGroup, doJoinGroup }
+  // 현재 그룹의 실제 구성원 로드 (userId·호칭·역할 포함) — 홈 링/멤버 화면용
+  const loadMembers = async (groupId) => {
+    if (!groupId) return
+    try {
+      const g = await api.getGroup(groupId)
+      setState({ groupMembers: g.members || [] })
+    } catch {
+      setState({ groupMembers: [] })
+    }
+  }
+
+  // 그룹(가족) 이름 저장 — 편집 중인 draft 를 서버에 반영 + 로컬 상태 갱신
+  const saveGroupName = async () => {
+    const cur = ref.current
+    const gid = cur.currentGroup?.id
+    const nm = (cur.groupNameDraft ?? '').trim()
+    if (!gid || !nm) { setState({ groupNameError: '가족 이름을 입력해주세요.' }); return }
+    setState({ groupNameSaving: true, groupNameError: null })
+    try {
+      await api.updateGroupName(gid, nm)
+      setState((p) => ({
+        groupNameSaving: false,
+        editingGroupName: false,
+        currentGroup: { ...p.currentGroup, name: nm },
+        groups: (p.groups || []).map((g) => (g.id === gid ? { ...g, name: nm } : g)),
+      }))
+    } catch (e) {
+      setState({ groupNameSaving: false, groupNameError: e.message })
+    }
+  }
+  const cancelEditGroupName = () => setState({ editingGroupName: false, groupNameError: null })
+
+  // 오늘의 한마디(무드) 저장 → 멤버 목록 갱신
+  const sendMood = async () => {
+    const cur = ref.current
+    const gid = cur.currentGroup?.id
+    const text = (cur.myMood ?? '').trim()
+    if (!gid || !text) return
+    setState({ moodSending: true, moodError: null })
+    try {
+      const g = await api.setMood(gid, text)
+      setState({ moodSending: false, myMoodSent: true, groupMembers: g.members || [] })
+    } catch (e) {
+      setState({ moodSending: false, moodError: e.message })
+    }
+  }
+
+  return { doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood }
 }
