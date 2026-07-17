@@ -2,7 +2,10 @@ import { View, Text, Pressable } from 'react-native'
 import Svg, { Path, Circle, Rect } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
-export default function Dict({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function Dict() {
+  const vm = useVm()
   return (
     <View style={s('padding:8px 20px 110px')}>
       <View style={s('display:flex;align-items:center;justify-content:space-between;margin:6px 2px 4px')}>

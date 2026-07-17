@@ -1,7 +1,10 @@
 import { View, Text, Pressable, TextInput } from 'react-native'
 import { s } from '../lib/style.js'
 
-export default function QuestionSheet({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function QuestionSheet() {
+  const vm = useVm()
   return (
     <Pressable onPress={vm.closeQuestion} style={s('position:absolute;inset:0;background:rgba(23,48,59,0.5);z-index:45;align-items:flex-end;animation:sfade .18s ease')}>
       <Pressable onPress={vm.stopEvt} style={s('width:100%;background:#fff;border-radius:26px 26px 0 0;padding:20px 20px 28px;animation:sheetup .26s cubic-bezier(.4,0,.2,1)')}>

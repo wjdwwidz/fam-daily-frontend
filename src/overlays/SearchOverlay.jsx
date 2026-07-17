@@ -2,7 +2,10 @@ import { View, Text, Pressable, TextInput } from 'react-native'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
-export default function SearchOverlay({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function SearchOverlay() {
+  const vm = useVm()
   return (
     <Pressable onPress={vm.closeSearch} style={s('position:absolute;inset:0;background:rgba(23,48,59,0.5);z-index:40;display:flex;flex-direction:column;padding:52px 18px 0;animation:sfade .18s ease')}>
       <Pressable onPress={vm.stopEvt} style={s('display:flex;align-items:center;gap:10px')}>

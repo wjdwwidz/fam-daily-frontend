@@ -2,7 +2,10 @@ import { View, Text, Image, Pressable, TextInput } from 'react-native'
 import Svg, { Path, Circle, Rect } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
-export default function Word({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function Word() {
+  const vm = useVm()
   return (
     <View style={s('padding:0 0 120px')}>
       <View style={s('display:flex;align-items:center;justify-content:space-between;padding:6px 18px 14px')}>

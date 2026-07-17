@@ -2,7 +2,10 @@ import { View, Text, Pressable, TextInput } from 'react-native'
 import Svg, { Path, Rect } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
-export default function AddEventSheet({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function AddEventSheet() {
+  const vm = useVm()
   return (
     <Pressable onPress={vm.closeAddEvent} style={s('position:absolute;inset:0;background:rgba(23,48,59,0.5);z-index:45;flex-direction:row;align-items:flex-end')}>
       <Pressable onPress={vm.stopEvt} style={s('width:100%;background:#fff;border-radius:26px 26px 0 0;padding:20px 20px 28px')}>

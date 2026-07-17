@@ -2,7 +2,10 @@ import { View, Text, Pressable } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
-export default function Signup({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function Signup() {
+  const vm = useVm()
   return (
     <View style={s('min-height:768px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;background:#FFF6FB;position:relative')}>
       <Pressable onPress={vm.back} style={s('position:absolute;top:18px;left:18px;width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#17303B')}>

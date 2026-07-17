@@ -8,7 +8,7 @@ import { createQnaActions } from './qnaActions.js'
 // 화면/오버레이는 useApp() 으로 필요한 것만 꺼내 쓴다.
 const Ctx = createContext(null)
 
-export function AppProvider({ initialScreen = 'login', children }) {
+export function AppProvider({ initialScreen = 'login', variant = 'grid', children }) {
   const [st, setRaw] = useState({ screen: undefined, uploadType: 'photo' })
   const ref = useRef(st)
   ref.current = st
@@ -40,7 +40,7 @@ export function AppProvider({ initialScreen = 'login', children }) {
   const words = createWordActions(core)
   const qna = createQnaActions(core)
 
-  const value = { ...core, back, initialScreen, ...auth, ...groups, ...words, ...qna }
+  const value = { ...core, back, initialScreen, variant, ...auth, ...groups, ...words, ...qna }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

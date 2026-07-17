@@ -4,7 +4,10 @@ import { s } from '../lib/style.js'
 import { Flower5, Flower6, Leaf } from '../components/Flower.jsx'
 import mascot from '../../assets/img/mascot.png'
 
-export default function Login({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function Login() {
+  const vm = useVm()
   return (
     <View style={s('flex:1;align-items:center;justify-content:center;padding:40px 32px;background:#FFF6FB;position:relative;overflow:hidden')}>
       <View style={[s('position:absolute;top:40px;left:20px'), { transform: [{ rotate: '-14deg' }] }]}><Flower6 size={66} petal="#FF9EBB" center="#FFD36E" /></View>

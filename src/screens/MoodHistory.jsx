@@ -2,7 +2,10 @@ import { View, Text, Pressable } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
-export default function MoodHistory({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function MoodHistory() {
+  const vm = useVm()
   return (
     <View style={s('padding:8px 20px 110px')}>
       <View style={s('display:flex;align-items:center;gap:12px;margin:6px 0 18px')}>

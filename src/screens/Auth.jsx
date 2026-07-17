@@ -22,7 +22,10 @@ function GoogleIcon() {
   )
 }
 
-export default function Auth({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function Auth() {
+  const vm = useVm()
   return (
     <View style={s('flex:1;padding:16px 28px 28px;background:#FFF6FB')}>
       <Pressable onPress={vm.back} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;align-items:center;justify-content:center;margin-bottom:6px')}>

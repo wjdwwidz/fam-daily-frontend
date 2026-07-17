@@ -15,8 +15,8 @@ export default function App() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF6FB' }}>
       <StatusBar style="dark" />
-      <AppProvider initialScreen={initialScreen}>
-        <FamilyPhonePop variant={variant} initialScreen={initialScreen} />
+      <AppProvider initialScreen={initialScreen} variant={variant}>
+        <FamilyPhonePop />
       </AppProvider>
     </SafeAreaView>
   )

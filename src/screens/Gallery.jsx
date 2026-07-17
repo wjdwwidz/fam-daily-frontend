@@ -7,7 +7,10 @@ const SCREEN_W = Dimensions.get('window').width
 const GRID_GAP = 6
 const CELL = Math.floor((SCREEN_W - 40 - GRID_GAP * 2) / 3) // 40 = 좌우 패딩(20*2)
 
-export default function Gallery({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function Gallery() {
+  const vm = useVm()
   return (
     <View style={s('padding:8px 20px 110px')}>
       <View style={s('margin:6px 2px 4px')}>

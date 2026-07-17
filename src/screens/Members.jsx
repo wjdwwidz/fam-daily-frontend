@@ -3,7 +3,10 @@ import Svg, { Path, Circle } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import signature from '../../assets/img/signature.png'
 
-export default function Members({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function Members() {
+  const vm = useVm()
   return (
     <View style={s('padding:8px 20px 110px')}>
       {vm.membersFromLink && (

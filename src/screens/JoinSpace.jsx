@@ -2,7 +2,10 @@ import { View, Text, Pressable, TextInput, ActivityIndicator } from 'react-nativ
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
-export default function JoinSpace({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function JoinSpace() {
+  const vm = useVm()
   return (
     <View style={s('flex:1;min-height:768px;padding:0 0 40px;background:#FFF6FB')}>
       <View style={s('flex-direction:row;align-items:center;justify-content:space-between;padding:6px 18px 6px')}>

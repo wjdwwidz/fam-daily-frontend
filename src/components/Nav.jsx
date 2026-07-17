@@ -10,7 +10,10 @@ function Icon({ name, color }) {
   return <Svg viewBox="0 0 24 24" width={23} height={23} {...common}><Circle cx="9.5" cy="8" r="3" /><Path d="M4 19 C4 15.7 6.5 14 9.5 14 C12.5 14 15 15.7 15 19" /><Circle cx="17" cy="9" r="2.3" /></Svg>
 }
 
-export default function Nav({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function Nav() {
+  const vm = useVm()
   const tabs = [
     { key: 'home', label: '홈', onPress: vm.goHome, color: vm.navHome },
     { key: 'dict', label: '사전', onPress: vm.goDict, color: vm.navDict },

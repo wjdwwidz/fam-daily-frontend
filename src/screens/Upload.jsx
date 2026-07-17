@@ -2,7 +2,10 @@ import { View, Text, Pressable, ScrollView, TextInput } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
-export default function Upload({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function Upload() {
+  const vm = useVm()
   return (
     <View style={s('padding:0 0 40px')}>
       <View style={s('flex-direction:row;align-items:center;justify-content:space-between;padding:6px 18px 14px')}>

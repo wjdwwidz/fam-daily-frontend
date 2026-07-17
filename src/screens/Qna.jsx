@@ -2,7 +2,10 @@ import { View, Text, Pressable } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
-export default function Qna({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function Qna() {
+  const vm = useVm()
   const q = vm.todayQ
   return (
     <View style={s('padding:8px 20px 110px')}>

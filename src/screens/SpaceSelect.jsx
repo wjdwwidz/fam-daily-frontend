@@ -3,7 +3,10 @@ import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import mascot from '../../assets/img/mascot.png'
 
-export default function SpaceSelect({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function SpaceSelect() {
+  const vm = useVm()
   const empty = !vm.groupsLoading && vm.mySpaces.length === 0
   return (
     <View style={s('flex:1;padding:16px 24px 24px')}>

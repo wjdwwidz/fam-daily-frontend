@@ -4,7 +4,10 @@ import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import mascot from '../../assets/img/mascot.png'
 
-export default function Home({ vm }) {
+import { useVm } from '../vm/useVm.js'
+
+export default function Home() {
+  const vm = useVm()
   return (
     <View style={s('padding:8px 20px 110px')}>
       <View style={s('display:flex;align-items:center;justify-content:space-between;margin:6px 0 16px')}>
