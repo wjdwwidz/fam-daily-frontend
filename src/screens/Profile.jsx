@@ -20,7 +20,7 @@ export default function Profile() {
 
       <View style={s('display:flex;flex-direction:column;align-items:center;padding:14px 20px 6px')}>
         <View style={s('position:relative;width:104px;height:104px')}>
-          <View style={s('width:104px;height:104px;border-radius:50%;border:3px solid #FF5E8A;overflow:hidden;background:#FF5E8A;position:relative')}>
+          <View style={s(`width:104px;height:104px;border-radius:50%;border:3px solid ${vm.myColor};overflow:hidden;background:${vm.myColor};position:relative`)}>
             <View style={s('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
               <Text style={s('color:#fff;font-weight:800;font-size:34px')}>{String(vm.profileNickname || '나').slice(0, 1)}</Text>
             </View>
@@ -43,9 +43,8 @@ export default function Profile() {
         <TextInput value={vm.profileNickname} onChangeText={vm.onProfileNickname} placeholder="예: 엄마, 아빠" placeholderTextColor="#9DB2BD" style={s('width:100%;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:14px 15px;font-size:13.5px;font-weight:600;font-family:inherit;color:#17303B')} />
 
         <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:18px 0 8px')}>오늘의 한마디</Text>
-        <View style={s('display:flex;align-items:center;gap:10px;border:1px solid #FFE1EC;background:#FFF6FB;border-radius:14px;padding:6px 6px 6px 15px')}>
-          <TextInput value="오늘 도윤이랑 공원 다녀왔어요" placeholderTextColor="#9DB2BD" style={s('flex:1;border:none;outline:none;background:transparent;font-size:13.1px;font-family:inherit;color:#17303B')} />
-          <Text style={s('width:38px;height:38px;border-radius:11px;background:#FFF0F5;display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto')}>😊</Text>
+        <View style={s('display:flex;align-items:center;border:1px solid #FFE1EC;background:#FFF6FB;border-radius:14px;padding:14px 15px')}>
+          <TextInput value={vm.profileMood} onChangeText={vm.onProfileMood} placeholder="오늘의 한마디를 남겨보세요" placeholderTextColor="#9DB2BD" style={s('flex:1;border:none;outline:none;background:transparent;font-size:13.1px;font-family:inherit;color:#17303B')} />
         </View>
 
         <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:18px 0 10px')}>내 프로필 색</Text>

@@ -56,7 +56,7 @@ export default function Members() {
       </View>
 
       <Pressable onPress={vm.goProfileEdit} style={s('display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:14px 16px;cursor:pointer;margin-bottom:12px')}>
-        <View style={s('width:52px;height:52px;border-radius:50%;background:#FF5E8A;display:flex;align-items:center;justify-content:center;flex:0 0 auto')}>
+        <View style={s(`width:52px;height:52px;border-radius:50%;background:${vm.myColor};display:flex;align-items:center;justify-content:center;flex:0 0 auto`)}>
           <Text style={s('color:#fff;font-weight:800;font-size:16.5px')}>{vm.myInitial}</Text>
         </View>
         <View style={s('flex:1')}>

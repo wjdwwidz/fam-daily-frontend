@@ -100,7 +100,7 @@ export function buildVm(app) {
       name: label,
       role: m.name || '', // 부제엔 실제 이름
       ini: String(label).slice(0, 1),
-      c: colorFor(label),
+      c: colorFor(m.userId || label), // 사용자 고유색 (userId 기반, 닉네임 바뀌어도 유지)
       admin: m.role === 'OWNER',
       me: isMe,
       mood: m.mood || (isMe ? myMood : ''),
@@ -110,10 +110,11 @@ export function buildVm(app) {
   })
   if (members.length === 0) {
     const label = st.currentGroup?.myNickname || st.me?.name || '나'
-    members.push({ name: label, role: st.me?.name || '', ini: String(label).slice(0, 1), c: colorFor(label), admin: true, me: true, mood: myMood, emoji: '', slotId: 'prof-0' })
+    members.push({ name: label, role: st.me?.name || '', ini: String(label).slice(0, 1), c: colorFor(myId || label), admin: true, me: true, mood: myMood, emoji: '', slotId: 'prof-0' })
   }
   const memberCount = st.groupMembers ? st.groupMembers.length : (st.currentGroup?.memberCount ?? members.length)
   const myInitial = String(st.currentGroup?.myNickname || st.me?.name || '나').slice(0, 1)
+  const myColor = colorFor(myId || st.currentGroup?.myNickname || '나') // 내 고유색 (프로필/아바타 통일용)
 
   const N = members.length, BOX = 296, C = BOX / 2, R = 114, AV = 60
   const active = (((st.activeMood ?? 0) % N) + N) % N
@@ -148,7 +149,7 @@ export function buildVm(app) {
       tint: '#FFF0F5',
       date: fmtDate(w.createdAt),
       by: {
-        name: w.author?.name || '',
+        name: w.author?.nickname || w.author?.name || '',
         ini: String(w.author?.nickname || w.author?.name || '?').slice(0, 1),
         c: colorFor(w.author?.nickname || w.author?.name),
       },
@@ -268,6 +269,7 @@ export function buildVm(app) {
     currentGroup: st.currentGroup || null,
     myNickname: st.currentGroup?.myNickname || '나',
     myInitial,
+    myColor,
     memberCount,
     // 그룹(가족) 이름 편집 — 방장만 연필 노출
     canEditGroupName: st.currentGroup?.myRole === 'OWNER',
@@ -282,8 +284,10 @@ export function buildVm(app) {
     // 프로필 편집 (이름 + 가족 내 호칭)
     profileName: st.profileName ?? (st.me?.name ?? ''),
     profileNickname: st.profileNickname ?? (st.currentGroup?.myNickname ?? ''),
+    profileMood: st.profileMood ?? (members.find((m) => m.me)?.mood ?? ''),
     onProfileName: (t) => setState({ profileName: t, profileError: null }),
     onProfileNickname: (t) => setState({ profileNickname: t, profileError: null }),
+    onProfileMood: (t) => setState({ profileMood: t, profileError: null }),
     saveProfile,
     profileSaving: !!st.profileSaving,
     profileError: st.profileError || null,

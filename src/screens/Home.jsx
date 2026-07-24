@@ -19,7 +19,7 @@ export default function Home() {
           </View>
         </View>
         <Pressable onPress={vm.goMembersDeep}>
-          <View style={s('width:44px;height:44px;border-radius:15px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;cursor:pointer;')}>
+          <View style={s(`width:44px;height:44px;border-radius:15px;background:${vm.myColor};display:flex;align-items:center;justify-content:center;cursor:pointer;`)}>
             <Text style={s('color:#fff;font-weight:800;font-size:15px')}>{vm.myInitial}</Text>
           </View>
         </Pressable>
@@ -33,8 +33,7 @@ export default function Home() {
 
       <View style={s('position:relative;width:296px;height:296px;margin:2px auto 18px')}>
         <View style={s('position:absolute;left:148px;top:148px;transform:translate(-50%,-50%);width:150px;text-align:center;background:#fff;border:1px solid #FFE1EC;border-radius:18px;padding:11px 14px;box-shadow:0 10px 24px rgba(255,94,138,0.16);z-index:5')}>
-          <Text style={s(`font-size:12px;font-weight:800;color:${vm.activeMember.c}`)}>{vm.activeMember.name}</Text>
-          <Text style={s('font-size:12.5px;color:#4A5A64;margin-top:3px;line-height:1.4')}>{vm.activeMember.mood} {vm.activeMember.emoji}</Text>
+          <Text style={s('font-size:12.5px;color:#4A5A64;line-height:1.4')}>{vm.activeMember.mood ? `${vm.activeMember.mood} ${vm.activeMember.emoji}`.trim() : '아직 오늘의 한마디가 없어요'}</Text>
         </View>
         <View style={s(vm.tailStyle)}><View style={s(vm.dotStyle)} /></View>
         {vm.ringMembers.map((m, i) => (
@@ -66,7 +65,7 @@ export default function Home() {
         )}
       </View>
       <View style={s('display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:8px 8px 8px 12px;margin-bottom:20px')}>
-        <View style={s('width:36px;height:36px;border-radius:50%;background:#FF5E8A;display:flex;align-items:center;justify-content:center;flex:0 0 auto')}>
+        <View style={s(`width:36px;height:36px;border-radius:50%;background:${vm.myColor};display:flex;align-items:center;justify-content:center;flex:0 0 auto`)}>
           <Text style={s('color:#fff;font-weight:800;font-size:13px')}>{vm.myInitial}</Text>
         </View>
         <TextInput value={vm.myMood} onChangeText={vm.onMoodInput} onSubmitEditing={vm.onMoodKey} placeholder="가족에게 한마디 남겨보세요" placeholderTextColor="#9DB2BD" style={s('flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:13px;color:#17303B;font-family:inherit')} />

@@ -49,6 +49,7 @@ export function createAuthActions({ ref, setState, go }) {
     const cur = ref.current
     const name = (cur.profileName ?? cur.me?.name ?? '').trim()
     const nickname = (cur.profileNickname ?? cur.currentGroup?.myNickname ?? '').trim()
+    const mood = cur.profileMood // undefined면 안 건드린 것
     if (!name || !nickname) {
       setState({ profileError: '이름과 호칭을 입력해주세요.' })
       return
@@ -60,15 +61,24 @@ export function createAuthActions({ ref, setState, go }) {
         setState({ me })
       }
       const gid = cur.currentGroup?.id
+      let groupChanged = false
       if (gid && nickname !== cur.currentGroup?.myNickname) {
         await api.updateMyNickname(gid, nickname)
         setState((p) => ({ currentGroup: { ...p.currentGroup, myNickname: nickname } }))
+        groupChanged = true
+      }
+      // 오늘의 한마디: 편집했고(undefined 아님) 내용이 있으면 저장
+      if (gid && mood !== undefined && mood.trim()) {
+        await api.setMood(gid, mood.trim())
+        groupChanged = true
+      }
+      if (groupChanged) {
         try {
           const g = await api.getGroup(gid)
           setState({ groupMembers: g.members || [] })
         } catch {}
       }
-      setState({ profileSaving: false, profileName: undefined, profileNickname: undefined })
+      setState({ profileSaving: false, profileName: undefined, profileNickname: undefined, profileMood: undefined })
       go('members')
     } catch (e) {
       setState({ profileSaving: false, profileError: e.message })
