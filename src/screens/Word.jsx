@@ -12,22 +12,13 @@ export default function Word() {
         <Pressable onPress={vm.back} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#17303B')}>
           <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#17303B"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
         </Pressable>
-        <View style={s('position:relative')}>
-          <Pressable onPress={vm.toggleMenuWord} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;cursor:pointer')}>
-            <Text style={s('color:#8497A1;font-size:17.4px')}>⋯</Text>
+        <View style={s('flex-direction:row;align-items:center;gap:8px')}>
+          <Pressable onPress={vm.startEditWord} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;cursor:pointer')}>
+            <Svg viewBox="0 0 24 24" width={17} height={17} fill="none" stroke="#FF5E8A" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round"><Path d="M4 20 h4 L18.5 9.5 a2 2 0 0 0 -3 -3 L5 17 Z" /></Svg>
           </Pressable>
-          {vm.isMenuWord && (
-            <View style={s('position:absolute;right:0;top:46px;background:#fff;border:1px solid #FFE1EC;border-radius:14px;box-shadow:0 12px 30px rgba(255,94,138,0.22);overflow:hidden;z-index:20;min-width:128px')}>
-              <Pressable onPress={vm.startEditWord} style={s('display:flex;flex-direction:row;align-items:center;gap:9px;padding:12px 15px;cursor:pointer;border-bottom:1px solid #FDECF2')}>
-                <Svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="#FF5E8A" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round"><Path d="M4 20 h4 L18.5 9.5 a2 2 0 0 0 -3 -3 L5 17 Z" /></Svg>
-                <Text style={s('font-size:13px;font-weight:600;color:#17303B')}>수정하기</Text>
-              </Pressable>
-              <Pressable onPress={vm.deleteWord} style={s('display:flex;flex-direction:row;align-items:center;gap:9px;padding:12px 15px;cursor:pointer')}>
-                <Svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" color="#E5484D"><Path d="M5 7 h14 M9 7 V5 h6 v2 M6 7 l1 13 h10 l1 -13" /></Svg>
-                <Text style={s('font-size:13px;font-weight:600;color:#E5484D')}>삭제하기</Text>
-              </Pressable>
-            </View>
-          )}
+          <Pressable onPress={vm.deleteWord} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;cursor:pointer')}>
+            <Svg viewBox="0 0 24 24" width={17} height={17} fill="none" stroke="#E5484D" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 7 h14 M9 7 V5 h6 v2 M6 7 l1 13 h10 l1 -13" /></Svg>
+          </Pressable>
         </View>
       </View>
 
@@ -67,7 +58,8 @@ export default function Word() {
       )}
 
       {vm.readWord && (
-      <View style={s('padding:0 22px')}>
+      <View style={s('padding:0 16px')}>
+        <View style={s('background:#FFFDFB;border:1px solid #F1E2E9;border-radius:0;padding:26px 22px;box-shadow:0 14px 34px rgba(214,150,175,0.14)')}>
         <View style={s('display:flex;flex-direction:row;align-items:center;gap:9px;margin-bottom:16px')}>
           <View style={s(`width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:${vm.currentWord.by.c}`)}>
             <Text style={s('color:#fff;font-weight:700;font-size:12.5px')}>{vm.currentWord.by.ini}</Text>
@@ -96,6 +88,7 @@ export default function Word() {
             <Text style={s('font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#9DB2BD')}>{vm.currentWord.ph}</Text>
           </View>
         )}
+        </View>
       </View>
       )}
     </View>
