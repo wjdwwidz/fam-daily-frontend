@@ -31,7 +31,8 @@ const fmtTime = (iso) => {
 const answerCard = (a) => {
   const key = a.author?.nickname || a.author?.name || '?'
   return {
-    by: { name: a.author?.nickname || a.author?.name || '가족', ini: String(key).slice(0, 1), c: colorFor(key) },
+    id: a.id,
+    by: { name: a.author?.nickname || a.author?.name || '가족', ini: String(key).slice(0, 1), c: colorFor(a.author?.userId || key) },
     time: fmtTime(a.createdAt),
     likes: 0,
     text: a.text,
@@ -209,7 +210,7 @@ export function buildVm(app) {
         no: `${qc.no}/${qc.total}`,
         q: qc.question.text,
         progress: `${qc.memberCount}명 중 ${qc.answers.length}명이 답했어요`,
-        answered: qc.answers.map(answerCard),
+        answered: qc.answers.map((a) => ({ ...answerCard(a), mine: !!myId && a.author?.userId === myId })),
         empty: false,
       }
     : { id: null, no: '0/0', q: '', progress: '', answered: [], empty: true }
@@ -400,8 +401,10 @@ export function buildVm(app) {
     // 문답 답변 남기기 (오늘의 질문에 대해)
     answerDraft: st.answerDraft ?? '',
     onAnswerInput: (text) => setState({ answerDraft: text }),
-    openAnswer: () => setState({ answerOpen: true, answerDraft: '' }),
-    closeAnswer: () => setState({ answerOpen: false }),
+    openAnswer: () => setState({ answerOpen: true, answerDraft: '', editingAnswerId: null }),
+    closeAnswer: () => setState({ answerOpen: false, editingAnswerId: null }),
+    startEditAnswer: (ans) => setState({ answerOpen: true, answerDraft: ans.text, editingAnswerId: ans.id }),
+    editingAnswer: !!st.editingAnswerId,
     submitAnswer,
     // 새 질문 내기
     questionOpen: !!st.questionOpen,

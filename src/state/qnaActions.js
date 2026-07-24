@@ -16,15 +16,17 @@ export function createQnaActions({ ref, setState }) {
 
   const submitAnswer = async () => {
     const text = (ref.current.answerDraft || '').trim()
+    const editingId = ref.current.editingAnswerId
     const qid = ref.current.qnaCurrent?.question?.id
-    if (!text || !qid) { setState({ answerOpen: false }); return }
+    if (!text || (!editingId && !qid)) { setState({ answerOpen: false, editingAnswerId: null }); return }
     setState({ actionLoading: true })
     try {
-      await api.answerQuestion(qid, text)
+      if (editingId) await api.editAnswer(editingId, text) // 수정
+      else await api.answerQuestion(qid, text) // 새 답변
       await loadQna(ref.current.currentGroup?.id)
-      setState({ actionLoading: false, answerOpen: false, answerDraft: '' })
+      setState({ actionLoading: false, answerOpen: false, answerDraft: '', editingAnswerId: null })
     } catch (e) {
-      setState({ actionLoading: false, answerOpen: false, authError: e.message })
+      setState({ actionLoading: false, answerOpen: false, editingAnswerId: null, authError: e.message })
     }
   }
 

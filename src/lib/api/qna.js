@@ -6,4 +6,5 @@ export const qnaApi = {
   currentQuestion: (groupId) => request(`/groups/${groupId}/questions/current`),
   createQuestion: (groupId, text) => request(`/groups/${groupId}/questions`, { method: 'POST', body: { text } }),
   answerQuestion: (questionId, text) => request(`/questions/${questionId}/answers`, { method: 'POST', body: { text } }),
+  editAnswer: (answerId, text) => request(`/answers/${answerId}`, { method: 'PATCH', body: { text } }),
 }

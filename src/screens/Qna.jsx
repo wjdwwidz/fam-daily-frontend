@@ -63,7 +63,14 @@ export default function Qna() {
                       <Text style={s('color:#fff;font-weight:700;font-size:12.5px')}>{a.by.ini}</Text>
                     </View>
                     <Text style={s('font-size:12.6px;font-weight:700;color:#17303B')}>{a.by.name}</Text>
-                    <Text style={s('font-size:10.5px;color:#B4C1CA;margin-left:auto')}>{a.time}</Text>
+                    <View style={s('flex-direction:row;align-items:center;gap:10px;margin-left:auto')}>
+                      <Text style={s('font-size:10.5px;color:#B4C1CA')}>{a.time}</Text>
+                      {a.mine && (
+                        <Pressable onPress={() => vm.startEditAnswer(a)}>
+                          <Text style={s('font-size:10.5px;font-weight:700;color:#FF5E8A')}>수정</Text>
+                        </Pressable>
+                      )}
+                    </View>
                   </View>
                   <Text style={s('font-size:13px;color:#3F4E58;line-height:1.6')}>{a.text}</Text>
                 </View>
