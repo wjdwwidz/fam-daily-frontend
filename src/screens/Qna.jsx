@@ -35,13 +35,13 @@ export default function Qna() {
         </View>
       ) : (
         <>
-          <View style={s('padding:2px 2px 20px;border-bottom:1px solid #F0DEE6;margin-bottom:6px')}>
+          <View style={s('background:#fff;border:1px solid #FFE1EC;border-radius:20px;padding:18px;margin-bottom:14px')}>
             <Text style={s('font-size:11.5px;font-weight:800;color:#FF5E8A;letter-spacing:0.5px')}>{q.no} · 오늘의 질문</Text>
             <Text style={s('font-size:19px;font-weight:600;color:#17303B;margin-top:10px;line-height:1.4;letter-spacing:-0.3px')}>{q.q}</Text>
           </View>
 
-          <Pressable onPress={vm.openAnswer} style={s('margin-top:6px;display:flex;align-items:center;gap:12px;cursor:pointer;padding:8px 2px')}>
-            <View style={s('width:40px;height:40px;border-radius:50%;background:#FF5E8A;display:flex;align-items:center;justify-content:center;flex:0 0 auto')}>
+          <Pressable onPress={vm.openAnswer} style={s('display:flex;align-items:center;gap:12px;cursor:pointer;background:#FCEEF4;border-radius:16px;padding:12px 14px;margin-bottom:8px')}>
+            <View style={s(`width:40px;height:40px;border-radius:50%;background:${vm.myColor};display:flex;align-items:center;justify-content:center;flex:0 0 auto`)}>
               <Text style={s('color:#fff;font-weight:800;font-size:14px')}>{String(vm.myNickname).slice(0, 1)}</Text>
             </View>
             <Text style={s('flex:1;font-size:12.6px;color:#B0808F;font-weight:600')}>나도 오늘의 답변을 남겨보세요…</Text>
@@ -57,7 +57,7 @@ export default function Qna() {
           ) : (
             <View style={s('display:flex;flex-direction:column')}>
               {q.answered.map((a, i) => (
-                <View key={i} style={s('padding:15px 2px;border-bottom:1px solid #F0DEE6')}>
+                <View key={i} style={s('background:#FCEEF4;border-radius:16px;padding:14px;margin-bottom:10px')}>
                   <View style={s('display:flex;align-items:center;gap:10px;margin-bottom:9px')}>
                     <View style={s(`width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:${a.by.c}`)}>
                       <Text style={s('color:#fff;font-weight:700;font-size:12.5px')}>{a.by.ini}</Text>
@@ -83,7 +83,7 @@ export default function Qna() {
                     </View>
                     <View style={s('flex:1;min-width:0')}>
                       <Text style={s('font-size:12.6px;font-weight:700;color:#17303B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap')} numberOfLines={1}>{p.q}</Text>
-                      <Text style={s('font-size:10.5px;color:#9DB2BD;margin-top:2px')}>{p.count}명 답변</Text>
+                      <Text style={s('font-size:10.5px;color:#9DB2BD;margin-top:2px')}>답변 {p.count}개</Text>
                     </View>
                     <Svg viewBox="0 0 24 24" width={17} height={17} fill="none" stroke="#D9C3CC" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                       <Path d="M9 6 L15 12 L9 18" />
