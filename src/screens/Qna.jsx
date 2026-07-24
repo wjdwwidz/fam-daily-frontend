@@ -38,16 +38,6 @@ export default function Qna() {
           <View style={s('padding:2px 2px 20px;border-bottom:1px solid #F0DEE6;margin-bottom:6px')}>
             <Text style={s('font-size:11.5px;font-weight:800;color:#FF5E8A;letter-spacing:0.5px')}>{q.no} · 오늘의 질문</Text>
             <Text style={s('font-size:19px;font-weight:600;color:#17303B;margin-top:10px;line-height:1.4;letter-spacing:-0.3px')}>{q.q}</Text>
-            <View style={s('display:flex;align-items:center;gap:10px;margin-top:14px')}>
-              <View style={s('display:flex')}>
-                {q.answered.map((a, i) => (
-                  <View key={i} style={s(`width:26px;height:26px;border-radius:50%;border:2px solid #FFF6FB;display:flex;align-items:center;justify-content:center;margin-left:-8px;background:${a.by.c}`)}>
-                    <Text style={s('color:#fff;font-size:10px;font-weight:700')}>{a.by.ini}</Text>
-                  </View>
-                ))}
-              </View>
-              <Text style={s('font-size:11.5px;color:#9DB2BD')}>{q.progress}</Text>
-            </View>
           </View>
 
           <Pressable onPress={vm.openAnswer} style={s('margin-top:6px;display:flex;align-items:center;gap:12px;cursor:pointer;padding:8px 2px')}>
