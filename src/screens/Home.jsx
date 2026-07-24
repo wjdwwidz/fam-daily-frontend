@@ -5,6 +5,7 @@ import { s } from '../lib/style.js'
 import mascot from '../../assets/img/mascot.png'
 
 import { useVm } from '../vm/useVm.js'
+import { SHOW_UNFINISHED } from '../lib/features.js'
 
 export default function Home() {
   const vm = useVm()
@@ -58,9 +59,11 @@ export default function Home() {
         <View>
           <Text style={s('font-size:12.5px;font-weight:500;color:#FF5E8A;letter-spacing:0.3px')}>2026.07.07</Text>
         </View>
-        <Pressable onPress={vm.toggleMoodHistory}>
-          <Text style={s('font-size:11.5px;color:#B4C1CA;font-weight:600;cursor:pointer')}>전체보기</Text>
-        </Pressable>
+        {SHOW_UNFINISHED && (
+          <Pressable onPress={vm.toggleMoodHistory}>
+            <Text style={s('font-size:11.5px;color:#B4C1CA;font-weight:600;cursor:pointer')}>전체보기</Text>
+          </Pressable>
+        )}
       </View>
       <View style={s('display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:8px 8px 8px 12px;margin-bottom:20px')}>
         <View style={s('width:36px;height:36px;border-radius:50%;background:#FF5E8A;display:flex;align-items:center;justify-content:center;flex:0 0 auto')}>
