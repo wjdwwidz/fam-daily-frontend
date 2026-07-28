@@ -12,7 +12,10 @@ function resolveHost() {
   return host || 'localhost'
 }
 
-export const API_BASE = `http://${resolveHost()}:3000/api`
+// 배포: EXPO_PUBLIC_API_URL(예: https://xxx.up.railway.app) 설정 시 그 백엔드를 사용.
+// 로컬: 미설정이면 Metro 호스트(맥 LAN IP)로 자동 연결.
+const LOCAL_BASE = `http://${resolveHost()}:3000`
+export const API_BASE = `${process.env.EXPO_PUBLIC_API_URL || LOCAL_BASE}/api`
 
 const TOKEN_KEY = 'famdaily_token'
 let memToken = null
