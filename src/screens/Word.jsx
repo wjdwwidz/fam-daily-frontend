@@ -38,8 +38,14 @@ export default function Word() {
               <Pressable onPress={vm.removeWordPhoto} style={s('position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:50%;background:rgba(23,48,59,0.55);display:flex;align-items:center;justify-content:center;cursor:pointer')}>
                 <Text style={s('color:#fff;font-size:15px')}>×</Text>
               </Pressable>
+              {vm.photoUploading && (
+                <View style={s('position:absolute;inset:0;border-radius:14px;background:rgba(23,48,59,0.45);display:flex;align-items:center;justify-content:center')}>
+                  <Text style={s('color:#fff;font-size:13px;font-weight:700')}>업로드 중…</Text>
+                </View>
+              )}
             </View>
           )}
+          {vm.photoError && <Text style={s('margin-top:8px;font-size:11.5px;color:#E5484D')}>{vm.photoError}</Text>}
           {vm.noWordPhoto && (
             <Pressable onPress={vm.pickWordPhoto} style={s('margin-top:14px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:7px;padding:14px;border:1.5px dashed #FFC4D8;border-radius:14px;cursor:pointer;background:#FFF6FA')}>
               <Svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="#FF5E8A" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Rect x={3} y={5} width={18} height={14} rx={3} /><Circle cx={9} cy={11} r={2} /><Path d="M21 17l-5-5-4 4-2-2-4 4" /></Svg>

@@ -5,6 +5,7 @@ import { authApi, kakaoLogin } from './api/auth.js'
 import { groupsApi } from './api/groups.js'
 import { wordsApi } from './api/words.js'
 import { qnaApi } from './api/qna.js'
+import { uploadImage } from './api/uploads.js'
 
 export { API_BASE, getToken, setToken, clearToken, kakaoLogin }
 
@@ -14,4 +15,5 @@ export const api = {
   ...groupsApi,
   ...wordsApi,
   ...qnaApi,
+  uploadImage,
 }

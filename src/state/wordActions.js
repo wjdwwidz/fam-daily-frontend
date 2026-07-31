@@ -28,7 +28,7 @@ export function createWordActions({ ref, setState, navTo, go }) {
   const onWordExample = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, example: text } }))
   const removeWordPhoto = () => setState((s2) => ({ wordDraft: { ...s2.wordDraft, photo: null } }))
 
-  // 기기 사진 접근 → 선택한 이미지 URI를 wordDraft.photo 에 저장 (미리보기용, 저장은 추후 업로드 연동)
+  // 기기 사진 선택 → 즉시 미리보기 → 서버(Supabase)로 업로드 → URL 을 wordDraft.photo 에 저장
   const pickWordPhoto = async () => {
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -37,8 +37,16 @@ export function createWordActions({ ref, setState, navTo, go }) {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.7,
       })
-      if (!result.canceled && result.assets && result.assets[0]) {
-        setState((s2) => ({ wordDraft: { ...s2.wordDraft, photo: result.assets[0].uri } }))
+      if (result.canceled || !result.assets || !result.assets[0]) return
+      const asset = result.assets[0]
+      // 1) 로컬 URI 로 즉시 미리보기 + 업로드 중 표시
+      setState((s2) => ({ wordDraft: { ...s2.wordDraft, photo: asset.uri }, photoUploading: true, photoError: null }))
+      try {
+        // 2) 서버 업로드 → public URL 로 교체 (저장 시 이 URL 이 photoUrl 로 전송됨)
+        const url = await api.uploadImage(asset)
+        setState((s2) => ({ wordDraft: { ...s2.wordDraft, photo: url }, photoUploading: false }))
+      } catch (e) {
+        setState({ photoUploading: false, photoError: e.message })
       }
     } catch {}
   }

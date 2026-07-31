@@ -409,6 +409,7 @@ export function buildVm(app) {
     deleteMedia: () => askConfirm({ title: '이 게시물을 삭제하시겠습니까?', message: '삭제하면 되돌릴 수 없어요.', onYes: deleteMedia }),
     onWordTerm, onWordReading, onWordMeaning, onWordExample,
     removeWordPhoto, pickWordPhoto, noWordPhoto: !(st.wordDraft && st.wordDraft.photo),
+    photoUploading: !!st.photoUploading, photoError: st.photoError || null,
     saveWord, onMediaTitle, saveMedia, cancelEdit,
     editWord: st.editPost === 'word', readWord: st.editPost !== 'word',
     editMedia: st.editPost === 'media',
