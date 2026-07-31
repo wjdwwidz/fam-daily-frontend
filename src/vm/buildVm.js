@@ -156,6 +156,7 @@ export function buildVm(app) {
       meaning: w.meaning || '',
       example: w.example || '',
       photo: !!w.photoUrl,
+      photoUrl: w.photoUrl || null,
       ph: '사진',
       tint: '#FFF0F5',
       date: fmtDate(w.createdAt),

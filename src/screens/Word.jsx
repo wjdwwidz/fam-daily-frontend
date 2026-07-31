@@ -88,11 +88,8 @@ export default function Word() {
 
         <Text style={s('font-size:12px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin-bottom:8px')}>💬 이럴 때 써요</Text>
         <Text style={s('font-size:14.5px;color:#3F4E58;line-height:1.7')}>{vm.currentWord.example}</Text>
-        {vm.currentWord.photo && (
-          <View style={s('margin-top:18px;border-radius:18px;height:200px;overflow:hidden;position:relative;background-color:#FFF0F5;align-items:center;justify-content:center;flex-direction:column;gap:8px')}>
-            <Svg viewBox="0 0 24 24" width={34} height={34} fill="none" stroke="#9DB2BD" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><Rect x={3} y={5} width={18} height={15} rx={2.5} /><Circle cx={8.5} cy={10} r={1.8} /><Path d="M4 18 L10 12 L14 15.5 L17 12.5 L20 15.5" /></Svg>
-            <Text style={s('font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#9DB2BD')}>{vm.currentWord.ph}</Text>
-          </View>
+        {vm.currentWord.photoUrl && (
+          <Image source={{ uri: vm.currentWord.photoUrl }} style={s('margin-top:18px;width:100%;height:220px;border-radius:18px')} resizeMode="cover" />
         )}
         </View>
       </View>

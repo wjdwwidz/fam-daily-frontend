@@ -17,7 +17,8 @@ export function createWordActions({ ref, setState, navTo, go }) {
 
   const startEditWord = () => {
     const w = ref.current.word || {}
-    setState({ menuOpen: null, editPost: 'word', wordDraft: { ...w } })
+    // 기존 사진(photoUrl)을 편집 폼의 photo(문자열 URL)로 넣어 미리보기·재저장 되게
+    setState({ menuOpen: null, editPost: 'word', wordDraft: { ...w, photo: w.photoUrl || null } })
   }
   const startAddWord = () =>
     navTo({ screen: 'word', menuOpen: null, editPost: 'word', word: { by: { ini: '엄', c: '#FF5E8A' } }, wordDraft: { term: '', reading: '', meaning: '', example: '' } })
