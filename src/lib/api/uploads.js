@@ -1,7 +1,8 @@
 import { API_BASE, getToken } from './client.js'
 
 // 이미지 업로드 (multipart/form-data, field=file) → 서버가 준 public URL 반환
-export async function uploadImage(asset) {
+// folder: 버킷 내 정리용 폴더 (예: 'words')
+export async function uploadImage(asset, folder) {
   const form = new FormData()
   if (asset.file) {
     // 웹: expo-image-picker 가 File 객체를 제공
@@ -13,7 +14,8 @@ export async function uploadImage(asset) {
     form.append('file', { uri: asset.uri, name, type })
   }
   const token = await getToken()
-  const res = await fetch(`${API_BASE}/uploads`, {
+  const qs = folder ? `?folder=${encodeURIComponent(folder)}` : ''
+  const res = await fetch(`${API_BASE}/uploads${qs}`, {
     method: 'POST',
     // Content-Type 은 넣지 않음 — 브라우저가 multipart boundary 를 자동 설정
     headers: token ? { Authorization: `Bearer ${token}` } : {},

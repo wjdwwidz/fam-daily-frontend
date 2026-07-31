@@ -44,7 +44,7 @@ export function createWordActions({ ref, setState, navTo, go }) {
       setState((s2) => ({ wordDraft: { ...s2.wordDraft, photo: asset.uri }, photoUploading: true, photoError: null }))
       try {
         // 2) 서버 업로드 → public URL 로 교체 (저장 시 이 URL 이 photoUrl 로 전송됨)
-        const url = await api.uploadImage(asset)
+        const url = await api.uploadImage(asset, 'words')
         setState((s2) => ({ wordDraft: { ...s2.wordDraft, photo: url }, photoUploading: false }))
       } catch (e) {
         setState({ photoUploading: false, photoError: e.message })
