@@ -1,4 +1,5 @@
 import { api } from '../lib/api.js'
+import * as ImagePicker from 'expo-image-picker'
 
 // 가족 사전(단어) 액션: 로드/추가/수정/삭제 + 편집 폼 입력.
 export function createWordActions({ ref, setState, navTo, go }) {
@@ -26,6 +27,21 @@ export function createWordActions({ ref, setState, navTo, go }) {
   const onWordMeaning = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, meaning: text } }))
   const onWordExample = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, example: text } }))
   const removeWordPhoto = () => setState((s2) => ({ wordDraft: { ...s2.wordDraft, photo: null } }))
+
+  // 기기 사진 접근 → 선택한 이미지 URI를 wordDraft.photo 에 저장 (미리보기용, 저장은 추후 업로드 연동)
+  const pickWordPhoto = async () => {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (perm.status !== 'granted') return
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.7,
+      })
+      if (!result.canceled && result.assets && result.assets[0]) {
+        setState((s2) => ({ wordDraft: { ...s2.wordDraft, photo: result.assets[0].uri } }))
+      }
+    } catch {}
+  }
 
   const saveWord = async () => {
     const draft = ref.current.wordDraft || {}
@@ -74,6 +90,7 @@ export function createWordActions({ ref, setState, navTo, go }) {
     onWordMeaning,
     onWordExample,
     removeWordPhoto,
+    pickWordPhoto,
     saveWord,
     deleteWord,
   }

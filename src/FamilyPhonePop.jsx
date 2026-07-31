@@ -27,6 +27,7 @@ import QuestionSheet from './overlays/QuestionSheet.jsx'
 import AddEventSheet from './overlays/AddEventSheet.jsx'
 import InviteSheet from './overlays/InviteSheet.jsx'
 import SearchOverlay from './overlays/SearchOverlay.jsx'
+import ConfirmDialog from './overlays/ConfirmDialog.jsx'
 
 // 셸: 현재 화면을 고르고, 배경·오버레이·네비를 얹는다.
 // 상태/뷰모델은 각 화면이 useVm() 으로 직접 가져간다.
@@ -59,6 +60,7 @@ export default function FamilyPhonePop() {
       {vm.inviteOpen && <InviteSheet />}
       {vm.searchOpen && <SearchOverlay />}
       {vm.showNav && <Nav />}
+      {vm.confirmOpen && <ConfirmDialog />}
     </View>
   )
 }

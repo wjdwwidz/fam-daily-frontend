@@ -34,14 +34,14 @@ export default function Word() {
           <TextInput value={vm.wordDraft.example} onChangeText={vm.onWordExample} multiline textAlignVertical="top" style={s('width:100%;box-sizing:border-box;border:1px solid #FFE1EC;border-radius:12px;padding:11px 14px;font-size:14px;font-family:inherit;color:#17303B;outline:none;background:#FFFAFC;resize:none;line-height:1.6')} />
           {vm.wordDraft.photo && (
             <View style={s('margin-top:14px;position:relative')}>
-              <Image source={vm.wordDraft.photo} style={s('width:100%;border-radius:14px;display:block')} resizeMode="cover" />
+              <Image source={typeof vm.wordDraft.photo === 'string' ? { uri: vm.wordDraft.photo } : vm.wordDraft.photo} style={s('width:100%;height:200px;border-radius:14px')} resizeMode="cover" />
               <Pressable onPress={vm.removeWordPhoto} style={s('position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:50%;background:rgba(23,48,59,0.55);display:flex;align-items:center;justify-content:center;cursor:pointer')}>
                 <Text style={s('color:#fff;font-size:15px')}>×</Text>
               </Pressable>
             </View>
           )}
           {vm.noWordPhoto && (
-            <Pressable style={s('margin-top:14px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:7px;padding:14px;border:1.5px dashed #FFC4D8;border-radius:14px;cursor:pointer;background:#FFF6FA')}>
+            <Pressable onPress={vm.pickWordPhoto} style={s('margin-top:14px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:7px;padding:14px;border:1.5px dashed #FFC4D8;border-radius:14px;cursor:pointer;background:#FFF6FA')}>
               <Svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="#FF5E8A" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Rect x={3} y={5} width={18} height={14} rx={3} /><Circle cx={9} cy={11} r={2} /><Path d="M21 17l-5-5-4 4-2-2-4 4" /></Svg>
               <Text style={s('color:#FF5E8A;font-size:13.5px;font-weight:700')}>사진 추가하기</Text>
             </Pressable>
@@ -70,8 +70,8 @@ export default function Word() {
           </View>
         </View>
 
-        <Text style={s('font-size:40px;font-weight:800;color:#17303B;letter-spacing:-1.3px;line-height:1.05')}>{vm.currentWord.term}</Text>
-        <Text style={s('font-size:15px;color:#FF5E8A;font-weight:600;margin-top:6px')}>“{vm.currentWord.reading}”</Text>
+        <Text style={s('font-size:32px;font-weight:800;color:#17303B;letter-spacing:-1px;line-height:1.3')}>{vm.currentWord.term}</Text>
+        <Text style={s('font-size:15px;color:#FF5E8A;font-weight:600;margin-top:8px')}>“{vm.currentWord.reading}”</Text>
 
         <View style={s('height:1px;background:#F0DEE6;margin:18px 0')}></View>
 

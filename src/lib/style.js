@@ -2,6 +2,8 @@
 // 웹 프로토타입의 인라인 스타일을 최대한 그대로 재사용하기 위한 헬퍼.
 // RN과 웹의 의미 차이(그림자, flex 기본축, px 단위, 그라디언트 등)를 흡수한다.
 
+import { resolveFontSize } from './type.js'
+
 // 전역 폰트 크기 보정(px). 디자인 대비 살짝 키움.
 const FONT_BUMP = 1
 
@@ -165,7 +167,12 @@ export function s(str) {
         if (/^-?\d*\.?\d+$/.test(val)) { pendingLineHeight = parseFloat(val) } // 단위없음 → 나중에 fontSize와 계산
         else raw.lineHeight = px(val)
         continue
-      case 'fontSize': raw.fontSize = px(val) + FONT_BUMP; continue
+      case 'fontSize': {
+        // 토큰(sm/base/xl…) 우선, 없으면 기존 px 값 그대로
+        const token = resolveFontSize(val)
+        raw.fontSize = (token != null ? token : px(val)) + FONT_BUMP
+        continue
+      }
       case 'margin': expandBox(val, raw, 'margin'); continue
       case 'padding': expandBox(val, raw, 'padding'); continue
       case 'gap': raw.gap = px(val); continue

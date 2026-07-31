@@ -49,7 +49,7 @@ export function buildVm(app) {
     variant = 'grid', initialScreen = 'login',
     logout, kakaoLogin, googleLogin, saveProfile,
     doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite,
-    loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, saveWord, deleteWord,
+    loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     loadQna, submitAnswer, submitQuestion,
   } = app
 
@@ -66,6 +66,15 @@ export function buildVm(app) {
   const onCommentKey = () => addComment()
 
   const toggleMenu = (which) => setState((s2) => ({ menuOpen: s2.menuOpen === which ? null : which }))
+
+  // 공용 확인 모달: askConfirm({ title, message, yesText, danger, onYes })
+  const askConfirm = (cfg) => setState({ menuOpen: null, confirm: cfg })
+  const closeConfirm = () => setState({ confirm: null })
+  const confirmYes = () => {
+    const onYes = st.confirm && st.confirm.onYes
+    setState({ confirm: null })
+    if (onYes) onYes()
+  }
 
   const startEditMedia = () => { const m = st.media || media[0] || {}; setState({ menuOpen: null, editPost: 'media', mediaDraft: { ...m } }) }
   const onMediaTitle = (text) => setState((s2) => ({ mediaDraft: { ...s2.mediaDraft, title: text } }))
@@ -393,10 +402,13 @@ export function buildVm(app) {
     onEditCmtInput, onEditCmtKey,
     isMenuWord: st.menuOpen === 'word', isMenuMedia: st.menuOpen === 'media',
     toggleMenuWord: () => toggleMenu('word'), toggleMenuMedia: () => toggleMenu('media'),
-    startEditWord, deleteWord, startAddWord,
-    startEditMedia, deleteMedia,
+    startEditWord, startAddWord, startEditMedia,
+    // 삭제는 항상 확인 모달을 거친다
+    confirm: st.confirm || null, confirmOpen: !!st.confirm, askConfirm, closeConfirm, confirmYes,
+    deleteWord: () => askConfirm({ title: '이 단어를 삭제하시겠습니까?', message: '삭제하면 되돌릴 수 없어요.', onYes: deleteWord }),
+    deleteMedia: () => askConfirm({ title: '이 게시물을 삭제하시겠습니까?', message: '삭제하면 되돌릴 수 없어요.', onYes: deleteMedia }),
     onWordTerm, onWordReading, onWordMeaning, onWordExample,
-    removeWordPhoto, noWordPhoto: !(st.wordDraft && st.wordDraft.photo),
+    removeWordPhoto, pickWordPhoto, noWordPhoto: !(st.wordDraft && st.wordDraft.photo),
     saveWord, onMediaTitle, saveMedia, cancelEdit,
     editWord: st.editPost === 'word', readWord: st.editPost !== 'word',
     editMedia: st.editPost === 'media',
