@@ -84,5 +84,18 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     }
   }
 
-  return { doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood }
+  // 초대 시트 열기 = 초대 코드 생성 (백엔드)
+  const openInvite = async () => {
+    const gid = ref.current.currentGroup?.id
+    if (!gid) return
+    setState({ inviteOpen: true, inviteLoading: true, inviteCode: null, inviteError: null, inviteCopied: false })
+    try {
+      const res = await api.createInvite(gid) // { code, link, expiresAt }
+      setState({ inviteLoading: false, inviteCode: res.code })
+    } catch (e) {
+      setState({ inviteLoading: false, inviteError: e.message })
+    }
+  }
+
+  return { doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite }
 }

@@ -6,6 +6,7 @@ import { MOCK_JOIN_GROUPS } from '../data/mockGroups.js'
 import { MOCK_MOOD_HISTORY } from '../data/mockMood.js'
 import { seedComments } from '../data/mockComments.js'
 import { EVENT_CATEGORIES } from '../data/eventCategories.js'
+import * as Clipboard from 'expo-clipboard'
 
 const AVATAR_COLORS = ['#FF5E8A', '#4D7CFE', '#FF9F43', '#22C4A6', '#A66CFF']
 const colorFor = (key) => {
@@ -47,7 +48,7 @@ export function buildVm(app) {
     st, setState, go, navTo, back,
     variant = 'grid', initialScreen = 'login',
     logout, kakaoLogin, googleLogin, saveProfile,
-    doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood,
+    doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, saveWord, deleteWord,
     loadQna, submitAnswer, submitQuestion,
   } = app
@@ -353,8 +354,26 @@ export function buildVm(app) {
     moodHistoryChevron: st.moodHistoryOpen ? 'rotate(180deg)' : 'rotate(0deg)',
     moodHistory: MOCK_MOOD_HISTORY,
     inviteOpen: !!st.inviteOpen,
-    openInvite: () => setState({ inviteOpen: true }),
-    closeInvite: () => setState({ inviteOpen: false }),
+    inviteLoading: !!st.inviteLoading,
+    inviteError: st.inviteError || null,
+    inviteCode: st.inviteCode || null,
+    inviteCopied: !!st.inviteCopied,
+    openInvite,
+    closeInvite: () => setState({ inviteOpen: false, inviteCopied: false }),
+    copyInvite: async () => {
+      if (!st.inviteCode) return
+      const text = `우리끼리 가족앱 초대!\n참여 코드: ${st.inviteCode}\nhttps://fam-daily-frontend.vercel.app`
+      try { await Clipboard.setStringAsync(text); setState({ inviteCopied: true }) } catch {}
+    },
+    shareInvite: async () => {
+      if (!st.inviteCode) return
+      const text = `우리끼리 가족앱 초대!\n참여 코드: ${st.inviteCode}\nhttps://fam-daily-frontend.vercel.app`
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        try { await navigator.share({ title: '우리끼리 가족 초대', text }) } catch {}
+      } else {
+        try { await Clipboard.setStringAsync(text); setState({ inviteCopied: true }) } catch {}
+      }
+    },
     searchOpen: !!st.searchOpen,
     openSearch: () => setState({ searchOpen: true }),
     closeSearch: () => setState({ searchOpen: false }),
