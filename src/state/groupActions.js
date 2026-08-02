@@ -78,7 +78,8 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     setState({ moodSending: true, moodError: null })
     try {
       const g = await api.setMood(gid, text)
-      setState({ moodSending: false, myMoodSent: true, groupMembers: g.members || [] })
+      // 전송 완료 → 입력란은 비운다. 내 무드 표시는 서버에서 갱신된 m.mood 로 유지됨.
+      setState({ moodSending: false, myMoodSent: true, myMood: '', groupMembers: g.members || [] })
     } catch (e) {
       setState({ moodSending: false, moodError: e.message })
     }
