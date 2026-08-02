@@ -3,6 +3,7 @@
 // RN과 웹의 의미 차이(그림자, flex 기본축, px 단위, 그라디언트 등)를 흡수한다.
 
 import { resolveFontSize } from './type.js'
+import { resolveSpace } from './space.js'
 
 // 전역 폰트 크기 보정(px). 디자인 대비 살짝 키움.
 const FONT_BUMP = 1
@@ -64,7 +65,7 @@ function parseBorder(val, out, prefix) {
 
 // margin/padding 축약형(1~4값) → RN 개별 속성. 'auto'는 margin 중앙정렬용으로 유지.
 function expandBox(val, out, prop) {
-  const parts = val.trim().split(/\s+/).map((v) => (v === 'auto' ? 'auto' : px(v)))
+  const parts = val.trim().split(/\s+/).map((v) => (v === 'auto' ? 'auto' : (resolveSpace(v) ?? px(v))))
   let t, r, b, l
   if (parts.length === 1) { t = r = b = l = parts[0] }
   else if (parts.length === 2) { t = b = parts[0]; r = l = parts[1] }
@@ -175,7 +176,7 @@ export function s(str) {
       }
       case 'margin': expandBox(val, raw, 'margin'); continue
       case 'padding': expandBox(val, raw, 'padding'); continue
-      case 'gap': raw.gap = px(val); continue
+      case 'gap': raw.gap = resolveSpace(val) ?? px(val); continue
       case 'borderRadius': {
         const parts = val.trim().split(/\s+/)
         if (val.includes('%')) { raw.borderRadius = 9999 }

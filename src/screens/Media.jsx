@@ -8,7 +8,7 @@ export default function Media() {
   const vm = useVm()
   return (
     <View style={s('padding:0 0 120px')}>
-      <View style={s('display:flex;align-items:center;justify-content:space-between;padding:6px 18px 14px')}>
+      <View style={s('display:flex;align-items:center;justify-content:space-between;padding:sm 4xl 2xl')}>
         <Pressable onPress={vm.back} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;color:#17303B')}>
           <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#17303B"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
         </Pressable>
@@ -19,11 +19,11 @@ export default function Media() {
           </Pressable>
           {vm.isMenuMedia && (
             <View style={s('position:absolute;right:0;top:46px;background:#fff;border:1px solid #FFE1EC;border-radius:14px;box-shadow:0 12px 30px rgba(255,94,138,0.22);overflow:hidden;z-index:20;min-width:128px')}>
-              <Pressable onPress={vm.startEditMedia} style={s('display:flex;align-items:center;gap:9px;padding:12px 15px;border-bottom:1px solid #FDECF2')}>
+              <Pressable onPress={vm.startEditMedia} style={s('display:flex;align-items:center;gap:lg;padding:xl 3xl;border-bottom:1px solid #FDECF2')}>
                 <Svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="#FF5E8A" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round"><Path d="M4 20 h4 L18.5 9.5 a2 2 0 0 0 -3 -3 L5 17 Z" /></Svg>
                 <Text style={s('font-size:13px;font-weight:600;color:#17303B')}>수정하기</Text>
               </Pressable>
-              <Pressable onPress={vm.deleteMedia} style={s('display:flex;align-items:center;gap:9px;padding:12px 15px')}>
+              <Pressable onPress={vm.deleteMedia} style={s('display:flex;align-items:center;gap:lg;padding:xl 3xl')}>
                 <Svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" color="#E5484D"><Path d="M5 7 h14 M9 7 V5 h6 v2 M6 7 l1 13 h10 l1 -13" /></Svg>
                 <Text style={s('font-size:13px;font-weight:600;color:#E5484D')}>삭제하기</Text>
               </Pressable>
@@ -31,26 +31,26 @@ export default function Media() {
           )}
         </View>
       </View>
-      <View style={s(`height:300px;position:relative;background-color:${vm.currentMedia.tone};background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.35) 0 12px,transparent 12px 24px);display:flex;align-items:center;justify-content:center;margin:0 20px;border-radius:28px;overflow:hidden`)}>
+      <View style={s(`height:300px;position:relative;background-color:${vm.currentMedia.tone};background-image:repeating-linear-gradient(45deg,rgba(255,255,255,0.35) 0 12px,transparent 12px 24px);display:flex;align-items:center;justify-content:center;margin:0 5xl;border-radius:28px;overflow:hidden`)}>
         <Text style={s('font-family:ui-monospace,Menlo,monospace;font-size:11px;color:rgba(23,48,59,0.4)')}>{vm.currentMedia.ph}</Text>
         {vm.currentMedia.isVideo && (
           <View style={s('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
             <View style={s('width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.94);display:flex;align-items:center;justify-content:center;')}>
-              <Svg viewBox="0 0 24 24" width={28} height={28} fill="#12B5F0" stroke="none" style={s('margin-left:3px')}><Path d="M8 5 L19 12 L8 19 Z" /></Svg>
+              <Svg viewBox="0 0 24 24" width={28} height={28} fill="#12B5F0" stroke="none" style={s('margin-left:xs')}><Path d="M8 5 L19 12 L8 19 Z" /></Svg>
             </View>
           </View>
         )}
       </View>
-      <View style={s('padding:18px 20px 0')}>
+      <View style={s('padding:4xl 5xl 0')}>
         {vm.editMedia && (
           <>
-          <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin-bottom:6px')}>설명</Text>
-          <TextInput multiline textAlignVertical="top" value={vm.mediaDraft.title} onChangeText={vm.onMediaTitle} placeholder="이 순간을 설명해 보세요" placeholderTextColor="#9DB2BD" style={s('width:100%;box-sizing:border-box;min-height:70px;resize:none;border:1px solid #FFE1EC;border-radius:12px;padding:12px 14px;font-size:13.5px;font-weight:500;line-height:1.55;font-family:inherit;color:#17303B;outline:none;background:#FFFAFC')} />
-          <View style={s('display:flex;gap:10px;margin:14px 0 4px')}>
-            <Pressable onPress={vm.cancelEdit} style={s('flex:1;align-items:center;justify-content:center;padding:12px;border-radius:14px;border:1px solid #FFE1EC')}>
+          <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin-bottom:sm')}>설명</Text>
+          <TextInput multiline textAlignVertical="top" value={vm.mediaDraft.title} onChangeText={vm.onMediaTitle} placeholder="이 순간을 설명해 보세요" placeholderTextColor="#9DB2BD" style={s('width:100%;box-sizing:border-box;min-height:70px;resize:none;border:1px solid #FFE1EC;border-radius:12px;padding:xl 2xl;font-size:13.5px;font-weight:500;line-height:1.55;font-family:inherit;color:#17303B;outline:none;background:#FFFAFC')} />
+          <View style={s('display:flex;gap:lg;margin:2xl 0 xs')}>
+            <Pressable onPress={vm.cancelEdit} style={s('flex:1;align-items:center;justify-content:center;padding:xl;border-radius:14px;border:1px solid #FFE1EC')}>
               <Text style={s('color:#8497A1;font-size:13.5px;font-weight:700')}>취소</Text>
             </Pressable>
-            <Pressable onPress={vm.saveMedia} style={s('flex:2;align-items:center;justify-content:center;padding:12px;border-radius:14px;background:#FF5E8A;box-shadow:0 10px 22px rgba(255,94,138,0.3)')}>
+            <Pressable onPress={vm.saveMedia} style={s('flex:2;align-items:center;justify-content:center;padding:xl;border-radius:14px;background:#FF5E8A;box-shadow:0 10px 22px rgba(255,94,138,0.3)')}>
               <Text style={s('color:#fff;font-size:13.5px;font-weight:800')}>저장하기</Text>
             </Pressable>
           </View>
@@ -58,8 +58,8 @@ export default function Media() {
         )}
         {vm.readMedia && (
           <>
-          <Text style={s('font-size:14px;color:#2B3A43;line-height:1.6;margin-bottom:16px;white-space:pre-wrap')}>{vm.currentMedia.title}</Text>
-        <View style={s('display:flex;align-items:center;gap:11px')}>
+          <Text style={s('font-size:14px;color:#2B3A43;line-height:1.6;margin-bottom:3xl;white-space:pre-wrap')}>{vm.currentMedia.title}</Text>
+        <View style={s('display:flex;align-items:center;gap:xl')}>
           <View style={s(`width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${vm.currentMedia.by.c}`)}>
             <Text style={s('color:#fff;font-weight:700;font-size:13.1px')}>{vm.currentMedia.by.ini}</Text>
           </View>
@@ -69,36 +69,36 @@ export default function Media() {
             <Text>{vm.mediaHearts}</Text>
           </Pressable>
         </View>
-        <Text style={s('margin-top:20px;font-size:11px;font-weight:800;color:#9DB2BD;letter-spacing:0.4px')}>댓글 {vm.commentCount}</Text>
-        <View style={s('margin-top:4px')}>
+        <Text style={s('margin-top:5xl;font-size:11px;font-weight:800;color:#9DB2BD;letter-spacing:0.4px')}>댓글 {vm.commentCount}</Text>
+        <View style={s('margin-top:xs')}>
           {vm.comments.map((c, i) => (
-            <View key={i} style={s('display:flex;gap:10px;padding:14px 0;border-bottom:1px solid #F0DEE6')}>
+            <View key={i} style={s('display:flex;gap:lg;padding:2xl 0;border-bottom:1px solid #F0DEE6')}>
               <View style={s(`width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:${c.c}`)}>
                 <Text style={s('color:#fff;font-size:11px;font-weight:700')}>{c.ini}</Text>
               </View>
               <View style={s('flex:1;min-width:0')}>
                 {c.editing && (
-                  <View style={s('display:flex;align-items:center;gap:8px')}>
-                    <TextInput value={c.draft} onChangeText={vm.onEditCmtInput} onSubmitEditing={vm.onEditCmtKey} style={s('flex:1;min-width:0;border:1px solid #FFE1EC;border-radius:10px;background:#FFFAFC;font-size:11.5px;font-family:inherit;color:#17303B;padding:7px 10px;outline:none')} />
+                  <View style={s('display:flex;align-items:center;gap:md')}>
+                    <TextInput value={c.draft} onChangeText={vm.onEditCmtInput} onSubmitEditing={vm.onEditCmtKey} style={s('flex:1;min-width:0;border:1px solid #FFE1EC;border-radius:10px;background:#FFFAFC;font-size:11.5px;font-family:inherit;color:#17303B;padding:md lg;outline:none')} />
                     <Pressable onPress={c.save} style={s('flex:0 0 auto')}><Text style={s('color:#FF5E8A;font-size:11.5px;font-weight:800')}>저장</Text></Pressable>
                   </View>
                 )}
                 {c.viewing && (
                   <>
-                  <View style={s('display:flex;align-items:flex-start;gap:6px')}>
+                  <View style={s('display:flex;align-items:flex-start;gap:sm')}>
                     <Text style={s('flex:1;min-width:0;font-size:11.5px;color:#3F4E58;line-height:1.55')}><Text style={s('color:#17303B;font-weight:700')}>{c.name}</Text>  {c.text}</Text>
-                    <Pressable onPress={c.edit} style={s('flex:0 0 auto;padding:1px 2px')}><Text style={s('color:#B4C1CA;font-size:10.5px;font-weight:700')}>수정</Text></Pressable>
+                    <Pressable onPress={c.edit} style={s('flex:0 0 auto;padding:hair hair')}><Text style={s('color:#B4C1CA;font-size:10.5px;font-weight:700')}>수정</Text></Pressable>
                   </View>
-                  <Text style={s('font-size:10px;color:#B4C1CA;margin-top:3px')}>{c.when}</Text>
+                  <Text style={s('font-size:10px;color:#B4C1CA;margin-top:xs')}>{c.when}</Text>
                   </>
                 )}
               </View>
             </View>
           ))}
         </View>
-        <View style={s('display:flex;align-items:center;gap:9px;margin-top:16px')}>
-          <TextInput value={vm.commentDraft} onChangeText={vm.onCommentInput} onSubmitEditing={vm.onCommentKey} placeholder="따뜻한 댓글을 남겨보세요" placeholderTextColor="#9DB2BD" style={s('flex:1;border:none;outline:none;background:transparent;font-size:12.5px;font-family:inherit;color:#17303B;padding:8px 0;border-bottom:1px solid #F0DEE6')} />
-          <Pressable onPress={vm.addComment} style={s('flex:0 0 auto;padding:6px 4px')}><Text style={s('color:#FF5E8A;font-size:12.5px;font-weight:800')}>등록</Text></Pressable>
+        <View style={s('display:flex;align-items:center;gap:lg;margin-top:3xl')}>
+          <TextInput value={vm.commentDraft} onChangeText={vm.onCommentInput} onSubmitEditing={vm.onCommentKey} placeholder="따뜻한 댓글을 남겨보세요" placeholderTextColor="#9DB2BD" style={s('flex:1;border:none;outline:none;background:transparent;font-size:12.5px;font-family:inherit;color:#17303B;padding:md 0;border-bottom:1px solid #F0DEE6')} />
+          <Pressable onPress={vm.addComment} style={s('flex:0 0 auto;padding:sm xs')}><Text style={s('color:#FF5E8A;font-size:12.5px;font-weight:800')}>등록</Text></Pressable>
         </View>
           </>
         )}

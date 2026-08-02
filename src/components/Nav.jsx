@@ -32,8 +32,7 @@ export default function Nav() {
         }}
       >
         {tabs.map((t) => (
-          <Pressable key={t.key} onPress={t.onPress} style={{ flex: 1, minWidth: 0, alignItems: 'center', gap: 4 }}>
-            <Icon name={t.key === 'members' ? 'members' : t.key} color={t.color} />
+          <Pressable key={t.key} onPress={t.onPress} style={{ flex: 1, minWidth: 0, alignItems: 'center', gap:4 }}> <Icon name={t.key ==='members' ? 'members' : t.key} color={t.color} />
             <Text style={{ fontSize: 10.5, fontWeight: '600', color: t.color }}>{t.label}</Text>
           </Pressable>
         ))}

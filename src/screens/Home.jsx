@@ -10,9 +10,9 @@ import { SHOW_UNFINISHED } from '../lib/features.js'
 export default function Home() {
   const vm = useVm()
   return (
-    <View style={s('padding:8px 20px 110px')}>
-      <View style={s('display:flex;align-items:center;justify-content:space-between;margin:6px 0 16px')}>
-        <View style={s('display:flex;align-items:center;gap:11px')}>
+    <View style={s('padding:md 5xl 110px')}>
+      <View style={s('display:flex;align-items:center;justify-content:space-between;margin:sm 0 3xl')}>
+        <View style={s('display:flex;align-items:center;gap:xl')}>
           <Image source={mascot} style={{ width: 52, height: 69 }} resizeMode="cover" />
           <View>
             <Text style={s('font-size:18px;font-weight:800;color:#17303B;letter-spacing:-0.3px;line-height:1.35;white-space:nowrap')}>오늘의 한마디!</Text>
@@ -25,14 +25,14 @@ export default function Home() {
         </Pressable>
       </View>
 
-      <View style={s('display:flex;justify-content:flex-end;margin:0 2px 2px')}>
+      <View style={s('display:flex;justify-content:flex-end;margin:0 hair hair')}>
         <Pressable onPress={vm.goMembersDeep}>
           <Text style={s('font-size:12.5px;color:#8497A1;cursor:pointer')}>가족 전체 ›</Text>
         </Pressable>
       </View>
 
-      <View style={s('position:relative;width:296px;height:296px;margin:2px auto 18px')}>
-        <View style={s('position:absolute;left:148px;top:148px;transform:translate(-50%,-50%);width:150px;text-align:center;background:#fff;border:1px solid #FFE1EC;border-radius:18px;padding:11px 14px;box-shadow:0 10px 24px rgba(255,94,138,0.16);z-index:5')}>
+      <View style={s('position:relative;width:296px;height:296px;margin:hair auto 4xl')}>
+        <View style={s('position:absolute;left:148px;top:148px;transform:translate(-50%,-50%);width:150px;text-align:center;background:#fff;border:1px solid #FFE1EC;border-radius:18px;padding:xl 2xl;box-shadow:0 10px 24px rgba(255,94,138,0.16);z-index:5')}>
           <Text style={s('font-size:12.5px;color:#4A5A64;line-height:1.4')}>{vm.activeMember.mood ? `${vm.activeMember.mood} ${vm.activeMember.emoji}`.trim() : '아직 오늘의 한마디가 없어요'}</Text>
         </View>
         <View style={s(vm.tailStyle)}><View style={s(vm.dotStyle)} /></View>
@@ -54,7 +54,7 @@ export default function Home() {
         ))}
       </View>
 
-      <View style={s('display:flex;align-items:flex-end;justify-content:space-between;margin:4px 2px 10px')}>
+      <View style={s('display:flex;align-items:flex-end;justify-content:space-between;margin:xs hair lg')}>
         <View>
           <Text style={s('font-size:12.5px;font-weight:500;color:#FF5E8A;letter-spacing:0.3px')}>2026.07.07</Text>
         </View>
@@ -64,7 +64,7 @@ export default function Home() {
           </Pressable>
         )}
       </View>
-      <View style={s('display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:8px 8px 8px 12px;margin-bottom:20px')}>
+      <View style={s('display:flex;align-items:center;gap:lg;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:md md md xl;margin-bottom:5xl')}>
         <View style={s(`width:36px;height:36px;border-radius:50%;overflow:hidden;background:${vm.myColor};display:flex;align-items:center;justify-content:center;flex:0 0 auto`)}>
           {vm.myPhoto ? <Image source={{ uri: vm.myPhoto }} style={s('width:36px;height:36px')} resizeMode="cover" /> : <Text style={s('color:#fff;font-weight:800;font-size:13px')}>{vm.myInitial}</Text>}
         </View>
@@ -77,15 +77,15 @@ export default function Home() {
         </Pressable>
       </View>
       {vm.myMoodSent && (
-        <View style={s('display:flex;align-items:center;gap:9px;margin:-10px 2px 20px;font-size:11.5px;color:#8497A1')}>
+        <View style={s('display:flex;align-items:center;gap:lg;margin:-10px hair 5xl;font-size:11.5px;color:#8497A1')}>
           <Text style={s('color:#FF5E8A;font-weight:700')}>✓ 인사 완료!</Text>
         </View>
       )}
 
-      <Text style={s('margin:4px 2px 10px;font-size:13px;font-weight:500;color:#7C8B95')}>최근 활동</Text>
-      <View style={s('background:rgba(255,255,255,0.45);border:1px solid rgba(255,225,236,0.6);border-radius:26px;padding:2px 16px;')}>
+      <Text style={s('margin:xs hair lg;font-size:13px;font-weight:500;color:#7C8B95')}>최근 활동</Text>
+      <View style={s('background:rgba(255,255,255,0.45);border:1px solid rgba(255,225,236,0.6);border-radius:26px;padding:hair 3xl;')}>
         {vm.recentWords.map((w, i) => (
-          <Pressable key={i} onPress={w.open} style={s('display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(239,244,247,0.7);cursor:pointer')}>
+          <Pressable key={i} onPress={w.open} style={s('display:flex;align-items:center;gap:xl;padding:lg 0;border-bottom:1px solid rgba(239,244,247,0.7);cursor:pointer')}>
             <View style={s(`width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:${w.by.c}`)}>
               <Text style={s('color:#fff;font-size:12px;font-weight:700')}>{w.by.ini}</Text>
             </View>

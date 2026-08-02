@@ -7,8 +7,8 @@ import { useVm } from '../vm/useVm.js'
 export default function Profile() {
   const vm = useVm()
   return (
-    <View style={s('padding:0 0 40px')}>
-      <View style={s('display:flex;align-items:center;justify-content:space-between;padding:6px 18px 6px')}>
+    <View style={s('padding:0 0 8xl')}>
+      <View style={s('display:flex;align-items:center;justify-content:space-between;padding:sm 4xl sm')}>
         <Pressable onPress={vm.back} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;color:#17303B')}>
           <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#17303B">
             <Path d="M14.5 5 L7.5 12 L14.5 19" />
@@ -18,7 +18,7 @@ export default function Profile() {
         <View style={s('width:40px')}></View>
       </View>
 
-      <View style={s('display:flex;flex-direction:column;align-items:center;padding:14px 20px 6px')}>
+      <View style={s('display:flex;flex-direction:column;align-items:center;padding:2xl 5xl sm')}>
         <Pressable onPress={vm.pickProfilePhoto} style={s('position:relative;width:104px;height:104px')}>
           <View style={s(`width:104px;height:104px;border-radius:50%;border:3px solid ${vm.myColor};overflow:hidden;background:${vm.myColor};position:relative`)}>
             {vm.profilePhoto ? (
@@ -41,23 +41,23 @@ export default function Profile() {
             </Svg>
           </View>
         </Pressable>
-        <Text style={s('font-size:11px;color:#9DB2BD;margin-top:10px')}>사진을 눌러 바꿔보세요</Text>
+        <Text style={s('font-size:11px;color:#9DB2BD;margin-top:lg')}>사진을 눌러 바꿔보세요</Text>
       </View>
 
-      <View style={s('padding:14px 20px 0')}>
-        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:8px')}>이름</Text>
-        <TextInput value={vm.profileName} onChangeText={vm.onProfileName} placeholder="이름" placeholderTextColor="#9DB2BD" style={s('width:100%;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:14px 15px;font-size:13.5px;font-weight:600;font-family:inherit;color:#17303B')} />
+      <View style={s('padding:2xl 5xl 0')}>
+        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>이름</Text>
+        <TextInput value={vm.profileName} onChangeText={vm.onProfileName} placeholder="이름" placeholderTextColor="#9DB2BD" style={s('width:100%;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-weight:600;font-family:inherit;color:#17303B')} />
 
-        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:18px 0 8px')}>가족 내 호칭</Text>
-        <TextInput value={vm.profileNickname} onChangeText={vm.onProfileNickname} placeholder="예: 엄마, 아빠" placeholderTextColor="#9DB2BD" style={s('width:100%;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:14px 15px;font-size:13.5px;font-weight:600;font-family:inherit;color:#17303B')} />
+        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:4xl 0 md')}>가족 내 호칭</Text>
+        <TextInput value={vm.profileNickname} onChangeText={vm.onProfileNickname} placeholder="예: 엄마, 아빠" placeholderTextColor="#9DB2BD" style={s('width:100%;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-weight:600;font-family:inherit;color:#17303B')} />
 
-        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:18px 0 8px')}>오늘의 한마디</Text>
-        <View style={s('display:flex;align-items:center;border:1px solid #FFE1EC;background:#FFF6FB;border-radius:14px;padding:14px 15px')}>
+        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:4xl 0 md')}>오늘의 한마디</Text>
+        <View style={s('display:flex;align-items:center;border:1px solid #FFE1EC;background:#FFF6FB;border-radius:14px;padding:2xl 3xl')}>
           <TextInput value={vm.profileMood} onChangeText={vm.onProfileMood} placeholder="오늘의 한마디를 남겨보세요" placeholderTextColor="#9DB2BD" style={s('flex:1;border:none;outline:none;background:transparent;font-size:13.1px;font-family:inherit;color:#17303B')} />
         </View>
 
-        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:18px 0 10px')}>내 프로필 색</Text>
-        <View style={s('display:flex;gap:12px;padding:0 2px')}>
+        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:4xl 0 lg')}>내 프로필 색</Text>
+        <View style={s('display:flex;gap:xl;padding:0 hair')}>
           <View style={s('width:38px;height:38px;border-radius:50%;background:#FF5E8A;border:3px solid #17303B')}></View>
           <View style={s('width:38px;height:38px;border-radius:50%;background:#A66CFF;border:3px solid transparent')}></View>
           <View style={s('width:38px;height:38px;border-radius:50%;background:#FF9F43;border:3px solid transparent')}></View>
@@ -65,9 +65,9 @@ export default function Profile() {
           <View style={s('width:38px;height:38px;border-radius:50%;background:#22C4A6;border:3px solid transparent')}></View>
         </View>
 
-        {vm.profileError && <Text style={s('font-size:12px;color:#E5484D;margin-top:16px;text-align:center')}>{vm.profileError}</Text>}
+        {vm.profileError && <Text style={s('font-size:12px;color:#E5484D;margin-top:3xl;text-align:center')}>{vm.profileError}</Text>}
 
-        <Pressable onPress={vm.saveProfile} disabled={vm.profileSaving} style={s(`margin-top:26px;height:54px;border-radius:17px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;opacity:${vm.profileSaving ? 0.7 : 1}`)}>
+        <Pressable onPress={vm.saveProfile} disabled={vm.profileSaving} style={s(`margin-top:6xl;height:54px;border-radius:17px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;opacity:${vm.profileSaving ? 0.7 : 1}`)}>
           <Text style={s('font-size:13.9px;font-weight:700;color:#fff')}>{vm.profileSaving ? '저장 중…' : '저장하기'}</Text>
         </Pressable>
       </View>

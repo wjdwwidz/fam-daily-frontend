@@ -12,8 +12,8 @@ import { useVm } from '../vm/useVm.js'
 export default function Gallery() {
   const vm = useVm()
   return (
-    <View style={s('padding:8px 20px 110px')}>
-      <View style={s('margin:6px 2px 4px')}>
+    <View style={s('padding:md 5xl 110px')}>
+      <View style={s('margin:sm hair xs')}>
         <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px')}>추억</Text>
       </View>
 
@@ -54,11 +54,11 @@ export default function Gallery() {
       <View style={{ height: 8, backgroundColor: '#FBEDF3', borderRadius: 4, marginTop: -2, marginBottom: 14 }} />
 
       {vm.isCards && (
-        <View style={s('flex-direction:row;flex-wrap:wrap;justify-content:space-between;row-gap:12px')}>
+        <View style={s('flex-direction:row;flex-wrap:wrap;justify-content:space-between;row-gap:xl')}>
           {vm.galleryMedia.map((g, i) => (
             <Pressable key={i} onPress={g.open} style={[s('background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:26px;overflow:hidden;'), { width: '48.5%' }]}>
               <View style={[{ height: 120, position: 'relative', backgroundColor: g.tone, alignItems: 'center', justifyContent: 'center' }]}>
-                <Text style={s('font-family:ui-monospace,Menlo,monospace;font-size:11px;color:rgba(23,48,59,0.4);padding:0 8px;text-align:center')}>{g.ph}</Text>
+                <Text style={s('font-family:ui-monospace,Menlo,monospace;font-size:11px;color:rgba(23,48,59,0.4);padding:0 md;text-align:center')}>{g.ph}</Text>
                 {g.isVideo && (
                   <View style={s('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
                     <View style={s('width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center')}>
@@ -95,7 +95,7 @@ export default function Gallery() {
       )}
 
       {vm.galleryEmpty && (
-        <Text style={s('text-align:center;padding:56px 20px;color:#B4C1CA;font-size:12.8px;line-height:1.7')}>아직 올린 추억이 없어요.{'\n'}첫 추억을 남겨보세요</Text>
+        <Text style={s('text-align:center;padding:56px 5xl;color:#B4C1CA;font-size:12.8px;line-height:1.7')}>아직 올린 추억이 없어요.{'\n'}첫 추억을 남겨보세요</Text>
       )}
     </View>
   )
