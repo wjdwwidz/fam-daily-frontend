@@ -106,7 +106,8 @@ export function buildVm(app) {
   const rawMembers = st.groupMembers || st.currentGroup?.members || []
   const members = rawMembers.map((m, i) => {
     const label = m.nickname || m.name || '가족' // 호칭 우선
-    const isMe = m.userId ? m.userId === myId : label === st.currentGroup?.myNickname
+    // userId 로 판별하되, 내 정보(me)가 아직 없으면 호칭으로 폴백 (색 통일이 깨지지 않게)
+    const isMe = m.userId && myId ? m.userId === myId : label === st.currentGroup?.myNickname
     return {
       name: label,
       role: m.name || '', // 부제엔 실제 이름
