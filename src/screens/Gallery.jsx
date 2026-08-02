@@ -14,7 +14,7 @@ export default function Gallery() {
   return (
     <View style={s('padding:md 5xl 110px')}>
       <View style={s('margin:sm hair xs')}>
-        <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px')}>추억</Text>
+        <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px')}>일상</Text>
       </View>
 
       {/* 폴더 탭 — 선택된 폴더가 앞으로, 나머지는 뒤로 넘어가 겹치는 느낌 */}
@@ -95,7 +95,7 @@ export default function Gallery() {
       )}
 
       {vm.galleryEmpty && (
-        <Text style={s('text-align:center;padding:56px 5xl;color:#B4C1CA;font-size:12.8px;line-height:1.7')}>아직 올린 추억이 없어요.{'\n'}첫 추억을 남겨보세요</Text>
+        <Text style={s('text-align:center;padding:56px 5xl;color:#B4C1CA;font-size:12.8px;line-height:1.7')}>아직 올린 일상이 없어요.{'\n'}첫 일상을 남겨보세요</Text>
       )}
     </View>
   )

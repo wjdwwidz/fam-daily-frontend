@@ -12,7 +12,7 @@ export default function Upload() {
         <Pressable onPress={vm.back} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);align-items:center;justify-content:center;color:#17303B')}>
           <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#17303B"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
         </Pressable>
-        <Text style={s('font-size:13.9px;font-weight:800;color:#17303B')}>새 추억 올리기</Text>
+        <Text style={s('font-size:13.9px;font-weight:800;color:#17303B')}>새 일상 올리기</Text>
         <View style={s('width:40px')}></View>
       </View>
       <View style={s('padding:sm 5xl 0')}>
