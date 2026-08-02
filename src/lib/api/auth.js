@@ -20,5 +20,5 @@ export async function kakaoLogin() {
 export const authApi = {
   kakaoLogin,
   me: () => request('/auth/me'),
-  updateMe: (name) => request('/auth/me', { method: 'PATCH', body: { name } }),
+  updateMe: (patch) => request('/auth/me', { method: 'PATCH', body: patch }),
 }

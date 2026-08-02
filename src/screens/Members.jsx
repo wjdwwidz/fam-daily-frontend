@@ -56,8 +56,8 @@ export default function Members() {
       </View>
 
       <Pressable onPress={vm.goProfileEdit} style={s('display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:14px 16px;cursor:pointer;margin-bottom:12px')}>
-        <View style={s(`width:52px;height:52px;border-radius:50%;background:${vm.myColor};display:flex;align-items:center;justify-content:center;flex:0 0 auto`)}>
-          <Text style={s('color:#fff;font-weight:800;font-size:16.5px')}>{vm.myInitial}</Text>
+        <View style={s(`width:52px;height:52px;border-radius:50%;overflow:hidden;background:${vm.myColor};display:flex;align-items:center;justify-content:center;flex:0 0 auto`)}>
+          {vm.myPhoto ? <Image source={{ uri: vm.myPhoto }} style={s('width:52px;height:52px')} resizeMode="cover" /> : <Text style={s('color:#fff;font-weight:800;font-size:16.5px')}>{vm.myInitial}</Text>}
         </View>
         <View style={s('flex:1')}>
           <Text style={s('font-size:13.5px;font-weight:800;color:#17303B')}>내 프로필 설정하기</Text>

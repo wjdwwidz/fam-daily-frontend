@@ -28,12 +28,12 @@ const fmtTime = (iso) => {
   h = h % 12 || 12
   return `${ap} ${h}:${min}`
 }
-// 백엔드 답변 → 화면 카드 형태
-const answerCard = (a) => {
+// 백엔드 답변 → 화면 카드 형태 (색은 공용 personColor 로 통일)
+const answerCard = (a, personColor) => {
   const key = a.author?.nickname || a.author?.name || '?'
   return {
     id: a.id,
-    by: { name: a.author?.nickname || a.author?.name || '가족', ini: String(key).slice(0, 1), c: colorFor(a.author?.userId || key) },
+    by: { name: a.author?.nickname || a.author?.name || '가족', ini: String(key).slice(0, 1), c: personColor(a.author) },
     time: fmtTime(a.createdAt),
     likes: 0,
     text: a.text,
@@ -47,7 +47,7 @@ export function buildVm(app) {
   const {
     st, setState, go, navTo, back,
     variant = 'grid', initialScreen = 'login',
-    logout, kakaoLogin, googleLogin, saveProfile,
+    logout, kakaoLogin, googleLogin, saveProfile, pickProfilePhoto,
     doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     loadQna, submitAnswer, submitQuestion,
@@ -125,7 +125,24 @@ export function buildVm(app) {
   }
   const memberCount = st.groupMembers ? st.groupMembers.length : (st.currentGroup?.memberCount ?? members.length)
   const myInitial = String(st.currentGroup?.myNickname || st.me?.name || '나').slice(0, 1)
-  const myColor = colorFor(myId || st.currentGroup?.myNickname || '나') // 내 고유색 (프로필/아바타 통일용)
+
+  // 사람 → 색을 한 군데로 통일.
+  // 1순위 userId(닉네임이 바뀌어도 유지), userId 가 없는 payload(단어 작성자 등)는
+  // 이미 로드된 멤버 목록에서 호칭/이름으로 찾아 같은 색을 쓴다. 그래도 없으면 이름 해시.
+  // ※ 키가 섞이면 색이 5개뿐이라 화면마다 다른 색이 나온다.
+  const colorByLabel = {}
+  members.forEach((m) => {
+    if (m.name) colorByLabel[m.name] = m.c
+    if (m.role) colorByLabel[m.role] = m.c
+  })
+  const personColor = (p) => {
+    if (!p) return AVATAR_COLORS[0]
+    if (p.userId != null) return colorFor(p.userId)
+    const label = p.nickname || p.name || ''
+    return colorByLabel[label] || colorFor(label)
+  }
+  // 내 고유색 (프로필/아바타 통일용) — 멤버 목록의 '나' 와 반드시 같은 색
+  const myColor = members.find((m) => m.me)?.c || colorFor(myId || st.currentGroup?.myNickname || '나')
 
   const N = members.length, BOX = 296, C = BOX / 2, R = 114, AV = 60
   const active = (((st.activeMood ?? 0) % N) + N) % N
@@ -163,7 +180,7 @@ export function buildVm(app) {
       by: {
         name: w.author?.nickname || w.author?.name || '',
         ini: String(w.author?.nickname || w.author?.name || '?').slice(0, 1),
-        c: colorFor(w.author?.nickname || w.author?.name),
+        c: personColor(w.author),
       },
     }
     obj.open = () => navTo({ screen: 'word', word: obj })
@@ -221,7 +238,7 @@ export function buildVm(app) {
         no: `${qc.no}/${qc.total}`,
         q: qc.question.text,
         progress: `${qc.memberCount}명 중 ${qc.answers.length}명이 답했어요`,
-        answered: qc.answers.map((a) => ({ ...answerCard(a), mine: !!myId && a.author?.userId === myId })),
+        answered: qc.answers.map((a) => ({ ...answerCard(a, personColor), mine: !!myId && a.author?.userId === myId })),
         empty: false,
       }
     : { id: null, no: '0/0', q: '', progress: '', answered: [], empty: true }
@@ -272,9 +289,9 @@ export function buildVm(app) {
     mySpaces: (st.groups || []).map((g) => ({
       name: g.name,
       sub: `${g.memberCount}명 · 내 호칭 ${g.myNickname}`,
-      avatars: (g.members || []).map((m, i) => ({
+      avatars: (g.members || []).map((m) => ({
         i: String(m.nickname || m.name || '').slice(0, 1),
-        c: AVATAR_COLORS[i % AVATAR_COLORS.length],
+        c: personColor(m), // 순서 기반이 아니라 사람 고유색으로 (다른 화면과 동일)
       })),
       pick: () => { setState({ currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null }); go('home'); loadMembers(g.id); loadWords(g.id); loadQna(g.id) },
     })),
@@ -300,6 +317,10 @@ export function buildVm(app) {
     onProfileName: (t) => setState({ profileName: t, profileError: null }),
     onProfileNickname: (t) => setState({ profileNickname: t, profileError: null }),
     onProfileMood: (t) => setState({ profileMood: t, profileError: null }),
+    profilePhoto: st.profilePhoto ?? (st.me?.photoUrl ?? null), // 편집 중 미리보기용
+    myPhoto: st.me?.photoUrl || null, // 저장된 내 프로필 사진 (아바타 표시용)
+    pickProfilePhoto,
+    profilePhotoUploading: !!st.profilePhotoUploading,
     saveProfile,
     profileSaving: !!st.profileSaving,
     profileError: st.profileError || null,

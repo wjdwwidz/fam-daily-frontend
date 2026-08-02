@@ -1,4 +1,5 @@
 import { api, setToken, clearToken } from '../lib/api.js'
+import * as ImagePicker from 'expo-image-picker'
 
 // 인증 흐름 (로그인/가입/카카오/로그아웃). 공유 컨텍스트 {ref,setState,go} 주입.
 export function createAuthActions({ ref, setState, go }) {
@@ -54,10 +55,16 @@ export function createAuthActions({ ref, setState, go }) {
       setState({ profileError: '이름과 호칭을 입력해주세요.' })
       return
     }
+    const photo = cur.profilePhoto // undefined면 사진 안 건드린 것
     setState({ profileSaving: true, profileError: null })
     try {
-      if (name !== cur.me?.name) {
-        const me = await api.updateMe(name)
+      const nameChanged = name !== cur.me?.name
+      const photoChanged = photo !== undefined && photo !== cur.me?.photoUrl
+      if (nameChanged || photoChanged) {
+        const me = await api.updateMe({
+          name,
+          ...(photoChanged ? { photoUrl: photo } : {}),
+        })
         setState({ me })
       }
       const gid = cur.currentGroup?.id
@@ -78,12 +85,33 @@ export function createAuthActions({ ref, setState, go }) {
           setState({ groupMembers: g.members || [] })
         } catch {}
       }
-      setState({ profileSaving: false, profileName: undefined, profileNickname: undefined, profileMood: undefined })
+      setState({ profileSaving: false, profileName: undefined, profileNickname: undefined, profileMood: undefined, profilePhoto: undefined })
       go('members')
     } catch (e) {
       setState({ profileSaving: false, profileError: e.message })
     }
   }
 
-  return { afterAuth, logout, kakaoLogin, googleLogin, saveProfile }
+  // 프로필 사진 선택 → 즉시 미리보기 → 업로드(profiles/ 폴더) → URL 을 profilePhoto 에 저장
+  const pickProfilePhoto = async () => {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (perm.status !== 'granted') return
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.7,
+      })
+      if (result.canceled || !result.assets || !result.assets[0]) return
+      const asset = result.assets[0]
+      setState({ profilePhoto: asset.uri, profilePhotoUploading: true, profileError: null })
+      try {
+        const url = await api.uploadImage(asset, 'profiles')
+        setState({ profilePhoto: url, profilePhotoUploading: false })
+      } catch (e) {
+        setState({ profilePhotoUploading: false, profileError: e.message })
+      }
+    } catch {}
+  }
+
+  return { afterAuth, logout, kakaoLogin, googleLogin, saveProfile, pickProfilePhoto }
 }

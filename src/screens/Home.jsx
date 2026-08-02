@@ -19,8 +19,8 @@ export default function Home() {
           </View>
         </View>
         <Pressable onPress={vm.goMembersDeep}>
-          <View style={s(`width:44px;height:44px;border-radius:15px;background:${vm.myColor};display:flex;align-items:center;justify-content:center;cursor:pointer;`)}>
-            <Text style={s('color:#fff;font-weight:800;font-size:15px')}>{vm.myInitial}</Text>
+          <View style={s(`width:44px;height:44px;border-radius:15px;overflow:hidden;background:${vm.myColor};display:flex;align-items:center;justify-content:center;cursor:pointer;`)}>
+            {vm.myPhoto ? <Image source={{ uri: vm.myPhoto }} style={s('width:44px;height:44px')} resizeMode="cover" /> : <Text style={s('color:#fff;font-weight:800;font-size:15px')}>{vm.myInitial}</Text>}
           </View>
         </Pressable>
       </View>
@@ -65,8 +65,8 @@ export default function Home() {
         )}
       </View>
       <View style={s('display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:8px 8px 8px 12px;margin-bottom:20px')}>
-        <View style={s(`width:36px;height:36px;border-radius:50%;background:${vm.myColor};display:flex;align-items:center;justify-content:center;flex:0 0 auto`)}>
-          <Text style={s('color:#fff;font-weight:800;font-size:13px')}>{vm.myInitial}</Text>
+        <View style={s(`width:36px;height:36px;border-radius:50%;overflow:hidden;background:${vm.myColor};display:flex;align-items:center;justify-content:center;flex:0 0 auto`)}>
+          {vm.myPhoto ? <Image source={{ uri: vm.myPhoto }} style={s('width:36px;height:36px')} resizeMode="cover" /> : <Text style={s('color:#fff;font-weight:800;font-size:13px')}>{vm.myInitial}</Text>}
         </View>
         <TextInput value={vm.myMood} onChangeText={vm.onMoodInput} onSubmitEditing={vm.onMoodKey} placeholder="가족에게 한마디 남겨보세요" placeholderTextColor="#9DB2BD" style={s('flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:13px;color:#17303B;font-family:inherit')} />
         <Pressable onPress={vm.sendMood} style={s(`width:38px;height:38px;border-radius:50%;background:${vm.sendBg};display:flex;align-items:center;justify-content:center;flex:0 0 auto;cursor:pointer;transition:background .2s`)}>

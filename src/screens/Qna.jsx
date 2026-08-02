@@ -1,4 +1,4 @@
-import { View, Text, Pressable } from 'react-native'
+import { View, Text, Image, Pressable } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
@@ -41,8 +41,8 @@ export default function Qna() {
           </View>
 
           <Pressable onPress={vm.openAnswer} style={s('display:flex;align-items:center;gap:12px;cursor:pointer;background:#FCEEF4;border-radius:16px;padding:12px 14px;margin-bottom:8px')}>
-            <View style={s(`width:40px;height:40px;border-radius:50%;background:${vm.myColor};display:flex;align-items:center;justify-content:center;flex:0 0 auto`)}>
-              <Text style={s('color:#fff;font-weight:800;font-size:14px')}>{String(vm.myNickname).slice(0, 1)}</Text>
+            <View style={s(`width:40px;height:40px;border-radius:50%;overflow:hidden;background:${vm.myColor};display:flex;align-items:center;justify-content:center;flex:0 0 auto`)}>
+              {vm.myPhoto ? <Image source={{ uri: vm.myPhoto }} style={s('width:40px;height:40px')} resizeMode="cover" /> : <Text style={s('color:#fff;font-weight:800;font-size:14px')}>{String(vm.myNickname).slice(0, 1)}</Text>}
             </View>
             <Text style={s('flex:1;font-size:12.6px;color:#B0808F;font-weight:600')}>나도 오늘의 답변을 남겨보세요…</Text>
             <Svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#FF5E8A" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">

@@ -1,4 +1,4 @@
-import { View, Text, Pressable, TextInput } from 'react-native'
+import { View, Text, Pressable, TextInput, Image } from 'react-native'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
@@ -19,11 +19,20 @@ export default function Profile() {
       </View>
 
       <View style={s('display:flex;flex-direction:column;align-items:center;padding:14px 20px 6px')}>
-        <View style={s('position:relative;width:104px;height:104px')}>
+        <Pressable onPress={vm.pickProfilePhoto} style={s('position:relative;width:104px;height:104px')}>
           <View style={s(`width:104px;height:104px;border-radius:50%;border:3px solid ${vm.myColor};overflow:hidden;background:${vm.myColor};position:relative`)}>
-            <View style={s('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
-              <Text style={s('color:#fff;font-weight:800;font-size:34px')}>{String(vm.profileNickname || '나').slice(0, 1)}</Text>
-            </View>
+            {vm.profilePhoto ? (
+              <Image source={{ uri: vm.profilePhoto }} style={s('width:104px;height:104px')} resizeMode="cover" />
+            ) : (
+              <View style={s('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
+                <Text style={s('color:#fff;font-weight:800;font-size:34px')}>{String(vm.profileNickname || '나').slice(0, 1)}</Text>
+              </View>
+            )}
+            {vm.profilePhotoUploading && (
+              <View style={s('position:absolute;inset:0;background:rgba(23,48,59,0.45);display:flex;align-items:center;justify-content:center')}>
+                <Text style={s('color:#fff;font-size:11px;font-weight:700')}>업로드 중…</Text>
+              </View>
+            )}
           </View>
           <View style={s('position:absolute;right:0;bottom:2px;width:32px;height:32px;border-radius:50%;background:#fff;border:1px solid #FFE1EC;box-shadow:0 4px 10px rgba(255,94,138,0.2);display:flex;align-items:center;justify-content:center;color:#FF5E8A')}>
             <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" color="#FF5E8A">
@@ -31,7 +40,7 @@ export default function Profile() {
               <Circle cx={12} cy={13} r={3.3} />
             </Svg>
           </View>
-        </View>
+        </Pressable>
         <Text style={s('font-size:11px;color:#9DB2BD;margin-top:10px')}>사진을 눌러 바꿔보세요</Text>
       </View>
 
