@@ -284,6 +284,9 @@ export function buildVm(app) {
     isGallery: scr === 'gallery', isMedia: scr === 'media', isUpload: scr === 'upload',
     isMembers: scr === 'members',
     isQna: scr === 'qna', isProfile: scr === 'profile',
+    isRecord: scr === 'record', // 사전+문답 통합 탭
+    recordTab: st.recordTab || 'dict', // 'dict' | 'qna'
+    setRecordTab: (k) => setState({ recordTab: k }),
     isSignup: scr === 'signup', isSpace: scr === 'space', isCreateSpace: scr === 'createSpace', isJoinSpace: scr === 'joinSpace',
     isSpaceSelect: scr === 'spaceSelect',
     // 백엔드에서 불러온 실제 그룹 목록
@@ -350,7 +353,7 @@ export function buildVm(app) {
     doJoinGroup,
     actionLoading: !!st.actionLoading, actionError: st.actionError || null,
     isMoodHistory: scr === 'moodhistory', readMedia: st.editPost !== 'media',
-    showNav: ['home', 'dict', 'gallery', 'members', 'qna'].indexOf(scr) !== -1,
+    showNav: ['home', 'record', 'dict', 'gallery', 'members', 'qna'].indexOf(scr) !== -1,
     members, words, media, days, events, dictGroups,
     galleryMedia, galleryTabs, galleryEmpty: galleryMedia.length === 0,
     todayQ, pastQs, joinList,
@@ -438,6 +441,7 @@ export function buildVm(app) {
     editMedia: st.editPost === 'media',
     wordDraft: st.wordDraft || {}, mediaDraft: st.mediaDraft || {},
     navHome: navC(scr === 'home'), navDict: navC(scr === 'dict'), navQna: navC(scr === 'qna'),
+    navRecord: navC(scr === 'record'),
     navGallery: navC(scr === 'gallery'), navMembers: navC(scr === 'members'),
     photoTabBg: ut === 'photo' ? '#FFF0F5' : 'transparent',
     photoTabColor: ut === 'photo' ? '#FF5E8A' : '#9DB2BD',
@@ -448,11 +452,13 @@ export function buildVm(app) {
     enterJoin: () => { setState({ authNext: 'joinSpace' }); go('auth') },
     goSpace: () => go('space'), goCreate: () => go('createSpace'), goJoin: () => go('joinSpace'), finishOnboard: () => go('spaceSelect'), goLogin: () => go('login'), goSignupBack: () => go('signup'),
     linkSheetOpen: !!st.linkSheetOpen, openLinkSheet: () => setState({ linkSheetOpen: true }), closeLinkSheet: () => setState({ linkSheetOpen: false }),
-    goHome: () => go('home'), goDict: () => go('dict'),
+    goHome: () => go('home'),
+    goRecord: () => go('record'), // 기록 탭 (마지막 서브탭 유지)
+    goDict: () => navTo({ screen: 'record', recordTab: 'dict' }),
     goGallery: () => go('gallery'),
     goMembers: () => navTo({ screen: 'members', membersFromLink: false }),
     goMembersDeep: () => navTo({ screen: 'members', membersFromLink: true }),
-    goCalendar: () => go('calendar'), goQna: () => go('qna'),
+    goCalendar: () => go('calendar'), goQna: () => navTo({ screen: 'record', recordTab: 'qna' }),
     // 문답 답변 남기기 (오늘의 질문에 대해)
     answerDraft: st.answerDraft ?? '',
     onAnswerInput: (text) => setState({ answerDraft: text }),

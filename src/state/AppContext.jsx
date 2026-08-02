@@ -9,7 +9,7 @@ import { createQnaActions } from './qnaActions.js'
 const Ctx = createContext(null)
 
 export function AppProvider({ initialScreen = 'login', variant = 'grid', children }) {
-  const [st, setRaw] = useState({ screen: undefined, uploadType: 'photo' })
+  const [st, setRaw] = useState({ screen: undefined, uploadType: 'photo', recordTab: 'dict' })
   const ref = useRef(st)
   ref.current = st
   const setState = (patch) =>

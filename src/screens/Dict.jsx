@@ -7,14 +7,7 @@ import { useVm } from '../vm/useVm.js'
 export default function Dict() {
   const vm = useVm()
   return (
-    <View style={s('padding:md 5xl 110px')}>
-      <View style={s('display:flex;align-items:center;justify-content:space-between;margin:sm hair xs')}>
-        <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px')}>가족 사전</Text>
-        <Pressable onPress={vm.openSearch} style={s('width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid #FFE1EC;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#FF5E8A')}>
-          <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#FF5E8A"><Circle cx={11} cy={11} r={6} /><Path d="M20 20 L16 16" /></Svg>
-        </Pressable>
-      </View>
-
+    <>
       <View style={s('display:flex;align-items:center;gap:sm;margin:0 hair xl;font-size:11px;color:#9DB2BD;font-weight:600')}>
         <Svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="#C6A8FF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M7 5 V19" /><Path d="M4 8 L7 5 L10 8" /><Path d="M14 16 h6" /><Path d="M14 11 h5" /><Path d="M14 6 h4" /></Svg>
         <Text style={s('font-size:11px;color:#9DB2BD;font-weight:600')}>가나다순 · ㄱ → ㅎ</Text>
@@ -42,6 +35,6 @@ export default function Dict() {
           </View>
         </View>
       ))}
-    </View>
+    </>
   )
 }

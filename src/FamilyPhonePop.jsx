@@ -11,13 +11,12 @@ import Space from './screens/Space.jsx'
 import CreateSpace from './screens/CreateSpace.jsx'
 import JoinSpace from './screens/JoinSpace.jsx'
 import Home from './screens/Home.jsx'
-import Dict from './screens/Dict.jsx'
+import Record from './screens/Record.jsx'
 import Word from './screens/Word.jsx'
 import Gallery from './screens/Gallery.jsx'
 import Media from './screens/Media.jsx'
 import MoodHistory from './screens/MoodHistory.jsx'
 import QnaHistory from './screens/QnaHistory.jsx'
-import Qna from './screens/Qna.jsx'
 import Upload from './screens/Upload.jsx'
 import Members from './screens/Members.jsx'
 import Profile from './screens/Profile.jsx'
@@ -36,9 +35,9 @@ export default function FamilyPhonePop() {
 
   const Screen =
     vm.isLogin ? Login : vm.isAuth ? Auth : vm.isSpaceSelect ? SpaceSelect : vm.isSignup ? Signup : vm.isSpace ? Space : vm.isCreateSpace ? CreateSpace :
-    vm.isJoinSpace ? JoinSpace : vm.isHome ? Home : vm.isDict ? Dict : vm.isWord ? Word :
+    vm.isJoinSpace ? JoinSpace : vm.isHome ? Home : vm.isRecord ? Record : vm.isWord ? Word :
     vm.isGallery ? Gallery : vm.isMedia ? Media : vm.isMoodHistory ? MoodHistory :
-    vm.isQnaHistory ? QnaHistory : vm.isQna ? Qna : vm.isUpload ? Upload :
+    vm.isQnaHistory ? QnaHistory : vm.isUpload ? Upload :
     vm.isMembers ? Members : vm.isProfile ? Profile : Login
 
   return (

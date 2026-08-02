@@ -8,14 +8,7 @@ export default function Qna() {
   const vm = useVm()
   const q = vm.todayQ
   return (
-    <View style={s('padding:md 5xl 110px')}>
-      <View style={s('flex-direction:row;align-items:center;justify-content:space-between;margin:sm hair xs')}>
-        <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px')}>가족 문답</Text>
-        <Pressable onPress={vm.openQuestion} style={s('flex-direction:row;align-items:center;gap:sm;background:#FF5E8A;border-radius:13px;padding:md 2xl')}>
-          <Text style={s('color:#fff;font-size:14px;font-weight:800;line-height:1')}>＋</Text>
-          <Text style={s('color:#fff;font-size:12px;font-weight:700')}>새 질문</Text>
-        </Pressable>
-      </View>
+    <>
       <View style={s('display:flex;align-items:flex-end;justify-content:space-between;margin:0 hair 3xl')}>
         <Text style={s('font-size:11.3px;color:#6A7E88')}>하루 한 개, 서로를 알아가요 🌱</Text>
         <Pressable onPress={vm.openQnaHistory}>
@@ -102,6 +95,6 @@ export default function Qna() {
           )}
         </>
       )}
-    </View>
+    </>
   )
 }
