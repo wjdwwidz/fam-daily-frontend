@@ -16,7 +16,7 @@ export default function QuestionSheet() {
           textAlignVertical="top"
           value={vm.questionDraft}
           onChangeText={vm.onQuestionInput}
-          placeholder="예: 우리 가족 하면 떠오르는 냄새는?"
+          placeholder="질문을 입력하세요"
           placeholderTextColor="#9DB2BD"
           style={s('width:100%;min-height:88px;margin-top:fieldGap;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-family:inherit;color:#17303B;resize:none')}
         />

@@ -11,14 +11,14 @@ export default function Home() {
   const vm = useVm()
   return (
     <View style={s('padding:screenTop screenX screenBottom')}>
-      <View style={s('display:flex;align-items:center;justify-content:space-between;margin:sm 0 3xl')}>
-        <View style={s('display:flex;align-items:center;gap:xl')}>
+      <View style={s('display:flex;align-items:flex-start;justify-content:space-between;margin:sm 0 lg')}>
+        <View style={s('display:flex;align-items:flex-start;gap:xl')}>
           <Image source={mascot} style={{ width: 52, height: 69 }} resizeMode="cover" />
           <View>
-            <Text style={s('font-size:18px;font-weight:800;color:#17303B;letter-spacing:-0.3px;line-height:1.35;white-space:nowrap')}>오늘의 한마디!</Text>
+            <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px;white-space:nowrap')}>오늘의 한마디!</Text>
           </View>
         </View>
-        <Pressable onPress={vm.goMembersDeep}>
+        <Pressable onPress={vm.goMembersDeep} style={s('align-self:center')}>
           <View style={s(`width:44px;height:44px;border-radius:15px;overflow:hidden;background:${vm.myColor};display:flex;align-items:center;justify-content:center;cursor:pointer;`)}>
             {vm.myPhoto ? <Image source={{ uri: vm.myPhoto }} style={s('width:44px;height:44px')} resizeMode="cover" /> : <Text style={s('color:#fff;font-weight:800;font-size:15px')}>{vm.myInitial}</Text>}
           </View>

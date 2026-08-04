@@ -18,7 +18,7 @@ export default function Record() {
   const isDict = vm.recordTab === 'dict'
   return (
     <View style={s('padding:screenTop screenX screenBottom')}>
-      <View style={s('flex-direction:row;align-items:center;justify-content:space-between;margin:sm hair 3xl')}>
+      <View style={s('flex-direction:row;align-items:flex-start;justify-content:space-between;margin:sm hair lg')}>
         {/* 사전 / 문답 — 타이틀이자 전환 스위처 (활성=진하게) */}
         <View style={s('flex-direction:row;align-items:center;gap:2xl')}>
           {SUBTABS.map((t) => {
