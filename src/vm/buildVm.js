@@ -436,6 +436,7 @@ export function buildVm(app) {
     onWordTerm, onWordReading, onWordMeaning, onWordExample,
     removeWordPhoto, pickWordPhoto, noWordPhoto: !(st.wordDraft && st.wordDraft.photo),
     photoUploading: !!st.photoUploading, photoError: st.photoError || null,
+    wordError: st.wordError || null, // 단어 저장 실패 사유 (사전 화면에 표시)
     saveWord, onMediaTitle, saveMedia, cancelEdit,
     editWord: st.editPost === 'word', readWord: st.editPost !== 'word',
     editMedia: st.editPost === 'media',

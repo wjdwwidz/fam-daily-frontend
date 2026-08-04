@@ -18,10 +18,10 @@ export function createWordActions({ ref, setState, navTo, go }) {
   const startEditWord = () => {
     const w = ref.current.word || {}
     // 기존 사진(photoUrl)을 편집 폼의 photo(문자열 URL)로 넣어 미리보기·재저장 되게
-    setState({ menuOpen: null, editPost: 'word', wordDraft: { ...w, photo: w.photoUrl || null } })
+    setState({ menuOpen: null, editPost: 'word', wordError: null, wordDraft: { ...w, photo: w.photoUrl || null } })
   }
   const startAddWord = () =>
-    navTo({ screen: 'word', menuOpen: null, editPost: 'word', word: { by: { ini: '엄', c: '#FF5E8A' } }, wordDraft: { term: '', reading: '', meaning: '', example: '' } })
+    navTo({ screen: 'word', menuOpen: null, editPost: 'word', wordError: null, word: { by: { ini: '엄', c: '#FF5E8A' } }, wordDraft: { term: '', reading: '', meaning: '', example: '' } })
 
   const onWordTerm = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, term: text } }))
   const onWordReading = (text) => setState((s2) => ({ wordDraft: { ...s2.wordDraft, reading: text } }))
@@ -56,7 +56,11 @@ export function createWordActions({ ref, setState, navTo, go }) {
     const draft = ref.current.wordDraft || {}
     const term = (draft.term || '').trim()
     const meaning = (draft.meaning || '').trim()
-    if (!term || !meaning) return // 단어·뜻 필수
+    // 단어·뜻 필수 — 그냥 return 하면 버튼이 먹통인 것처럼 보이므로 이유를 알린다
+    if (!term || !meaning) {
+      setState({ wordError: '단어와 뜻을 입력해주세요.' })
+      return
+    }
     const groupId = ref.current.currentGroup?.id
     const editingId = ref.current.word && ref.current.word.id
     const body = {
@@ -66,14 +70,16 @@ export function createWordActions({ ref, setState, navTo, go }) {
       example: (draft.example || '').trim(),
       photoUrl: draft.photo || undefined,
     }
-    setState({ actionLoading: true })
+    setState({ actionLoading: true, wordError: null })
     try {
       if (editingId) await api.updateWord(editingId, body)
       else await api.createWord(groupId, body)
       await loadWords(groupId)
-      setState({ actionLoading: false, editPost: null, word: null, wordDraft: {}, screen: 'dict' })
+      // 저장 후 사전 목록으로. 'dict' 는 '기록' 탭 병합 후 사라진 화면이라 라우팅에서 떨어진다.
+      setState({ actionLoading: false, wordError: null, editPost: null, word: null, wordDraft: {}, screen: 'record', recordTab: 'dict' })
     } catch (e) {
-      setState({ actionLoading: false, authError: e.message })
+      // 예전엔 authError 로 넣어서 사전 화면에 아무것도 안 떴다 → 저장 실패가 조용히 묻힘
+      setState({ actionLoading: false, wordError: e.message })
     }
   }
 
@@ -87,7 +93,8 @@ export function createWordActions({ ref, setState, navTo, go }) {
         await loadWords(groupId)
       } catch {}
     }
-    go('dict')
+    // 삭제한 단어로 되돌아갈 일은 없으니 히스토리 없이 사전 목록으로
+    setState({ screen: 'record', recordTab: 'dict' })
   }
 
   return {
