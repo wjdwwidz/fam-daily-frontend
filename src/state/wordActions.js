@@ -2,7 +2,7 @@ import { api } from '../lib/api.js'
 import * as ImagePicker from 'expo-image-picker'
 
 // 가족 사전(단어) 액션: 로드/추가/수정/삭제 + 편집 폼 입력.
-export function createWordActions({ ref, setState, navTo, go }) {
+export function createWordActions({ ref, setState, navTo, go, showToast }) {
   // 현재 그룹의 단어 불러오기
   const loadWords = async (groupId) => {
     if (!groupId) return
@@ -72,11 +72,11 @@ export function createWordActions({ ref, setState, navTo, go }) {
     }
     setState({ actionLoading: true, wordError: null })
     try {
-      if (editingId) await api.updateWord(editingId, body)
-      else await api.createWord(groupId, body)
-      await loadWords(groupId)
-      // 저장 후 사전 목록으로. 'dict' 는 '기록' 탭 병합 후 사라진 화면이라 라우팅에서 떨어진다.
-      setState({ actionLoading: false, wordError: null, editPost: null, word: null, wordDraft: {}, screen: 'record', recordTab: 'dict' })
+      const saved = editingId ? await api.updateWord(editingId, body) : await api.createWord(groupId, body)
+      await loadWords(groupId) // 목록 갱신 → 상세보기가 최신 내용으로 다시 그려진다
+      // 저장 후엔 목록이 아니라 방금 쓴 글의 상세보기로 돌아간다
+      setState({ actionLoading: false, wordError: null, editPost: null, wordDraft: {}, screen: 'word', word: saved })
+      showToast('저장되었습니다')
     } catch (e) {
       // 예전엔 authError 로 넣어서 사전 화면에 아무것도 안 떴다 → 저장 실패가 조용히 묻힘
       setState({ actionLoading: false, wordError: e.message })

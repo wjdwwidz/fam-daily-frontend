@@ -35,7 +35,13 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
     return () => clearInterval(t)
   }, [])
 
-  const core = { st, setState, ref, go, navTo }
+  // 하단 알림 — 잠시 뒤 자동으로 사라진다. 그 사이 다른 알림이 떴으면 건드리지 않는다.
+  const showToast = (text, ms = 2200) => {
+    setState({ toast: text })
+    setTimeout(() => setState((p) => (p.toast === text ? { toast: null } : {})), ms)
+  }
+
+  const core = { st, setState, ref, go, navTo, showToast }
   const auth = createAuthActions(core)
   const groups = createGroupActions(core, auth.afterAuth)
   const words = createWordActions(core)

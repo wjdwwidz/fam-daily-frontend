@@ -165,8 +165,9 @@ export function buildVm(app) {
   const tailStyle = `position:absolute;left:${C}px;top:${C}px;width:0;height:0;transform:rotate(${-90 + (active * 360) / N}deg);z-index:3`
   const dotStyle = `position:absolute;left:0;top:-7px;width:14px;height:14px;border-radius:50%;transform:translateX(60px);background:${activeMember.c};box-shadow:0 2px 6px rgba(255,94,138,0.3)`
 
-  // 실제 그룹 단어(백엔드) → 화면용 형태로 변환
-  const words = (st.groupWords || []).map((w) => {
+  // 실제 그룹 단어(백엔드) → 화면용 형태로 변환.
+  // 저장 직후 목록 갱신이 실패한 경우의 폴백에도 재사용하려고 함수로 뺐다.
+  const wordVm = (w) => {
     const obj = {
       id: w.id,
       term: w.term,
@@ -186,7 +187,8 @@ export function buildVm(app) {
     }
     obj.open = () => navTo({ screen: 'word', word: obj })
     return obj
-  })
+  }
+  const words = (st.groupWords || []).map(wordVm)
 
   const dictGroups = []
   const gIdx = {}
@@ -415,7 +417,12 @@ export function buildVm(app) {
     stopEvt: () => {},
     recentWords: words.slice(0, 3),
     todayWord: words[0],
-    currentWord: st.word || words[0],
+    // st.word 는 열었던 시점의 스냅샷이라, 저장 직후엔 같은 id 를 최신 목록에서 다시 찾아 반영한다.
+    // 목록에 없으면(갱신 실패 등) 서버 응답을 화면 형태로 변환해 쓴다 — by/date 누락 방지.
+    currentWord:
+      (st.word && words.find((w) => w.id === st.word.id)) ||
+      (st.word && (st.word.by ? st.word : wordVm(st.word))) ||
+      words[0],
     currentMedia: st.media || media[0] || null,
     mediaLiked: !!st.mediaLiked,
     mediaHearts: ((st.media || media[0] || {}).hearts || 0) + (st.mediaLiked ? 1 : 0),
@@ -437,6 +444,7 @@ export function buildVm(app) {
     removeWordPhoto, pickWordPhoto, noWordPhoto: !(st.wordDraft && st.wordDraft.photo),
     photoUploading: !!st.photoUploading, photoError: st.photoError || null,
     wordError: st.wordError || null, // 단어 저장 실패 사유 (사전 화면에 표시)
+    toast: st.toast || null, // 하단 알림 문구
     saveWord, onMediaTitle, saveMedia, cancelEdit,
     editWord: st.editPost === 'word', readWord: st.editPost !== 'word',
     editMedia: st.editPost === 'media',
