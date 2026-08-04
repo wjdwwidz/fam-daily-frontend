@@ -16,7 +16,7 @@ export default function Signup() {
       </View>
       <Text style={s('font-size:26px;font-weight:800;color:#17303B;letter-spacing:-0.5px')}>가입 완료!</Text>
       <Text style={s('font-size:14px;color:#6A7E88;margin-top:xl;line-height:1.6;max-width:250px')}>카카오 프로필로 시작해요.{'\n'}이제 우리 가족 공간을 만들어볼까요?</Text>
-      <Pressable onPress={vm.goSpace} style={s('width:100%;margin-top:8xl;height:56px;border-radius:20px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;cursor:pointer')}>
+      <Pressable onPress={vm.goSpace} style={s('width:100%;margin:ctaTop 0 ctaBottom;height:56px;border-radius:20px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;cursor:pointer')}>
         <Text style={s('font-size:16px;font-weight:700;color:#fff')}>시작하기</Text>
       </Pressable>
     </View>

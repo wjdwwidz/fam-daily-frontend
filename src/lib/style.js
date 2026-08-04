@@ -193,7 +193,12 @@ export function s(str) {
       case 'fontWeight': raw.fontWeight = String(px(val)); continue
       default:
         if (DROP.has(key)) continue
-        raw[key] = px(val)
+        // 방향 지정 마진/패딩(marginTop, marginBottom, paddingLeft…)도 토큰 해석
+        if (/^(margin|padding)(Top|Right|Bottom|Left)$/.test(key)) {
+          raw[key] = resolveSpace(val) ?? px(val)
+        } else {
+          raw[key] = px(val)
+        }
     }
   }
 

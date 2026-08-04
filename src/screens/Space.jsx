@@ -17,7 +17,7 @@ export default function Space() {
       <Image source={onboarding} style={{ width: 104, height: 82, marginBottom: 14 }} resizeMode="cover" />
       <Text style={s('font-size:24px;font-weight:600;color:#17303B;letter-spacing:-0.5px;line-height:1.35')}>가족 공간을{'\n'}만들어볼까요?</Text>
       <Text style={s('font-size:13px;color:#6A7E88;margin-top:lg')}>새로 만들거나, 초대받은 가족방에 참여하세요</Text>
-      <View style={s('display:flex;flex-direction:column;gap:2xl;margin-top:7xl')}>
+      <View style={s('display:flex;flex-direction:column;gap:btnGap;margin-top:7xl')}>
         <Pressable onPress={vm.goCreate} style={s('display:flex;align-items:center;gap:2xl;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:22px;padding:4xl 4xl;cursor:pointer')}>
           <View style={s('width:48px;height:48px;border-radius:15px;background:#FFF0F5;display:flex;align-items:center;justify-content:center;color:#FF5E8A;flex:0 0 auto')}>
             <Svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" color="#FF5E8A">

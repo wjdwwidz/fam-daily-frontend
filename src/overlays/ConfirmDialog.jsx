@@ -15,7 +15,7 @@ export default function ConfirmDialog() {
         {!!c.message && (
           <Text style={s('font-size:12.5px;color:#9DB2BD;text-align:center;margin-top:md;line-height:1.6')}>{c.message}</Text>
         )}
-        <View style={s('display:flex;flex-direction:row;gap:lg;margin-top:5xl')}>
+        <View style={s('display:flex;flex-direction:row;gap:lg;margin:ctaTop 0 0')}>
           <Pressable onPress={vm.closeConfirm} style={s('flex:1;align-items:center;justify-content:center;padding:2xl;border-radius:14px;border:1px solid #FFE1EC;background:#FFF6FB;cursor:pointer')}>
             <Text style={s('color:#FF8FAE;font-size:14px;font-weight:700')}>{c.noText || '아니오'}</Text>
           </Pressable>

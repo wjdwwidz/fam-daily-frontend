@@ -24,13 +24,13 @@ export default function Word() {
 
       {vm.editWord && (
         <View style={s('padding:0 6xl')}>
-          <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin-bottom:sm')}>단어</Text>
+          <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin-bottom:labelGap')}>단어</Text>
           <TextInput value={vm.wordDraft.term} onChangeText={vm.onWordTerm} style={s('width:100%;box-sizing:border-box;border:1px solid #FFE1EC;border-radius:12px;padding:xl 2xl;font-size:20px;font-weight:800;font-family:inherit;color:#17303B;outline:none;background:#FFFAFC')} />
-          <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin:3xl 0 sm')}>발음</Text>
+          <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin:fieldGap 0 labelGap')}>발음</Text>
           <TextInput value={vm.wordDraft.reading} onChangeText={vm.onWordReading} style={s('width:100%;box-sizing:border-box;border:1px solid #FFE1EC;border-radius:12px;padding:xl 2xl;font-size:14px;font-family:inherit;color:#17303B;outline:none;background:#FFFAFC')} />
-          <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin:3xl 0 sm')}>뜻</Text>
+          <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin:fieldGap 0 labelGap')}>뜻</Text>
           <TextInput value={vm.wordDraft.meaning} onChangeText={vm.onWordMeaning} multiline textAlignVertical="top" style={s('width:100%;box-sizing:border-box;border:1px solid #FFE1EC;border-radius:12px;padding:xl 2xl;font-size:14px;font-family:inherit;color:#17303B;outline:none;background:#FFFAFC;resize:none;line-height:1.6')} />
-          <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin:3xl 0 sm')}>이럴 때 써요</Text>
+          <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin:fieldGap 0 labelGap')}>이럴 때 써요</Text>
           <TextInput value={vm.wordDraft.example} onChangeText={vm.onWordExample} multiline textAlignVertical="top" style={s('width:100%;box-sizing:border-box;border:1px solid #FFE1EC;border-radius:12px;padding:xl 2xl;font-size:14px;font-family:inherit;color:#17303B;outline:none;background:#FFFAFC;resize:none;line-height:1.6')} />
           {vm.wordDraft.photo && (
             <View style={s('margin-top:2xl;position:relative')}>
@@ -52,11 +52,12 @@ export default function Word() {
               <Text style={s('color:#FF5E8A;font-size:13.5px;font-weight:700')}>사진 추가하기</Text>
             </Pressable>
           )}
-          <View style={s('display:flex;flex-direction:row;gap:lg;margin-top:5xl')}>
-            <Pressable onPress={vm.cancelEdit} style={s('flex:1;align-items:center;justify-content:center;padding:2xl;border-radius:14px;border:1px solid #FFE1EC;cursor:pointer')}>
+          {vm.wordError && <Text style={s('margin-top:2xl;font-size:12px;color:#E5484D;text-align:center')}>{vm.wordError}</Text>}
+          <View style={s('display:flex;flex-direction:row;gap:lg;margin:ctaTop 0 ctaBottom')}>
+            <Pressable onPress={vm.cancelEdit} style={s('flex:1;align-items:center;justify-content:center;padding:btnY 2xl;border-radius:14px;border:1px solid #FFE1EC;cursor:pointer')}>
               <Text style={s('color:#8497A1;font-size:14px;font-weight:700')}>취소</Text>
             </Pressable>
-            <Pressable onPress={vm.saveWord} style={s('flex:2;align-items:center;justify-content:center;padding:2xl;border-radius:14px;background:#FF5E8A;cursor:pointer;box-shadow:0 10px 22px rgba(255,94,138,0.3)')}>
+            <Pressable onPress={vm.saveWord} style={s('flex:2;align-items:center;justify-content:center;padding:btnY 2xl;border-radius:14px;background:#FF5E8A;cursor:pointer;box-shadow:0 10px 22px rgba(255,94,138,0.3)')}>
               <Text style={s('color:#fff;font-size:14px;font-weight:800')}>저장하기</Text>
             </Pressable>
           </View>

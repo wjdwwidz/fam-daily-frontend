@@ -11,8 +11,8 @@ export default function AnswerSheet() {
         <View style={s('width:40px;height:4px;border-radius:2px;background:#EADCE2;margin:0 auto 4xl')} />
         <Text style={s('font-size:11px;font-weight:700;color:#FF5E8A;letter-spacing:0.4px')}>{vm.todayQ.no} 문답</Text>
         <Text style={s('font-size:16px;font-weight:800;color:#17303B;margin-top:sm;line-height:1.4')}>{vm.todayQ.q}</Text>
-        <TextInput multiline textAlignVertical="top" value={vm.answerDraft} onChangeText={vm.onAnswerInput} placeholder="내 답변을 적어보세요" placeholderTextColor="#9DB2BD" style={s('width:100%;min-height:96px;margin-top:3xl;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-family:inherit;color:#17303B;resize:none')} />
-        <Pressable onPress={vm.submitAnswer} style={s('margin-top:4xl;height:54px;border-radius:17px;background:#FF5E8A;align-items:center;justify-content:center;cursor:pointer')}>
+        <TextInput multiline textAlignVertical="top" value={vm.answerDraft} onChangeText={vm.onAnswerInput} placeholder="내 답변을 적어보세요" placeholderTextColor="#9DB2BD" style={s('width:100%;min-height:96px;margin-top:fieldGap;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-family:inherit;color:#17303B;resize:none')} />
+        <Pressable onPress={vm.submitAnswer} style={s('margin-top:ctaTop;height:54px;border-radius:17px;background:#FF5E8A;align-items:center;justify-content:center;cursor:pointer')}>
           <Text style={s('font-size:14px;font-weight:700;color:#fff')}>{vm.actionLoading ? (vm.editingAnswer ? '수정 중…' : '남기는 중…') : (vm.editingAnswer ? '답변 수정하기' : '답변 남기기')}</Text>
         </Pressable>
       </Pressable>

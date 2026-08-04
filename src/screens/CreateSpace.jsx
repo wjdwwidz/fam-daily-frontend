@@ -18,10 +18,10 @@ export default function CreateSpace() {
       <View style={s('padding:6xl 6xl 0')}>
         <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>공간 이름</Text>
         <TextInput value={vm.createName} onChangeText={vm.onCreateName} placeholder="예) 서연이네 가족" placeholderTextColor={vm.createNameErr ? '#F0A6B0' : '#B7C3CC'} style={s(`width:100%;border:1.5px solid ${vm.createNameErr ? '#E5484D' : '#FFE1EC'};background:${vm.createNameErr ? '#FFF2F3' : '#fff'};border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-weight:600;color:#17303B`)} />
-        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:4xl 0 md')}>내 호칭</Text>
+        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:fieldGap 0 labelGap')}>내 호칭</Text>
         <TextInput value={vm.createNickname} onChangeText={vm.onCreateNickname} placeholder="예) 엄마" placeholderTextColor={vm.createNickErr ? '#F0A6B0' : '#B7C3CC'} style={s(`width:100%;border:1.5px solid ${vm.createNickErr ? '#E5484D' : '#FFE1EC'};background:${vm.createNickErr ? '#FFF2F3' : '#fff'};border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-weight:600;color:#17303B`)} />
         <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md;line-height:1.5')}>공간을 만들면 내가 관리자가 되고,{'\n'}가족을 초대할 수 있어요</Text>
-        <Pressable onPress={vm.doCreateGroup} disabled={vm.actionLoading} style={s(`margin-top:6xl;height:54px;border-radius:17px;background:${vm.actionLoading ? '#F3C6D5' : '#FF5E8A'};align-items:center;justify-content:center;flex-direction:row;gap:md`)}>
+        <Pressable onPress={vm.doCreateGroup} disabled={vm.actionLoading} style={s(`margin:ctaTop 0 ctaBottom;height:54px;border-radius:17px;background:${vm.actionLoading ? '#F3C6D5' : '#FF5E8A'};align-items:center;justify-content:center;flex-direction:row;gap:md`)}>
           {vm.actionLoading && <ActivityIndicator color="#fff" size="small" />}
           <Text style={s('font-size:15px;font-weight:700;color:#fff')}>공간 만들기</Text>
         </Pressable>

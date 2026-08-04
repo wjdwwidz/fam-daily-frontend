@@ -41,16 +41,16 @@ export default function Media() {
           </View>
         )}
       </View>
-      <View style={s('padding:4xl 5xl 0')}>
+      <View style={s('padding:4xl screenX 0')}>
         {vm.editMedia && (
           <>
-          <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin-bottom:sm')}>설명</Text>
+          <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin-bottom:labelGap')}>설명</Text>
           <TextInput multiline textAlignVertical="top" value={vm.mediaDraft.title} onChangeText={vm.onMediaTitle} placeholder="이 순간을 설명해 보세요" placeholderTextColor="#9DB2BD" style={s('width:100%;box-sizing:border-box;min-height:70px;resize:none;border:1px solid #FFE1EC;border-radius:12px;padding:xl 2xl;font-size:13.5px;font-weight:500;line-height:1.55;font-family:inherit;color:#17303B;outline:none;background:#FFFAFC')} />
-          <View style={s('display:flex;gap:lg;margin:2xl 0 xs')}>
-            <Pressable onPress={vm.cancelEdit} style={s('flex:1;align-items:center;justify-content:center;padding:xl;border-radius:14px;border:1px solid #FFE1EC')}>
+          <View style={s('display:flex;gap:lg;margin:ctaTop 0 ctaBottom')}>
+            <Pressable onPress={vm.cancelEdit} style={s('flex:1;align-items:center;justify-content:center;padding:btnY xl;border-radius:14px;border:1px solid #FFE1EC')}>
               <Text style={s('color:#8497A1;font-size:13.5px;font-weight:700')}>취소</Text>
             </Pressable>
-            <Pressable onPress={vm.saveMedia} style={s('flex:2;align-items:center;justify-content:center;padding:xl;border-radius:14px;background:#FF5E8A;box-shadow:0 10px 22px rgba(255,94,138,0.3)')}>
+            <Pressable onPress={vm.saveMedia} style={s('flex:2;align-items:center;justify-content:center;padding:btnY xl;border-radius:14px;background:#FF5E8A;box-shadow:0 10px 22px rgba(255,94,138,0.3)')}>
               <Text style={s('color:#fff;font-size:13.5px;font-weight:800')}>저장하기</Text>
             </Pressable>
           </View>

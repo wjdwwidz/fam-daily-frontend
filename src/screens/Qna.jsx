@@ -21,7 +21,7 @@ export default function Qna() {
           <Text style={s('font-size:34px;margin-bottom:lg')}>🌱</Text>
           <Text style={s('font-size:15px;font-weight:800;color:#17303B;text-align:center;line-height:1.5')}>아직 질문이 없어요</Text>
           <Text style={s('font-size:12px;color:#8A98A2;text-align:center;margin-top:sm;line-height:1.6')}>첫 질문을 올리고{'\n'}가족의 답변을 모아보세요</Text>
-          <Pressable onPress={vm.openQuestion} style={s('margin-top:4xl;flex-direction:row;align-items:center;gap:sm;background:#FF5E8A;border-radius:15px;padding:2xl 6xl')}>
+          <Pressable onPress={vm.openQuestion} style={s('margin-top:ctaTop;flex-direction:row;align-items:center;gap:sm;background:#FF5E8A;border-radius:15px;padding:2xl 6xl')}>
             <Text style={s('color:#fff;font-size:14px;font-weight:800;line-height:1')}>＋</Text>
             <Text style={s('color:#fff;font-size:13.5px;font-weight:700')}>첫 질문 내기</Text>
           </Pressable>

@@ -17,7 +17,7 @@ export default function LinkSheet() {
           <TextInput placeholder="우리끼리.app/join/..." placeholderTextColor="#9DB2BD" style={s('flex:1;border:none;outline:none;background:transparent;font-size:12.6px;font-family:inherit;color:#17303B')} />
           <Text style={s('height:36px;padding:0 2xl;border-radius:11px;background:#FFF0F5;color:#FF5E8A;display:flex;align-items:center;font-size:12px;font-weight:700;cursor:pointer;flex:0 0 auto')}>붙여넣기</Text>
         </View>
-        <Pressable onPress={vm.finishOnboard} style={s('margin-top:5xl;height:54px;border-radius:17px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;cursor:pointer')}>
+        <Pressable onPress={vm.finishOnboard} style={s('margin-top:ctaTop;height:54px;border-radius:17px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;cursor:pointer')}>
           <Text style={s('font-size:15px;font-weight:700;color:#fff')}>참여하기</Text>
         </Pressable>
       </Pressable>

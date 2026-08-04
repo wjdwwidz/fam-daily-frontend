@@ -22,7 +22,7 @@ export default function JoinSpace() {
         <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>초대 코드 (또는 링크)</Text>
         <TextInput value={vm.joinCode} onChangeText={vm.onJoinCode} placeholder="예) bpowPeLX 또는 우리끼리.app/join/…" placeholderTextColor={vm.joinCodeErr ? '#F0A6B0' : '#B7C3CC'} autoCapitalize="none" style={s(`width:100%;border:1.5px solid ${vm.joinCodeErr ? '#E5484D' : '#FFE1EC'};background:${vm.joinCodeErr ? '#FFF2F3' : '#fff'};border-radius:14px;padding:2xl 3xl;font-size:13px;color:#17303B`)} />
 
-        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:4xl 0 md')}>가족 내 호칭</Text>
+        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:fieldGap 0 labelGap')}>가족 내 호칭</Text>
         <TextInput value={vm.joinNickname} onChangeText={vm.onJoinNickname} placeholder="예) 이모" placeholderTextColor={vm.joinNickErr ? '#F0A6B0' : '#B7C3CC'} style={s(`width:100%;border:1.5px solid ${vm.joinNickErr ? '#E5484D' : '#FFE1EC'};background:${vm.joinNickErr ? '#FFF2F3' : '#fff'};border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-weight:600;color:#17303B`)} />
 
         <View style={s('flex:1')} />

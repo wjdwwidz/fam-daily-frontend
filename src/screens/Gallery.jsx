@@ -12,10 +12,8 @@ import { useVm } from '../vm/useVm.js'
 export default function Gallery() {
   const vm = useVm()
   return (
-    <View style={s('padding:md 5xl 110px')}>
-      <View style={s('margin:sm hair xs')}>
-        <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px')}>일상</Text>
-      </View>
+    <View style={s('padding:screenTop screenX screenBottom')}>
+      <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px;margin:sm hair lg')}>일상</Text>
 
       {/* 폴더 탭 — 선택된 폴더가 앞으로, 나머지는 뒤로 넘어가 겹치는 느낌 */}
       <ScrollView

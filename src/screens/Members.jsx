@@ -8,7 +8,7 @@ import { useVm } from '../vm/useVm.js'
 export default function Members() {
   const vm = useVm()
   return (
-    <View style={s('padding:md 5xl 110px')}>
+    <View style={s('padding:screenTop screenX screenBottom')}>
       {vm.membersFromLink && (
         <Pressable onPress={vm.back} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#17303B;margin:sm hair lg')}>
           <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#17303B">
@@ -16,13 +16,14 @@ export default function Members() {
           </Svg>
         </Pressable>
       )}
-      <View style={s('display:flex;align-items:center;gap:xl;margin:sm hair 2xl')}>
+      <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px;margin:sm hair lg')}>가족</Text>
+      <View style={s('display:flex;align-items:center;gap:xl;margin:0 hair 2xl')}>
         <Image source={signature} style={{ width: 74, height: 42 }} resizeMode="cover" />
         <View style={s('flex:1')}>
           {vm.editingGroupName ? (
             <View style={s('flex-direction:row;align-items:center;gap:sm')}>
               <TextInput value={vm.groupNameDraft} onChangeText={vm.onGroupNameDraft} autoFocus placeholder="가족 이름" placeholderTextColor="#9DB2BD" style={s('flex:1;min-width:0;border:1px solid #FFE1EC;background:#FFF6FB;border-radius:10px;padding:sm lg;font-size:18px;font-weight:800;color:#17303B;font-family:inherit')} />
-              <Pressable onPress={vm.saveGroupName} disabled={vm.groupNameSaving} style={s(`padding:md xl;border-radius:10px;background:#FF5E8A;opacity:${vm.groupNameSaving ? 0.7 : 1}`)}>
+              <Pressable onPress={vm.saveGroupName} disabled={vm.groupNameSaving} style={s(`padding:btnY xl;border-radius:10px;background:#FF5E8A;opacity:${vm.groupNameSaving ? 0.7 : 1}`)}>
                 <Text style={s('color:#fff;font-size:12px;font-weight:700')}>저장</Text>
               </Pressable>
               <Pressable onPress={vm.cancelEditGroupName} style={s('padding:md lg;border-radius:10px;background:#fff;border:1px solid #FFE1EC')}>

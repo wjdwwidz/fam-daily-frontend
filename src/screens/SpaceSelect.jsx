@@ -33,7 +33,7 @@ export default function SpaceSelect() {
       )}
 
       {vm.mySpaces.map((g, i) => (
-        <Pressable key={i} onPress={g.pick} style={s('flex-direction:row;align-items:center;gap:2xl;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:22px;padding:3xl 4xl;margin-bottom:xl')}>
+        <Pressable key={i} onPress={g.pick} style={s('flex-direction:row;align-items:center;gap:2xl;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:22px;padding:3xl 4xl;margin-bottom:btnGap')}>
           <View style={s('flex-direction:row')}>
             {g.avatars.slice(0, 4).map((a, j) => (
               <View key={j} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', backgroundColor: a.c, marginLeft: j === 0 ? 0 : -11 }}>
@@ -49,7 +49,7 @@ export default function SpaceSelect() {
         </Pressable>
       ))}
 
-      <View style={s('flex-direction:column;gap:lg;margin-top:xs')}>
+      <View style={s('flex-direction:column;gap:btnGap;margin-top:0')}>
         <Pressable onPress={vm.goCreate} style={s('flex-direction:row;align-items:center;justify-content:center;gap:lg;border:1.5px dashed #FFC4D8;border-radius:20px;padding:4xl;background:#FFF6FA')}>
           <Svg viewBox="0 0 24 24" width={19} height={19} fill="none" stroke="#FF5E8A" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 5 V19" /><Path d="M5 12 H19" /></Svg>
           <Text style={s('font-size:14px;font-weight:700;color:#FF5E8A')}>새 가족 만들기</Text>

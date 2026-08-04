@@ -10,7 +10,7 @@ import { SHOW_UNFINISHED } from '../lib/features.js'
 export default function Home() {
   const vm = useVm()
   return (
-    <View style={s('padding:md 5xl 110px')}>
+    <View style={s('padding:screenTop screenX screenBottom')}>
       <View style={s('display:flex;align-items:center;justify-content:space-between;margin:sm 0 3xl')}>
         <View style={s('display:flex;align-items:center;gap:xl')}>
           <Image source={mascot} style={{ width: 52, height: 69 }} resizeMode="cover" />

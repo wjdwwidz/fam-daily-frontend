@@ -15,7 +15,7 @@ export default function Upload() {
         <Text style={s('font-size:13.9px;font-weight:800;color:#17303B')}>새 일상 올리기</Text>
         <View style={s('width:40px')}></View>
       </View>
-      <View style={s('padding:sm 5xl 0')}>
+      <View style={s('padding:sm screenX 0')}>
         <View style={s('margin-top:3xl;height:200px;border-radius:28px;border:2px dashed #BEE6F7;background:#F3FAFE;flex-direction:column;align-items:center;justify-content:center;gap:xl')}>
           <View style={s('width:60px;height:60px;border-radius:26px;background:#FFF0F5;align-items:center;justify-content:center;color:#FF5E8A')}>
             <Svg viewBox="0 0 24 24" width={28} height={28} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" color="#FF5E8A"><Path d="M12 16 V5" /><Path d="M8 9 L12 5 L16 9" /><Path d="M5 15 v3 a1 1 0 0 0 1 1 h12 a1 1 0 0 0 1 -1 v-3" /></Svg>
@@ -38,7 +38,7 @@ export default function Upload() {
             </View>
           ))}
         </ScrollView>
-        <Pressable onPress={vm.goHome} style={s('margin-top:6xl;height:54px;border-radius:17px;background:#FF5E8A;align-items:center;justify-content:center;flex-direction:row')}>
+        <Pressable onPress={vm.goHome} style={s('margin:ctaTop 0 ctaBottom;height:54px;border-radius:17px;background:#FF5E8A;align-items:center;justify-content:center;flex-direction:row')}>
           <Text style={s('font-size:13.9px;font-weight:700;color:#fff')}>올리기</Text>
         </Pressable>
       </View>

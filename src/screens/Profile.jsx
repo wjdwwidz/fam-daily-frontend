@@ -44,14 +44,14 @@ export default function Profile() {
         <Text style={s('font-size:11px;color:#9DB2BD;margin-top:lg')}>사진을 눌러 바꿔보세요</Text>
       </View>
 
-      <View style={s('padding:2xl 5xl 0')}>
+      <View style={s('padding:2xl screenX 0')}>
         <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>이름</Text>
         <TextInput value={vm.profileName} onChangeText={vm.onProfileName} placeholder="이름" placeholderTextColor="#9DB2BD" style={s('width:100%;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-weight:600;font-family:inherit;color:#17303B')} />
 
-        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:4xl 0 md')}>가족 내 호칭</Text>
+        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:fieldGap 0 labelGap')}>가족 내 호칭</Text>
         <TextInput value={vm.profileNickname} onChangeText={vm.onProfileNickname} placeholder="예: 엄마, 아빠" placeholderTextColor="#9DB2BD" style={s('width:100%;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-weight:600;font-family:inherit;color:#17303B')} />
 
-        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:4xl 0 md')}>오늘의 한마디</Text>
+        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:fieldGap 0 labelGap')}>오늘의 한마디</Text>
         <View style={s('display:flex;align-items:center;border:1px solid #FFE1EC;background:#FFF6FB;border-radius:14px;padding:2xl 3xl')}>
           <TextInput value={vm.profileMood} onChangeText={vm.onProfileMood} placeholder="오늘의 한마디를 남겨보세요" placeholderTextColor="#9DB2BD" style={s('flex:1;border:none;outline:none;background:transparent;font-size:13.1px;font-family:inherit;color:#17303B')} />
         </View>
@@ -67,7 +67,7 @@ export default function Profile() {
 
         {vm.profileError && <Text style={s('font-size:12px;color:#E5484D;margin-top:3xl;text-align:center')}>{vm.profileError}</Text>}
 
-        <Pressable onPress={vm.saveProfile} disabled={vm.profileSaving} style={s(`margin-top:6xl;height:54px;border-radius:17px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;opacity:${vm.profileSaving ? 0.7 : 1}`)}>
+        <Pressable onPress={vm.saveProfile} disabled={vm.profileSaving} style={s(`margin:ctaTop 0 ctaBottom;height:54px;border-radius:17px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;opacity:${vm.profileSaving ? 0.7 : 1}`)}>
           <Text style={s('font-size:13.9px;font-weight:700;color:#fff')}>{vm.profileSaving ? '저장 중…' : '저장하기'}</Text>
         </Pressable>
       </View>
