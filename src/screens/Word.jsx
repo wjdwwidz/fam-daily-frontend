@@ -1,6 +1,7 @@
 import { View, Text, Image, Pressable, TextInput } from 'react-native'
 import Svg, { Path, Circle, Rect } from 'react-native-svg'
 import { s } from '../lib/style.js'
+import Avatar from '../components/Avatar.jsx'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -68,9 +69,7 @@ export default function Word() {
       <View style={s('padding:0 3xl')}>
         <View style={s('background:#FFFDFB;border:1px solid #F1E2E9;border-radius:0;padding:6xl 6xl;box-shadow:0 14px 34px rgba(214,150,175,0.14)')}>
         <View style={s('display:flex;flex-direction:row;align-items:center;gap:lg;margin-bottom:3xl')}>
-          <View style={s(`width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:${vm.currentWord.by.c}`)}>
-            <Text style={s('color:#fff;font-weight:700;font-size:12.5px')}>{vm.currentWord.by.ini}</Text>
-          </View>
+          <Avatar photoUrl={vm.currentWord.by.photoUrl} ini={vm.currentWord.by.ini} size={34} />
           <View style={s('flex:1')}>
             <Text style={s('font-size:12px;font-weight:700;color:#17303B')}>{vm.currentWord.by.name}</Text>
             <Text style={s('font-size:10.5px;color:#9DB2BD;margin-top:hair')}>{vm.currentWord.date} 등록</Text>

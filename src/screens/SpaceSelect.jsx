@@ -1,6 +1,7 @@
 import { View, Text, Image, Pressable, ActivityIndicator } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
+import Avatar from '../components/Avatar.jsx'
 import mascot from '../../assets/img/mascot.png'
 
 import { useVm } from '../vm/useVm.js'
@@ -36,9 +37,7 @@ export default function SpaceSelect() {
         <Pressable key={i} onPress={g.pick} style={s('flex-direction:row;align-items:center;gap:2xl;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:22px;padding:3xl 4xl;margin-bottom:btnGap')}>
           <View style={s('flex-direction:row')}>
             {g.avatars.slice(0, 4).map((a, j) => (
-              <View key={j} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', backgroundColor: a.c, marginLeft: j === 0 ? 0 : -11 }}>
-                <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '700' }}>{a.i}</Text>
-              </View>
+              <Avatar key={j} photoUrl={a.photoUrl} ini={a.i} size={36} style={{ borderWidth: 2, borderColor: '#fff', marginLeft: j === 0 ? 0 : -11 }} />
             ))}
           </View>
           <View style={s('flex:1;min-width:0')}>

@@ -1,6 +1,7 @@
-import { View, Text, Pressable, TextInput, Image } from 'react-native'
+import { View, Text, Pressable, TextInput } from 'react-native'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { s } from '../lib/style.js'
+import Avatar from '../components/Avatar.jsx'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -20,16 +21,10 @@ export default function Profile() {
 
       <View style={s('display:flex;flex-direction:column;align-items:center;padding:2xl 5xl sm')}>
         <Pressable onPress={vm.pickProfilePhoto} style={s('position:relative;width:104px;height:104px')}>
-          <View style={s(`width:104px;height:104px;border-radius:50%;border:3px solid ${vm.myColor};overflow:hidden;background:${vm.myColor};position:relative`)}>
-            {vm.profilePhoto ? (
-              <Image source={{ uri: vm.profilePhoto }} style={s('width:104px;height:104px')} resizeMode="cover" />
-            ) : (
-              <View style={s('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
-                <Text style={s('color:#fff;font-weight:800;font-size:34px')}>{String(vm.profileNickname || '나').slice(0, 1)}</Text>
-              </View>
-            )}
+          <View style={s('width:104px;height:104px;position:relative')}>
+            <Avatar photoUrl={vm.profilePhoto} ini={String(vm.profileNickname || '나').slice(0, 1)} size={104} />
             {vm.profilePhotoUploading && (
-              <View style={s('position:absolute;inset:0;background:rgba(23,48,59,0.45);display:flex;align-items:center;justify-content:center')}>
+              <View style={s('position:absolute;inset:0;border-radius:50%;background:rgba(23,48,59,0.45);display:flex;align-items:center;justify-content:center')}>
                 <Text style={s('color:#fff;font-size:11px;font-weight:700')}>업로드 중…</Text>
               </View>
             )}
@@ -54,15 +49,6 @@ export default function Profile() {
         <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:fieldGap 0 labelGap')}>오늘의 한마디</Text>
         <View style={s('display:flex;align-items:center;border:1px solid #FFE1EC;background:#FFF6FB;border-radius:14px;padding:2xl 3xl')}>
           <TextInput value={vm.profileMood} onChangeText={vm.onProfileMood} placeholder="오늘의 한마디를 남겨보세요" placeholderTextColor="#9DB2BD" style={s('flex:1;border:none;outline:none;background:transparent;font-size:13.1px;font-family:inherit;color:#17303B')} />
-        </View>
-
-        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:4xl 0 lg')}>내 프로필 색</Text>
-        <View style={s('display:flex;gap:xl;padding:0 hair')}>
-          <View style={s('width:38px;height:38px;border-radius:50%;background:#FF5E8A;border:3px solid #17303B')}></View>
-          <View style={s('width:38px;height:38px;border-radius:50%;background:#A66CFF;border:3px solid transparent')}></View>
-          <View style={s('width:38px;height:38px;border-radius:50%;background:#FF9F43;border:3px solid transparent')}></View>
-          <View style={s('width:38px;height:38px;border-radius:50%;background:#4D7CFE;border:3px solid transparent')}></View>
-          <View style={s('width:38px;height:38px;border-radius:50%;background:#22C4A6;border:3px solid transparent')}></View>
         </View>
 
         {vm.profileError && <Text style={s('font-size:12px;color:#E5484D;margin-top:3xl;text-align:center')}>{vm.profileError}</Text>}

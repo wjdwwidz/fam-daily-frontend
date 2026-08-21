@@ -2,6 +2,7 @@ import { View, ScrollView } from 'react-native'
 import { s } from './lib/style.js'
 import { Flower6 } from './components/Flower.jsx'
 import Nav from './components/Nav.jsx'
+import ScreenTransition from './components/ScreenTransition.jsx'
 import { useVm } from './vm/useVm.js'
 import Login from './screens/Login.jsx'
 import Auth from './screens/Auth.jsx'
@@ -15,7 +16,6 @@ import Record from './screens/Record.jsx'
 import Word from './screens/Word.jsx'
 import Gallery from './screens/Gallery.jsx'
 import Media from './screens/Media.jsx'
-import MoodHistory from './screens/MoodHistory.jsx'
 import QnaHistory from './screens/QnaHistory.jsx'
 import Upload from './screens/Upload.jsx'
 import Members from './screens/Members.jsx'
@@ -37,7 +37,7 @@ export default function FamilyPhonePop() {
   const Screen =
     vm.isLogin ? Login : vm.isAuth ? Auth : vm.isSpaceSelect ? SpaceSelect : vm.isSignup ? Signup : vm.isSpace ? Space : vm.isCreateSpace ? CreateSpace :
     vm.isJoinSpace ? JoinSpace : vm.isHome ? Home : vm.isRecord ? Record : vm.isWord ? Word :
-    vm.isGallery ? Gallery : vm.isMedia ? Media : vm.isMoodHistory ? MoodHistory :
+    vm.isGallery ? Gallery : vm.isMedia ? Media :
     vm.isQnaHistory ? QnaHistory : vm.isUpload ? Upload :
     vm.isMembers ? Members : vm.isProfile ? Profile : Login
 
@@ -50,7 +50,9 @@ export default function FamilyPhonePop() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <Screen />
+        <ScreenTransition screenKey={vm.screen}>
+          <Screen />
+        </ScreenTransition>
       </ScrollView>
 
       {vm.linkSheetOpen && <LinkSheet />}

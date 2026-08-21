@@ -1,6 +1,7 @@
-import { View, Text, Image, Pressable } from 'react-native'
+import { View, Text, Pressable } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
+import Avatar from '../components/Avatar.jsx'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -34,9 +35,7 @@ export default function Qna() {
           </View>
 
           <Pressable onPress={vm.openAnswer} style={s('display:flex;align-items:center;gap:xl;cursor:pointer;background:#FCEEF4;border-radius:16px;padding:xl 2xl;margin-bottom:md')}>
-            <View style={s(`width:40px;height:40px;border-radius:50%;overflow:hidden;background:${vm.myColor};display:flex;align-items:center;justify-content:center;flex:0 0 auto`)}>
-              {vm.myPhoto ? <Image source={{ uri: vm.myPhoto }} style={s('width:40px;height:40px')} resizeMode="cover" /> : <Text style={s('color:#fff;font-weight:800;font-size:14px')}>{String(vm.myNickname).slice(0, 1)}</Text>}
-            </View>
+            <Avatar photoUrl={vm.myPhoto} ini={String(vm.myNickname).slice(0, 1)} size={40} />
             <Text style={s('flex:1;font-size:12.6px;color:#B0808F;font-weight:600')}>나도 오늘의 답변을 남겨보세요…</Text>
             <Svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#FF5E8A" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
               <Path d="M4 20 L4 16 L15 5 L19 9 L8 20 Z" />
@@ -52,9 +51,7 @@ export default function Qna() {
               {q.answered.map((a, i) => (
                 <View key={i} style={s('background:#FCEEF4;border-radius:16px;padding:2xl;margin-bottom:lg')}>
                   <View style={s('display:flex;align-items:center;gap:lg;margin-bottom:lg')}>
-                    <View style={s(`width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:${a.by.c}`)}>
-                      <Text style={s('color:#fff;font-weight:700;font-size:12.5px')}>{a.by.ini}</Text>
-                    </View>
+                    <Avatar photoUrl={a.by.photoUrl} ini={a.by.ini} size={34} />
                     <Text style={s('font-size:12.6px;font-weight:700;color:#17303B')}>{a.by.name}</Text>
                     <View style={s('flex-direction:row;align-items:center;gap:lg;margin-left:auto')}>
                       <Text style={s('font-size:10.5px;color:#B4C1CA')}>{a.time}</Text>

@@ -3,18 +3,13 @@
 import { QUESTION_BANK } from '../data/questionBank.js'
 import { CALENDAR_SINGLE, CALENDAR_RANGES, CALENDAR_EVENTS } from '../data/mockCalendar.js'
 import { MOCK_JOIN_GROUPS } from '../data/mockGroups.js'
-import { MOCK_MOOD_HISTORY } from '../data/mockMood.js'
 import { seedComments } from '../data/mockComments.js'
 import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import * as Clipboard from 'expo-clipboard'
 
-const AVATAR_COLORS = ['#FF5E8A', '#4D7CFE', '#FF9F43', '#22C4A6', '#A66CFF']
-const colorFor = (key) => {
-  const str = String(key || '')
-  let h = 0
-  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0
-  return AVATAR_COLORS[h % AVATAR_COLORS.length]
-}
+// 일상(갤러리) 폴더 탭 색. 멤버 아바타 색을 쓰면 탭마다 색이 튀어 무지개가 된다.
+// 브랜드 핑크(#FF5E8A)와 같은 밝기에서 마젠타 쪽으로 살짝 밀어 또렷하게.
+const FOLDER_TAB_COLOR = '#FF5A97'
 const fmtDate = (iso) => {
   const m = String(iso || '').match(/^\d{4}-(\d{2})-(\d{2})/)
   return m ? `${Number(m[1])}월 ${Number(m[2])}일` : ''
@@ -28,12 +23,12 @@ const fmtTime = (iso) => {
   h = h % 12 || 12
   return `${ap} ${h}:${min}`
 }
-// 백엔드 답변 → 화면 카드 형태 (색은 공용 personColor 로 통일)
-const answerCard = (a, personColor) => {
+// 백엔드 답변 → 화면 카드 형태
+const answerCard = (a) => {
   const key = a.author?.nickname || a.author?.name || '?'
   return {
     id: a.id,
-    by: { name: a.author?.nickname || a.author?.name || '가족', ini: String(key).slice(0, 1), c: personColor(a.author) },
+    by: { name: a.author?.nickname || a.author?.name || '가족', ini: String(key).slice(0, 1), photoUrl: a.author?.photoUrl || null },
     time: fmtTime(a.createdAt),
     likes: 0,
     text: a.text,
@@ -112,7 +107,8 @@ export function buildVm(app) {
       name: label,
       role: m.name || '', // 부제엔 실제 이름
       ini: String(label).slice(0, 1),
-      c: colorFor(m.userId || label), // 사용자 고유색 (userId 기반, 닉네임 바뀌어도 유지)
+      // 내 사진은 /auth/me 로 이미 알고 있다. 멤버 응답에 photoUrl 이 없어도 채운다.
+      photoUrl: m.photoUrl || (isMe ? st.me?.photoUrl : null) || null,
       admin: m.role === 'OWNER',
       me: isMe,
       mood: m.mood || (isMe ? myMood : ''),
@@ -122,28 +118,36 @@ export function buildVm(app) {
   })
   if (members.length === 0) {
     const label = st.currentGroup?.myNickname || st.me?.name || '나'
-    members.push({ name: label, role: st.me?.name || '', ini: String(label).slice(0, 1), c: colorFor(myId || label), admin: true, me: true, mood: myMood, emoji: '', slotId: 'prof-0' })
+    members.push({ name: label, role: st.me?.name || '', ini: String(label).slice(0, 1), photoUrl: st.me?.photoUrl || null, admin: true, me: true, mood: myMood, emoji: '', slotId: 'prof-0' })
   }
   const memberCount = st.groupMembers ? st.groupMembers.length : (st.currentGroup?.memberCount ?? members.length)
   const myInitial = String(st.currentGroup?.myNickname || st.me?.name || '나').slice(0, 1)
 
-  // 사람 → 색을 한 군데로 통일.
-  // 1순위 userId(닉네임이 바뀌어도 유지), userId 가 없는 payload(단어 작성자 등)는
-  // 이미 로드된 멤버 목록에서 호칭/이름으로 찾아 같은 색을 쓴다. 그래도 없으면 이름 해시.
-  // ※ 키가 섞이면 색이 5개뿐이라 화면마다 다른 색이 나온다.
-  const colorByLabel = {}
+  // 사람 → 프로필 사진을 한 군데로 통일.
+  // 단어 작성자처럼 payload 에 사진이 없는 경우, 이미 로드된 멤버 목록에서
+  // 호칭/이름으로 찾아 같은 사진을 쓴다.
+  const photoByLabel = {}
   members.forEach((m) => {
-    if (m.name) colorByLabel[m.name] = m.c
-    if (m.role) colorByLabel[m.role] = m.c
+    if (m.photoUrl) {
+      if (m.name) photoByLabel[m.name] = m.photoUrl
+      if (m.role) photoByLabel[m.role] = m.photoUrl
+    }
   })
-  const personColor = (p) => {
-    if (!p) return AVATAR_COLORS[0]
-    if (p.userId != null) return colorFor(p.userId)
-    const label = p.nickname || p.name || ''
-    return colorByLabel[label] || colorFor(label)
+  const personPhoto = (p) => {
+    if (!p) return null
+    if (p.photoUrl) return p.photoUrl
+    return photoByLabel[p.nickname || p.name || ''] || null
   }
-  // 내 고유색 (프로필/아바타 통일용) — 멤버 목록의 '나' 와 반드시 같은 색
-  const myColor = members.find((m) => m.me)?.c || colorFor(myId || st.currentGroup?.myNickname || '나')
+
+  // 프로필 화면 진입 — 편집하다 만 초안(이름/호칭/한마디/고른 사진)은 버리고
+  // 저장된 값부터 다시 시작한다. 저장 안 하고 나갔다 들어오면 원래대로 보여야 한다.
+  const openProfile = () => {
+    setState({
+      profileName: undefined, profileNickname: undefined, profileMood: undefined,
+      profilePhoto: undefined, profilePhotoAsset: undefined, profileError: null,
+    })
+    go('profile')
+  }
 
   const N = members.length, BOX = 296, C = BOX / 2, R = 114, AV = 60
   const active = (((st.activeMood ?? 0) % N) + N) % N
@@ -153,17 +157,17 @@ export function buildVm(app) {
     const isA = i === active
     return {
       ...m,
-      wrapStyle: `position:absolute;left:${cx - AV / 2}px;top:${cy - AV / 2}px;width:${AV}px;height:${AV}px;border-radius:50%;border:3px solid ${m.c};overflow:hidden;background:${m.c};box-shadow:0 6px 15px rgba(255,94,138,0.22);transform:scale(${isA ? 1.18 : 0.97});z-index:${isA ? 6 : 2}`,
+      wrapStyle: `position:absolute;left:${cx - AV / 2}px;top:${cy - AV / 2}px;width:${AV}px;height:${AV}px;border-radius:50%;box-shadow:0 6px 15px rgba(255,94,138,0.22);transform:scale(${isA ? 1.18 : 0.97});z-index:${isA ? 6 : 2}`,
       badgeStyle: m.me
         ? `position:absolute;left:${cx + AV / 2 - 21}px;top:${cy + AV / 2 - 21}px;width:22px;height:22px;border-radius:50%;background:#FF5E8A;border:2px solid #fff;align-items:center;justify-content:center;z-index:${isA ? 7 : 3};box-shadow:0 2px 6px rgba(255,94,138,0.4)`
         : `display:none`,
-      badgeClick: m.me ? () => go('profile') : undefined,
-      labelStyle: `position:absolute;left:${cx - 40}px;top:${cy + AV / 2 + 3}px;width:80px;text-align:center;font-size:10.5px;font-weight:700;color:${isA ? m.c : '#A9B4BD'};z-index:2`,
+      badgeClick: m.me ? openProfile : undefined,
+      labelStyle: `position:absolute;left:${cx - 40}px;top:${cy + AV / 2 + 3}px;width:80px;text-align:center;font-size:10.5px;font-weight:700;color:${isA ? '#17303B' : '#A9B4BD'};z-index:2`,
     }
   })
   const activeMember = members[active]
   const tailStyle = `position:absolute;left:${C}px;top:${C}px;width:0;height:0;transform:rotate(${-90 + (active * 360) / N}deg);z-index:3`
-  const dotStyle = `position:absolute;left:0;top:-7px;width:14px;height:14px;border-radius:50%;transform:translateX(60px);background:${activeMember.c};box-shadow:0 2px 6px rgba(255,94,138,0.3)`
+  const dotStyle = `position:absolute;left:0;top:-7px;width:14px;height:14px;border-radius:50%;transform:translateX(60px);background:#FF5E8A;box-shadow:0 2px 6px rgba(255,94,138,0.3)`
 
   // 실제 그룹 단어(백엔드) → 화면용 형태로 변환.
   // 저장 직후 목록 갱신이 실패한 경우의 폴백에도 재사용하려고 함수로 뺐다.
@@ -182,7 +186,7 @@ export function buildVm(app) {
       by: {
         name: w.author?.nickname || w.author?.name || '',
         ini: String(w.author?.nickname || w.author?.name || '?').slice(0, 1),
-        c: personColor(w.author),
+        photoUrl: personPhoto(w.author),
       },
     }
     obj.open = () => navTo({ screen: 'word', word: obj })
@@ -202,9 +206,9 @@ export function buildVm(app) {
   const media = gbase.map((g) => ({ ...g, isVideo: g.type === 'video', open: () => navTo({ screen: 'media', media: g, mediaLiked: false }) }))
   const gFilter = st.galleryFilter || 'all'
   const galleryMedia = gFilter === 'all' ? media : media.filter((m) => m.by && m.by.name === gFilter)
-  const galleryTabs = [{ label: '전체', key: 'all', c: '#FF5E8A' }].concat(members.map((m) => ({ label: m.name, key: m.name, c: m.c }))).map((t) => {
+  const galleryTabs = [{ label: '전체', key: 'all' }].concat(members.map((m) => ({ label: m.name, key: m.name }))).map((t) => {
     const sel = t.key === gFilter
-    return { label: t.label, sel, bg: sel ? t.c : '#fff', color: sel ? '#fff' : '#6A7E88', border: sel ? t.c : '#FFE1EC', pick: () => setState({ galleryFilter: t.key }) }
+    return { label: t.label, sel, bg: sel ? FOLDER_TAB_COLOR : '#fff', color: sel ? '#fff' : '#6A7E88', border: sel ? FOLDER_TAB_COLOR : '#FFE1EC', pick: () => setState({ galleryFilter: t.key }) }
   })
   const curMedia = st.media || media[0] || {}
   const cmts = commentsFor(curMedia.title).map((c, i) => ({
@@ -241,7 +245,7 @@ export function buildVm(app) {
         no: `${qc.no}/${qc.total}`,
         q: qc.question.text,
         progress: `${qc.memberCount}명 중 ${qc.answers.length}명이 답했어요`,
-        answered: qc.answers.map((a) => ({ ...answerCard(a, personColor), mine: !!myId && a.author?.userId === myId })),
+        answered: qc.answers.map((a) => ({ ...answerCard(a), mine: !!myId && a.author?.userId === myId })),
         empty: false,
       }
     : { id: null, no: '0/0', q: '', progress: '', answered: [], empty: true }
@@ -264,7 +268,7 @@ export function buildVm(app) {
     name: g.name, sub: g.sub, sel: i === sj,
     cardStyle: `flex-direction:row;align-items:center;gap:12px;background:#fff;border:2px solid ${i === sj ? '#FF5E8A' : '#FFE1EC'};border-radius:20px;padding:15px 16px`,
     checkStyle: `width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;border:2px solid ${i === sj ? '#FF5E8A' : '#E3D2DA'};background:${i === sj ? '#FF5E8A' : 'transparent'};color:#fff`,
-    avatars: g.avatars.map((a, j) => ({ i: a.i, style: `width:28px;height:28px;border-radius:50%;border:2px solid #fff;align-items:center;justify-content:center;color:#fff;font-size:10.5px;font-weight:700;background:${a.c};margin-left:${j === 0 ? '0' : '-8px'}` })),
+    avatars: g.avatars.map((a, j) => ({ i: a.i, photoUrl: a.photoUrl, style: `margin-left:${j === 0 ? '0' : '-8px'}` })),
     pick: () => setState({ selectedJoin: i }),
   }))
 
@@ -282,6 +286,7 @@ export function buildVm(app) {
 
   return {
     isCards: v === 'cards', isGrid: v === 'grid',
+    screen: scr, // 화면 전환 모션용 키
     isLogin: scr === 'login', isHome: scr === 'home', isDict: scr === 'dict', isWord: scr === 'word',
     isGallery: scr === 'gallery', isMedia: scr === 'media', isUpload: scr === 'upload',
     isMembers: scr === 'members',
@@ -297,14 +302,13 @@ export function buildVm(app) {
       sub: `${g.memberCount}명 · 내 호칭 ${g.myNickname}`,
       avatars: (g.members || []).map((m) => ({
         i: String(m.nickname || m.name || '').slice(0, 1),
-        c: personColor(m), // 순서 기반이 아니라 사람 고유색으로 (다른 화면과 동일)
+        photoUrl: personPhoto(m),
       })),
       pick: () => { setState({ currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null }); go('home'); loadMembers(g.id); loadWords(g.id); loadQna(g.id) },
     })),
     currentGroup: st.currentGroup || null,
     myNickname: st.currentGroup?.myNickname || '나',
     myInitial,
-    myColor,
     memberCount,
     // 그룹(가족) 이름 편집 — 방장만 연필 노출
     canEditGroupName: st.currentGroup?.myRole === 'OWNER',
@@ -354,7 +358,7 @@ export function buildVm(app) {
     onJoinNickname: (t) => setState({ joinNickname: t, joinNickErr: false }),
     doJoinGroup,
     actionLoading: !!st.actionLoading, actionError: st.actionError || null,
-    isMoodHistory: scr === 'moodhistory', readMedia: st.editPost !== 'media',
+    readMedia: st.editPost !== 'media',
     showNav: ['home', 'record', 'dict', 'gallery', 'members', 'qna'].indexOf(scr) !== -1,
     members, words, media, days, events, dictGroups,
     galleryMedia, galleryTabs, galleryEmpty: galleryMedia.length === 0,
@@ -364,6 +368,7 @@ export function buildVm(app) {
     isQnaHistory: scr === 'qnahistory',
     openQnaHistory: () => go('qnahistory'),
     ringMembers, activeMember, tailStyle, dotStyle,
+    ringAvatarSize: AV,
     membersFromLink: !!st.membersFromLink,
     answerOpen: !!st.answerOpen,
     eventCats,
@@ -378,18 +383,13 @@ export function buildVm(app) {
     oneDayColor: st.eventRange !== true ? '#FF5E8A' : '#B39AA4',
     rangeBg: st.eventRange === true ? '#fff' : 'transparent',
     rangeColor: st.eventRange === true ? '#FF5E8A' : '#B39AA4',
-    goProfileEdit: () => go('profile'),
+    goProfileEdit: openProfile,
     myMood: st.myMood ?? '',
     myMoodSent: !!st.myMoodSent,
     sendBg: st.myMood && st.myMood.trim() ? '#FF5E8A' : '#F3C6D5',
     onMoodInput: (text) => setState({ myMood: text, myMoodSent: false }),
     onMoodKey: () => sendMood(),
     sendMood: () => sendMood(),
-    moodHistoryOpen: !!st.moodHistoryOpen,
-    toggleMoodHistory: () => go('moodhistory'),
-    moodHistoryLabel: st.moodHistoryOpen ? '접기' : '펼치기',
-    moodHistoryChevron: st.moodHistoryOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-    moodHistory: MOCK_MOOD_HISTORY,
     inviteOpen: !!st.inviteOpen,
     inviteLoading: !!st.inviteLoading,
     inviteError: st.inviteError || null,

@@ -1,6 +1,7 @@
 import { View, Text, Image, Pressable, TextInput } from 'react-native'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { s } from '../lib/style.js'
+import Avatar from '../components/Avatar.jsx'
 import signature from '../../assets/img/signature.png'
 
 import { useVm } from '../vm/useVm.js'
@@ -57,9 +58,7 @@ export default function Members() {
       </View>
 
       <Pressable onPress={vm.goProfileEdit} style={s('display:flex;align-items:center;gap:2xl;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:2xl 3xl;cursor:pointer;margin-bottom:xl')}>
-        <View style={s(`width:52px;height:52px;border-radius:50%;overflow:hidden;background:${vm.myColor};display:flex;align-items:center;justify-content:center;flex:0 0 auto`)}>
-          {vm.myPhoto ? <Image source={{ uri: vm.myPhoto }} style={s('width:52px;height:52px')} resizeMode="cover" /> : <Text style={s('color:#fff;font-weight:800;font-size:16.5px')}>{vm.myInitial}</Text>}
-        </View>
+        <Avatar photoUrl={vm.myPhoto} ini={vm.myInitial} size={52} />
         <View style={s('flex:1')}>
           <Text style={s('font-size:13.5px;font-weight:800;color:#17303B')}>내 프로필 설정하기</Text>
           <Text style={s('font-size:11px;color:#9DB2BD;margin-top:hair')}>사진 · 이름 · 오늘의 한마디</Text>
@@ -73,9 +72,7 @@ export default function Members() {
       <View style={s('display:flex;flex-direction:column;gap:lg')}>
         {vm.members.map((m, i) => (
           <View key={i} style={s('display:flex;align-items:center;gap:2xl;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:lg 3xl;')}>
-            <View style={s(`width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:${m.c}`)}>
-              <Text style={s('color:#fff;font-weight:700;font-size:14.8px')}>{m.ini}</Text>
-            </View>
+            <Avatar photoUrl={m.photoUrl} ini={m.ini} size={46} />
             <View style={s('flex:1;min-width:0')}>
               <View style={s('flex-direction:row;align-items:center;gap:sm')}><Text style={s('font-size:13.1px;font-weight:700;color:#17303B')}>{m.name}</Text><Text style={s('font-size:10.5px;color:#B7C3CC')}>{m.role}</Text></View>
               <Text numberOfLines={1} style={s('font-size:11.5px;color:#5A6D77;margin-top:xs;overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{m.mood} {m.emoji}</Text>
