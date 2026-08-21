@@ -55,16 +55,22 @@ export function createAuthActions({ ref, setState, go }) {
       setState({ profileError: '이름과 호칭을 입력해주세요.' })
       return
     }
-    const photo = cur.profilePhoto // undefined면 사진 안 건드린 것
+    const pendingPhoto = cur.profilePhotoAsset // 고르기만 하고 아직 안 올린 사진
     setState({ profileSaving: true, profileError: null })
     try {
-      const nameChanged = name !== cur.me?.name
-      const photoChanged = photo !== undefined && photo !== cur.me?.photoUrl
-      if (nameChanged || photoChanged) {
-        const me = await api.updateMe({
-          name,
-          ...(photoChanged ? { photoUrl: photo } : {}),
-        })
+      // 사진은 여기서 처음 서버로 올라간다. 실패하면 저장 전체를 중단한다.
+      // 업로드와 DB 기록을 서버가 한 요청으로 묶어주므로, 실패해도 고아 파일이 안 남는다.
+      if (pendingPhoto) {
+        setState({ profilePhotoUploading: true })
+        try {
+          const me = await api.updateMyPhoto(pendingPhoto)
+          setState({ me })
+        } finally {
+          setState({ profilePhotoUploading: false })
+        }
+      }
+      if (name !== ref.current.me?.name) {
+        const me = await api.updateMe({ name })
         setState({ me })
       }
       const gid = cur.currentGroup?.id
@@ -85,14 +91,15 @@ export function createAuthActions({ ref, setState, go }) {
           setState({ groupMembers: g.members || [] })
         } catch {}
       }
-      setState({ profileSaving: false, profileName: undefined, profileNickname: undefined, profileMood: undefined, profilePhoto: undefined })
+      setState({ profileSaving: false, profileName: undefined, profileNickname: undefined, profileMood: undefined, profilePhoto: undefined, profilePhotoAsset: undefined })
       go('members')
     } catch (e) {
       setState({ profileSaving: false, profileError: e.message })
     }
   }
 
-  // 프로필 사진 선택 → 즉시 미리보기 → 업로드(profiles/ 폴더) → URL 을 profilePhoto 에 저장
+  // 프로필 사진 선택 — 기기 안의 파일로 미리보기만 하고, 고른 asset 을 들고 있는다.
+  // 실제 업로드는 저장할 때(saveProfile). 고르기만 하고 저장 안 하면 서버엔 아무것도 안 남는다.
   const pickProfilePhoto = async () => {
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -103,13 +110,7 @@ export function createAuthActions({ ref, setState, go }) {
       })
       if (result.canceled || !result.assets || !result.assets[0]) return
       const asset = result.assets[0]
-      setState({ profilePhoto: asset.uri, profilePhotoUploading: true, profileError: null })
-      try {
-        const url = await api.uploadImage(asset, 'profiles')
-        setState({ profilePhoto: url, profilePhotoUploading: false })
-      } catch (e) {
-        setState({ profilePhotoUploading: false, profileError: e.message })
-      }
+      setState({ profilePhoto: asset.uri, profilePhotoAsset: asset, profileError: null })
     } catch {}
   }
 

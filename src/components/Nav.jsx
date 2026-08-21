@@ -12,16 +12,15 @@ function Icon({ name, color }) {
 }
 
 import { useVm } from '../vm/useVm.js'
-import { SHOW_UNFINISHED } from '../lib/features.js'
 
 export default function Nav() {
   const vm = useVm()
   const tabs = [
     { key: 'home', label: '홈', onPress: vm.goHome, color: vm.navHome },
     { key: 'record', label: '기록', onPress: vm.goRecord, color: vm.navRecord },
-    SHOW_UNFINISHED && { key: 'gallery', label: '일상', onPress: vm.goGallery, color: vm.navGallery },
+    { key: 'gallery', label: '일상', onPress: vm.goGallery, color: vm.navGallery },
     { key: 'members', label: '가족', onPress: vm.goMembers, color: vm.navMembers },
-  ].filter(Boolean)
+  ]
   return (
     <>
       <View

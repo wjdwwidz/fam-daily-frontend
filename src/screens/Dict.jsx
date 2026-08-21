@@ -1,6 +1,7 @@
 import { View, Text, Pressable } from 'react-native'
 import Svg, { Path, Circle, Rect } from 'react-native-svg'
 import { s } from '../lib/style.js'
+import Avatar from '../components/Avatar.jsx'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -26,9 +27,7 @@ export default function Dict() {
                 <Text style={s('font-size:14.8px;font-weight:800;color:#17303B;flex:0 0 auto')}>{w.term}</Text>
                 <Text numberOfLines={1} style={s('font-size:11.3px;font-weight:500;color:#B7C1CA;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>“{w.reading}”</Text>
                 {w.photo && (<Svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="#FF9EBB" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" style={s('flex:0 0 auto')}><Rect x={4} y={6} width={16} height={13} rx={2.5} /><Circle cx={9} cy={11} r={1.5} /><Path d="M5 17 L10 13 L13 15.5 L16 13 L19 15.5" /></Svg>)}
-                <View style={s(`width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:${w.by.c}`)}>
-                  <Text style={s('color:#fff;font-size:11px;font-weight:700')}>{w.by.ini}</Text>
-                </View>
+                <Avatar photoUrl={w.by.photoUrl} ini={w.by.ini} size={22} />
                 <Svg viewBox="0 0 24 24" width={17} height={17} fill="none" stroke="#D9C3CC" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={s('flex:0 0 auto')}><Path d="M9 6 L15 12 L9 18" /></Svg>
               </Pressable>
             ))}

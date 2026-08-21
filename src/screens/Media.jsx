@@ -1,6 +1,7 @@
 import { View, Text, Pressable, TextInput } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
+import Avatar from '../components/Avatar.jsx'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -60,9 +61,7 @@ export default function Media() {
           <>
           <Text style={s('font-size:14px;color:#2B3A43;line-height:1.6;margin-bottom:3xl;white-space:pre-wrap')}>{vm.currentMedia.title}</Text>
         <View style={s('display:flex;align-items:center;gap:xl')}>
-          <View style={s(`width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${vm.currentMedia.by.c}`)}>
-            <Text style={s('color:#fff;font-weight:700;font-size:13.1px')}>{vm.currentMedia.by.ini}</Text>
-          </View>
+          <Avatar photoUrl={vm.currentMedia.by.photoUrl} ini={vm.currentMedia.by.ini} size={38} />
           <View style={s('flex:1')}><Text style={s('font-size:11.7px;font-weight:700;color:#17303B')}>{vm.currentMedia.by.name}님이 올림</Text><Text style={s('font-size:11px;color:#9DB2BD')}>{vm.currentMedia.date}</Text></View>
           <Pressable onPress={vm.toggleMediaLike} style={s(vm.likeBtnStyle)}>
             <Svg viewBox="0 0 24 24" width={17} height={17} fill="currentColor" stroke="none" color="#FF5E8A"><Path d="M12 20 C12 20 4 15 4 9.2 C4 6.4 6.1 4.8 8.2 4.8 C10 4.8 11.4 6 12 7 C12.6 6 14 4.8 15.8 4.8 C17.9 4.8 20 6.4 20 9.2 C20 15 12 20 12 20 Z" /></Svg>
@@ -73,9 +72,7 @@ export default function Media() {
         <View style={s('margin-top:xs')}>
           {vm.comments.map((c, i) => (
             <View key={i} style={s('display:flex;gap:lg;padding:2xl 0;border-bottom:1px solid #F0DEE6')}>
-              <View style={s(`width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:${c.c}`)}>
-                <Text style={s('color:#fff;font-size:11px;font-weight:700')}>{c.ini}</Text>
-              </View>
+              <Avatar photoUrl={c.photoUrl} ini={c.ini} size={30} />
               <View style={s('flex:1;min-width:0')}>
                 {c.editing && (
                   <View style={s('display:flex;align-items:center;gap:md')}>

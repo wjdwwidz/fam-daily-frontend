@@ -44,7 +44,7 @@ export default function Gallery() {
                 : {}),
             }}
           >
-            <Text style={{ fontSize: t.sel ? 16 : 13.5, fontWeight: '800', color: t.sel ? '#fff' : '#C39BB0' }}>{t.label}</Text>
+            <Text style={{ fontSize: t.sel ? 16 : 13.5, fontWeight: '400', color: t.sel ? '#fff' : '#C39BB0' }}>{t.label}</Text>
           </Pressable>
         ))}
       </ScrollView>

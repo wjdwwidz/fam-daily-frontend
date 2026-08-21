@@ -1,6 +1,7 @@
 import { View, Text, Pressable, ScrollView, TextInput } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
+import Avatar from '../components/Avatar.jsx'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -31,9 +32,7 @@ export default function Upload() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s('gap:xl;padding-bottom:xs')}>
           {vm.members.map((m, i) => (
             <View key={i} style={s('display:flex;flex-direction:column;align-items:center;gap:sm;flex:0 0 auto')}>
-              <View style={s(`width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0.55;background:${m.c}`)}>
-                <Text style={s('color:#fff;font-weight:700;font-size:13.1px')}>{m.ini}</Text>
-              </View>
+              <Avatar photoUrl={m.photoUrl} ini={m.ini} size={46} style={{ opacity: 0.55 }} />
               <Text style={s('font-size:11px;color:#9DB2BD')}>{m.name}</Text>
             </View>
           ))}
