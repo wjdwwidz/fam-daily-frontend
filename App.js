@@ -1,5 +1,6 @@
-import { SafeAreaView, Platform } from 'react-native'
+import { Platform } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { AppProvider } from './src/state/AppContext.jsx'
 import FamilyPhonePop from './src/FamilyPhonePop'
 
@@ -13,11 +14,13 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
 
 export default function App() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF6FB' }}>
-      <StatusBar style="dark" />
-      <AppProvider initialScreen={initialScreen} variant={variant}>
-        <FamilyPhonePop />
-      </AppProvider>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF6FB' }}>
+        <StatusBar style="dark" />
+        <AppProvider initialScreen={initialScreen} variant={variant}>
+          <FamilyPhonePop />
+        </AppProvider>
+      </SafeAreaView>
+    </SafeAreaProvider>
   )
 }
