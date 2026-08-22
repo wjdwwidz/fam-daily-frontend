@@ -8,10 +8,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.wjdwwidz.famdaily"
+      "bundleIdentifier": "com.famdaily"
     },
     "android": {
-      "package": "com.wjdwwidz.famdaily",
+      "package": "com.famdaily",
       "blockedPermissions": ["android.permission.RECORD_AUDIO"],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
