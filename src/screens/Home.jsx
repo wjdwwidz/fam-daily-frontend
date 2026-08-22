@@ -14,11 +14,11 @@ export default function Home() {
       <View style={s('display:flex;align-items:flex-start;justify-content:space-between;margin:sm 0 lg')}>
         <View style={s('display:flex;align-items:flex-start;gap:xl')}>
           <Image source={mascot} style={{ width: 52, height: 69 }} resizeMode="cover" />
-          <View>
+          <View style={s('align-self:center')}>
             <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px;white-space:nowrap')}>오늘의 한마디!</Text>
           </View>
         </View>
-        <Pressable onPress={vm.goMembersDeep} style={s('align-self:center')}>
+        <Pressable onPress={vm.goProfileEdit} style={s('align-self:center')}>
           <Avatar photoUrl={vm.myPhoto} ini={vm.myInitial} size={44} style={{ borderRadius: 15 }} />
         </Pressable>
       </View>
@@ -33,7 +33,6 @@ export default function Home() {
         <View style={s('position:absolute;left:148px;top:148px;transform:translate(-50%,-50%);width:150px;text-align:center;background:#fff;border:1px solid #FFE1EC;border-radius:18px;padding:xl 2xl;box-shadow:0 10px 24px rgba(255,94,138,0.16);z-index:5')}>
           <Text style={s('font-size:12.5px;color:#4A5A64;line-height:1.4')}>{vm.activeMember.mood ? `${vm.activeMember.mood} ${vm.activeMember.emoji}`.trim() : '아직 오늘의 한마디가 없어요'}</Text>
         </View>
-        <View style={s(vm.tailStyle)}><View style={s(vm.dotStyle)} /></View>
         {vm.ringMembers.map((m, i) => (
           <Fragment key={i}>
             <View style={s(m.wrapStyle)}>

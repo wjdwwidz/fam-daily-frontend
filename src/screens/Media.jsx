@@ -40,6 +40,14 @@ export default function Media() {
         </View>
       </View>
 
+      <View style={s('display:flex;align-items:center;gap:xl;margin:0 5xl 3xl')}>
+        <Avatar photoUrl={m.by.photoUrl} ini={m.by.ini} size={38} />
+        <View style={s('flex:1')}>
+          <Text style={s('font-size:11.7px;font-weight:700;color:#17303B')}>{m.by.name}님이 올림</Text>
+          <Text style={s('font-size:11px;color:#9DB2BD')}>{m.date}</Text>
+        </View>
+      </View>
+
       <View style={s('margin:0 5xl;gap:lg')}>
         {m.items.map((it, i) =>
           it.type === 'video'
@@ -48,18 +56,11 @@ export default function Media() {
         )}
       </View>
 
-      <View style={s('padding:4xl screenX 0')}>
-        {!!m.title && (
-          <Text style={s('font-size:14px;color:#2B3A43;line-height:1.6;margin-bottom:3xl;white-space:pre-wrap')}>{m.title}</Text>
-        )}
-        <View style={s('display:flex;align-items:center;gap:xl')}>
-          <Avatar photoUrl={m.by.photoUrl} ini={m.by.ini} size={38} />
-          <View style={s('flex:1')}>
-            <Text style={s('font-size:11.7px;font-weight:700;color:#17303B')}>{m.by.name}님이 올림</Text>
-            <Text style={s('font-size:11px;color:#9DB2BD')}>{m.date}</Text>
-          </View>
+      {!!m.title && (
+        <View style={s('padding:4xl screenX 0')}>
+          <Text style={s('font-size:14px;color:#2B3A43;line-height:1.6;white-space:pre-wrap')}>{m.title}</Text>
         </View>
-      </View>
+      )}
     </View>
   )
 }
