@@ -3,6 +3,7 @@ import { createAuthActions } from './authActions.js'
 import { createGroupActions } from './groupActions.js'
 import { createWordActions } from './wordActions.js'
 import { createQnaActions } from './qnaActions.js'
+import { createMediaActions } from './mediaActions.js'
 
 // 앱 전역 상태 + 네비게이션 + 도메인 액션을 담는 컨텍스트.
 // 화면/오버레이는 useApp() 으로 필요한 것만 꺼내 쓴다.
@@ -46,8 +47,9 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
   const groups = createGroupActions(core, auth.afterAuth)
   const words = createWordActions(core)
   const qna = createQnaActions(core)
+  const media = createMediaActions(core)
 
-  const value = { ...core, back, initialScreen, variant, ...auth, ...groups, ...words, ...qna }
+  const value = { ...core, back, initialScreen, variant, ...auth, ...groups, ...words, ...qna, ...media }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

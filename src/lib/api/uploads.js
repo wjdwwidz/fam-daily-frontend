@@ -16,8 +16,14 @@ function toForm(asset) {
   return form
 }
 
-async function postFile(path, asset, failMsg) {
+export async function postFile(path, asset, failMsg, fields) {
   const form = toForm(asset)
+  // 파일과 같이 보낼 텍스트 필드 (예: caption)
+  if (fields) {
+    for (const [k, v] of Object.entries(fields)) {
+      if (v !== undefined && v !== null) form.append(k, String(v))
+    }
+  }
   const token = await getToken()
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',

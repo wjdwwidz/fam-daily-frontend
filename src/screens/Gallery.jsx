@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView, Dimensions } from 'react-native'
+import { View, Text, Pressable, ScrollView, Dimensions, Image } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
@@ -55,8 +55,8 @@ export default function Gallery() {
         <View style={s('flex-direction:row;flex-wrap:wrap;justify-content:space-between;row-gap:xl')}>
           {vm.galleryMedia.map((g, i) => (
             <Pressable key={i} onPress={g.open} style={[s('background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:26px;overflow:hidden;'), { width: '48.5%' }]}>
-              <View style={[{ height: 120, position: 'relative', backgroundColor: g.tone, alignItems: 'center', justifyContent: 'center' }]}>
-                <Text style={s('font-family:ui-monospace,Menlo,monospace;font-size:11px;color:rgba(23,48,59,0.4);padding:0 md;text-align:center')}>{g.ph}</Text>
+              <View style={[{ height: 120, position: 'relative', backgroundColor: '#FCEEF4', alignItems: 'center', justifyContent: 'center' }]}>
+                <Image source={{ uri: g.photoUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                 {g.isVideo && (
                   <View style={s('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
                     <View style={s('width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center')}>
@@ -78,8 +78,9 @@ export default function Gallery() {
             <Pressable
               key={i}
               onPress={g.open}
-              style={{ width: CELL, height: CELL, borderRadius: 12, overflow: 'hidden', position: 'relative', backgroundColor: g.tone }}
+              style={{ width: CELL, height: CELL, borderRadius: 12, overflow: 'hidden', position: 'relative', backgroundColor: '#FCEEF4' }}
             >
+              <Image source={{ uri: g.photoUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
               {g.isVideo && (
                 <View style={s('position:absolute;right:5px;top:5px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center')}>
                   <Svg viewBox="0 0 24 24" width={11} height={11} fill="#fff" stroke="none" style={{ marginLeft: 1 }}>

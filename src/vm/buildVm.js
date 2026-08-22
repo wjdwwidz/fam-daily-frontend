@@ -3,7 +3,6 @@
 import { QUESTION_BANK } from '../data/questionBank.js'
 import { CALENDAR_SINGLE, CALENDAR_RANGES, CALENDAR_EVENTS } from '../data/mockCalendar.js'
 import { MOCK_JOIN_GROUPS } from '../data/mockGroups.js'
-import { seedComments } from '../data/mockComments.js'
 import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import * as Clipboard from 'expo-clipboard'
 
@@ -46,19 +45,8 @@ export function buildVm(app) {
     doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     loadQna, submitAnswer, submitQuestion,
+    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, removeMedia,
   } = app
-
-  const commentsFor = (key) => (st.commentsByKey || seedComments())[key] || []
-  const addComment = () => {
-    const key = st.media ? st.media.title : null
-    const text = (st.commentDraft || '').trim()
-    if (!key || !text) return
-    const map = { ...(st.commentsByKey || seedComments()) }
-    map[key] = [...(map[key] || []), { name: '엄마', ini: '엄', c: '#FF5E8A', text, when: '방금' }]
-    setState({ commentsByKey: map, commentDraft: '' })
-  }
-  const onCommentInput = (text) => setState({ commentDraft: text })
-  const onCommentKey = () => addComment()
 
   const toggleMenu = (which) => setState((s2) => ({ menuOpen: s2.menuOpen === which ? null : which }))
 
@@ -71,25 +59,8 @@ export function buildVm(app) {
     if (onYes) onYes()
   }
 
-  const startEditMedia = () => { const m = st.media || media[0] || {}; setState({ menuOpen: null, editPost: 'media', mediaDraft: { ...m } }) }
-  const onMediaTitle = (text) => setState((s2) => ({ mediaDraft: { ...s2.mediaDraft, title: text } }))
-  const saveMedia = () => setState((s2) => ({ media: { ...(s2.media || {}), ...s2.mediaDraft }, editPost: null }))
-  const deleteMedia = () => setState({ menuOpen: null, screen: 'gallery' })
+  const deleteMedia = () => { setState({ menuOpen: null }); const id = st.media?.id; if (id) removeMedia(id) }
   const cancelEdit = () => setState({ editPost: null })
-
-  const startEditCmt = (i, text) => setState({ editCmt: i, editCmtDraft: text })
-  const onEditCmtInput = (text) => setState({ editCmtDraft: text })
-  const saveCmt = (i) => {
-    const key = (st.media || media[0] || {}).title
-    const text = (st.editCmtDraft || '').trim()
-    if (!key || !text) { setState({ editCmt: null }); return }
-    const map = { ...(st.commentsByKey || seedComments()) }
-    const list = [...(map[key] || [])]
-    if (list[i]) list[i] = { ...list[i], text }
-    map[key] = list
-    setState({ commentsByKey: map, editCmt: null, editCmtDraft: '' })
-  }
-  const onEditCmtKey = () => saveCmt(st.editCmt)
 
   const v = variant === 'grid' ? 'grid' : 'cards'
   const scr = st.screen || initialScreen || 'login'
@@ -202,24 +173,31 @@ export function buildVm(app) {
     dictGroups[gIdx[ch]].items.push(w)
   })
 
-  const gbase = [] // 추억(갤러리)은 백엔드 연동 전까지 빈 목록 (목업 제거)
-  const media = gbase.map((g) => ({ ...g, isVideo: g.type === 'video', open: () => navTo({ screen: 'media', media: g, mediaLiked: false }) }))
+  // 일상(갤러리) — 백엔드에서 불러온 사진 목록.
+  // 목록과 상세가 같은 모양을 쓰도록 shaper 하나로 모은다.
+  const shapeMedia = (m) => ({
+    id: m.id,
+    photoUrl: m.photoUrl,
+    title: m.caption || '',
+    date: fmtDate(m.createdAt),
+    isVideo: false,
+    mine: !!myId && m.author?.userId === myId,
+    by: {
+      name: m.author?.nickname || m.author?.name || '가족',
+      ini: String(m.author?.nickname || m.author?.name || '?').slice(0, 1),
+      photoUrl: personPhoto(m.author),
+    },
+  })
+  const media = (st.groupMedia || []).map((m) => ({
+    ...shapeMedia(m),
+    open: () => navTo({ screen: 'media', media: m, mediaLiked: false }),
+  }))
   const gFilter = st.galleryFilter || 'all'
   const galleryMedia = gFilter === 'all' ? media : media.filter((m) => m.by && m.by.name === gFilter)
   const galleryTabs = [{ label: '전체', key: 'all' }].concat(members.map((m) => ({ label: m.name, key: m.name }))).map((t) => {
     const sel = t.key === gFilter
     return { label: t.label, sel, bg: sel ? FOLDER_TAB_COLOR : '#fff', color: sel ? '#fff' : '#6A7E88', border: sel ? FOLDER_TAB_COLOR : '#FFE1EC', pick: () => setState({ galleryFilter: t.key }) }
   })
-  const curMedia = st.media || media[0] || {}
-  const cmts = commentsFor(curMedia.title).map((c, i) => ({
-    ...c,
-    editing: st.editCmt === i,
-    viewing: st.editCmt !== i,
-    draft: st.editCmt === i ? (st.editCmtDraft || '') : c.text,
-    edit: () => startEditCmt(i, c.text),
-    save: () => saveCmt(i),
-  }))
-
   const single = CALENDAR_SINGLE
   const ranges = CALENDAR_RANGES
   const days = []
@@ -304,7 +282,7 @@ export function buildVm(app) {
         i: String(m.nickname || m.name || '').slice(0, 1),
         photoUrl: personPhoto(m),
       })),
-      pick: () => { setState({ currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null }); go('home'); loadMembers(g.id); loadWords(g.id); loadQna(g.id) },
+      pick: () => { setState({ currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [] }); go('home'); loadMembers(g.id); loadWords(g.id); loadQna(g.id); loadMedia(g.id) },
     })),
     currentGroup: st.currentGroup || null,
     myNickname: st.currentGroup?.myNickname || '나',
@@ -358,7 +336,6 @@ export function buildVm(app) {
     onJoinNickname: (t) => setState({ joinNickname: t, joinNickErr: false }),
     doJoinGroup,
     actionLoading: !!st.actionLoading, actionError: st.actionError || null,
-    readMedia: st.editPost !== 'media',
     showNav: ['home', 'record', 'dict', 'gallery', 'members', 'qna'].indexOf(scr) !== -1,
     members, words, media, days, events, dictGroups,
     galleryMedia, galleryTabs, galleryEmpty: galleryMedia.length === 0,
@@ -423,19 +400,11 @@ export function buildVm(app) {
       (st.word && words.find((w) => w.id === st.word.id)) ||
       (st.word && (st.word.by ? st.word : wordVm(st.word))) ||
       words[0],
-    currentMedia: st.media || media[0] || null,
+    currentMedia: st.media ? shapeMedia(st.media) : (media[0] || null),
     mediaLiked: !!st.mediaLiked,
-    mediaHearts: ((st.media || media[0] || {}).hearts || 0) + (st.mediaLiked ? 1 : 0),
-    toggleMediaLike: () => setState((s2) => ({ mediaLiked: !s2.mediaLiked })),
-    likeBtnStyle: 'flex-direction:row;align-items:center;justify-content:center;gap:5px;height:32px;padding:0 13px;border-radius:16px;font-size:12.5px;font-weight:800;' + (st.mediaLiked ? 'background:#FF5E8A;color:#fff;border:1px solid #FF5E8A' : 'background:#FFF0F5;color:#FF5E8A;border:1px solid #FFD5E4'),
-    comments: cmts,
-    commentCount: cmts.length,
-    commentDraft: st.commentDraft || '',
-    onCommentInput, onCommentKey, addComment,
-    onEditCmtInput, onEditCmtKey,
     isMenuWord: st.menuOpen === 'word', isMenuMedia: st.menuOpen === 'media',
     toggleMenuWord: () => toggleMenu('word'), toggleMenuMedia: () => toggleMenu('media'),
-    startEditWord, startAddWord, startEditMedia,
+    startEditWord, startAddWord,
     // 삭제는 항상 확인 모달을 거친다
     confirm: st.confirm || null, confirmOpen: !!st.confirm, askConfirm, closeConfirm, confirmYes,
     deleteWord: () => askConfirm({ title: '이 단어를 삭제하시겠습니까?', message: '삭제하면 되돌릴 수 없어요.', onYes: deleteWord }),
@@ -445,10 +414,9 @@ export function buildVm(app) {
     photoUploading: !!st.photoUploading, photoError: st.photoError || null,
     wordError: st.wordError || null, // 단어 저장 실패 사유 (사전 화면에 표시)
     toast: st.toast || null, // 하단 알림 문구
-    saveWord, onMediaTitle, saveMedia, cancelEdit,
+    saveWord, cancelEdit,
     editWord: st.editPost === 'word', readWord: st.editPost !== 'word',
-    editMedia: st.editPost === 'media',
-    wordDraft: st.wordDraft || {}, mediaDraft: st.mediaDraft || {},
+    wordDraft: st.wordDraft || {},
     navHome: navC(scr === 'home'), navDict: navC(scr === 'dict'), navQna: navC(scr === 'qna'),
     navRecord: navC(scr === 'record'),
     navGallery: navC(scr === 'gallery'), navMembers: navC(scr === 'members'),
@@ -484,7 +452,14 @@ export function buildVm(app) {
     closeQuestion: () => setState({ questionOpen: false }),
     fillSuggestedQuestion: () => setState({ questionDraft: suggestQuestion() }),
     submitQuestion,
-    goUpload: () => go('upload'),
+    goUpload: openUpload,
+    // 새 일상 올리기
+    uploadPhoto: st.uploadPhoto || null,
+    uploadCaption: st.uploadCaption ?? '',
+    uploadSaving: !!st.uploadSaving,
+    uploadError: st.uploadError || null,
+    pickUploadPhoto, onUploadCaption, submitUpload,
+    mediaLoading: !!st.mediaLoading,
     openTodayWord: () => navTo({ screen: 'word', word: words[0] }),
     setPhoto: () => setState({ uploadType: 'photo' }),
     setVideo: () => setState({ uploadType: 'video' }),
