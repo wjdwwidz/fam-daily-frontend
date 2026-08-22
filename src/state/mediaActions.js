@@ -53,27 +53,45 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       return
     }
     const caption = (cur.uploadCaption || '').trim()
-    setState({ uploadSaving: true, uploadError: null })
+    setState({ uploadSaving: true, uploadError: null, uploadDone: 0, uploadTotal: assets.length })
     try {
+      // 사진을 골랐으면 먼저 스토리지에 직접 올린다(서버를 거치지 않음).
+      // 여기서 멈춰도 글이 안 만들어질 뿐이고, 남은 파일은 서버가 나중에 치운다.
+      let uploadIds
+      if (assets.length) {
+        const files = assets.map((a) => ({
+          contentType: api.assetContentType(a),
+          size: a.fileSize,
+          fileName: a.fileName,
+        }))
+        const slots = await api.prepareUpload(groupId, files)
+        for (let i = 0; i < assets.length; i++) {
+          await api.putToSignedUrl(slots[i].signedUrl, assets[i], files[i].contentType)
+          setState({ uploadDone: i + 1 })
+        }
+        uploadIds = slots.map((s) => s.uploadId)
+      }
       if (editId) {
-        // 사진을 다시 골랐으면 서버가 파일까지 교체하고 옛 파일을 지운다.
-        const updated = await api.updateMedia(editId, assets, caption)
+        // uploadIds 가 있으면 서버가 파일까지 교체하고 옛 파일을 지운다.
+        const updated = await api.updateMedia(editId, uploadIds, caption)
         await loadMedia(groupId)
         setState({
           uploadSaving: false, editMediaId: null, editMediaItems: undefined,
           uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
+          uploadDone: 0, uploadTotal: 0,
           media: updated, // 되돌아갈 상세 화면이 바뀐 내용을 보도록
         })
         showToast('일상을 수정했어요')
         back()
         return
       }
-      // 고른 것 전부가 한 요청으로 가서 글 하나가 된다.
-      await api.createMedia(groupId, assets, caption)
+      // 올린 자리들이 글 하나로 확정된다.
+      await api.commitUpload(groupId, uploadIds, caption)
       await loadMedia(groupId)
       setState({
         uploadSaving: false,
         uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
+        uploadDone: 0, uploadTotal: 0,
       })
       showToast('일상을 올렸어요')
       go('gallery')

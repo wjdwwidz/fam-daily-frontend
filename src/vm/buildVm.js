@@ -474,12 +474,13 @@ export function buildVm(app) {
     uploadCount: uploadPreview.length,
     isEditUpload: editingMedia,
     uploadTitle: editingMedia ? '일상 수정하기' : '새 일상 올리기',
+    // 여러 개를 한 개씩 올리므로 진행 상황을 버튼에 같이 보여준다
     uploadCta: st.uploadSaving
-      ? (editingMedia ? '수정 중…' : '올리는 중…')
+      ? (editingMedia ? '수정 중…' : '올리는 중…') +
+        (st.uploadTotal > 1 ? ` ${st.uploadDone || 0}/${st.uploadTotal}` : '')
       : (editingMedia ? '수정하기' : '올리기'),
     uploadCaption: st.uploadCaption ?? '',
     uploadSaving: !!st.uploadSaving,
-    // 여러 장일 때 몇 장째인지
     uploadError: st.uploadError || null,
     pickUploadPhoto, onUploadCaption, submitUpload, editMedia,
     mediaLoading: !!st.mediaLoading,
