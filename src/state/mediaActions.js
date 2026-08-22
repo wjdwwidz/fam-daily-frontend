@@ -1,8 +1,8 @@
 import { api } from '../lib/api.js'
 import * as ImagePicker from 'expo-image-picker'
 
-// 일상 사진 액션: 목록 로드 / 사진 고르기 / 올리기 / 삭제.
-export function createMediaActions({ ref, setState, go, showToast }) {
+// 일상 사진 액션: 목록 로드 / 사진 고르기 / 올리기 / 수정 / 삭제.
+export function createMediaActions({ ref, setState, go, back, showToast }) {
   const loadMedia = async (groupId) => {
     if (!groupId) return
     setState({ mediaLoading: true })
@@ -41,7 +41,9 @@ export function createMediaActions({ ref, setState, go, showToast }) {
   const submitUpload = async () => {
     const cur = ref.current
     const assets = cur.uploadAssets || []
-    if (!assets.length) {
+    const editId = cur.editMediaId
+    // 새 글은 사진이 반드시 있어야 한다. 수정은 사진을 안 골라도 된다(= 기존 사진 유지).
+    if (!editId && !assets.length) {
       setState({ uploadError: '사진을 먼저 선택해주세요.' })
       return
     }
@@ -53,6 +55,19 @@ export function createMediaActions({ ref, setState, go, showToast }) {
     const caption = (cur.uploadCaption || '').trim()
     setState({ uploadSaving: true, uploadError: null })
     try {
+      if (editId) {
+        // 사진을 다시 골랐으면 서버가 파일까지 교체하고 옛 파일을 지운다.
+        const updated = await api.updateMedia(editId, assets, caption)
+        await loadMedia(groupId)
+        setState({
+          uploadSaving: false, editMediaId: null, editMediaItems: undefined,
+          uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
+          media: updated, // 되돌아갈 상세 화면이 바뀐 내용을 보도록
+        })
+        showToast('일상을 수정했어요')
+        back()
+        return
+      }
       // 고른 것 전부가 한 요청으로 가서 글 하나가 된다.
       await api.createMedia(groupId, assets, caption)
       await loadMedia(groupId)
@@ -69,7 +84,23 @@ export function createMediaActions({ ref, setState, go, showToast }) {
 
   // 올리기 화면 진입 — 이전에 고르다 만 초안은 버린다.
   const openUpload = () => {
-    setState({ uploadAssets: undefined, uploadCaption: undefined, uploadError: null })
+    setState({
+      editMediaId: null, editMediaItems: undefined,
+      uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
+    })
+    go('upload')
+  }
+
+  // 수정 진입 — 올리기 화면을 그대로 재사용한다.
+  // uploadAssets 를 비워두는 게 '사진은 그대로' 라는 뜻이고,
+  // 다시 고르는 순간부터 교체 대상이 된다. editMediaItems 는 그때까지 보여줄 기존 사진.
+  const startEditMedia = () => {
+    const m = ref.current.media
+    if (!m) return
+    setState({
+      editMediaId: m.id, editMediaItems: m.items || [],
+      uploadAssets: undefined, uploadCaption: m.caption || '', uploadError: null,
+    })
     go('upload')
   }
 
@@ -84,5 +115,5 @@ export function createMediaActions({ ref, setState, go, showToast }) {
     }
   }
 
-  return { loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, removeMedia }
+  return { loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia }
 }

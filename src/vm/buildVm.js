@@ -45,7 +45,7 @@ export function buildVm(app) {
     doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     loadQna, submitAnswer, submitQuestion,
-    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, removeMedia,
+    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
   } = app
 
   const toggleMenu = (which) => setState((s2) => ({ menuOpen: s2.menuOpen === which ? null : which }))
@@ -60,6 +60,20 @@ export function buildVm(app) {
   }
 
   const deleteMedia = () => { setState({ menuOpen: null }); const id = st.media?.id; if (id) removeMedia(id) }
+  const editMedia = () => { setState({ menuOpen: null }); startEditMedia() }
+
+  // 올리기 화면은 '새 글'과 '수정' 둘 다 쓴다.
+  // 수정 중인데 사진을 아직 다시 안 골랐으면 기존 사진을 미리보기로 보여준다.
+  const editingMedia = !!st.editMediaId
+  const pickedAssets = st.uploadAssets || []
+  const uploadPreview = pickedAssets.length
+    ? pickedAssets.map((a) => ({
+        uri: a.uri,
+        isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
+      }))
+    : editingMedia
+      ? (st.editMediaItems || []).map((it) => ({ uri: it.url, isVideo: it.type === 'video' }))
+      : []
   const cancelEdit = () => setState({ editPost: null })
 
   const v = variant === 'grid' ? 'grid' : 'cards'
@@ -456,16 +470,18 @@ export function buildVm(app) {
     submitQuestion,
     goUpload: openUpload,
     // 새 일상 올리기 (사진·영상 여러 개가 글 하나)
-    uploadItems: (st.uploadAssets || []).map((a) => ({
-      uri: a.uri,
-      isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
-    })),
-    uploadCount: (st.uploadAssets || []).length,
+    uploadItems: uploadPreview,
+    uploadCount: uploadPreview.length,
+    isEditUpload: editingMedia,
+    uploadTitle: editingMedia ? '일상 수정하기' : '새 일상 올리기',
+    uploadCta: st.uploadSaving
+      ? (editingMedia ? '수정 중…' : '올리는 중…')
+      : (editingMedia ? '수정하기' : '올리기'),
     uploadCaption: st.uploadCaption ?? '',
     uploadSaving: !!st.uploadSaving,
     // 여러 장일 때 몇 장째인지
     uploadError: st.uploadError || null,
-    pickUploadPhoto, onUploadCaption, submitUpload,
+    pickUploadPhoto, onUploadCaption, submitUpload, editMedia,
     mediaLoading: !!st.mediaLoading,
     openTodayWord: () => navTo({ screen: 'word', word: words[0] }),
     setPhoto: () => setState({ uploadType: 'photo' }),

@@ -14,7 +14,7 @@ export default function Upload() {
         <Pressable onPress={vm.back} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);align-items:center;justify-content:center;color:#17303B')}>
           <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#17303B"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
         </Pressable>
-        <Text style={s('font-size:13.9px;font-weight:800;color:#17303B')}>새 일상 올리기</Text>
+        <Text style={s('font-size:13.9px;font-weight:800;color:#17303B')}>{vm.uploadTitle}</Text>
         <View style={s('width:40px')}></View>
       </View>
       <View style={s('padding:sm screenX 0')}>
@@ -62,7 +62,7 @@ export default function Upload() {
         <TextInput value={vm.uploadCaption} onChangeText={vm.onUploadCaption} multiline textAlignVertical="top" placeholder="이 순간을 한 줄로 남겨보세요" placeholderTextColor="#9DB2BD" style={s('width:100%;min-height:64px;border:none;outline:none;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:16px;padding:2xl 3xl;font-size:12.2px;font-family:inherit;color:#17303B;resize:none')} />
         {vm.uploadError && <Text style={s('font-size:12px;color:#E5484D;margin-top:3xl;text-align:center')}>{vm.uploadError}</Text>}
         <Pressable onPress={vm.submitUpload} disabled={vm.uploadSaving} style={s(`margin:ctaTop 0 ctaBottom;height:54px;border-radius:17px;background:#FF5E8A;align-items:center;justify-content:center;flex-direction:row;opacity:${vm.uploadSaving ? 0.7 : 1}`)}>
-          <Text style={s('font-size:13.9px;font-weight:700;color:#fff')}>{vm.uploadSaving ? '올리는 중…' : '올리기'}</Text>
+          <Text style={s('font-size:13.9px;font-weight:700;color:#fff')}>{vm.uploadCta}</Text>
         </Pressable>
       </View>
     </View>

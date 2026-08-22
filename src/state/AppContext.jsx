@@ -42,7 +42,7 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
     setTimeout(() => setState((p) => (p.toast === text ? { toast: null } : {})), ms)
   }
 
-  const core = { st, setState, ref, go, navTo, showToast }
+  const core = { st, setState, ref, go, navTo, back, showToast }
   const auth = createAuthActions(core)
   const groups = createGroupActions(core, auth.afterAuth)
   const words = createWordActions(core)

@@ -27,6 +27,11 @@ export default function Media() {
               </Pressable>
               {vm.isMenuMedia && (
                 <View style={s('position:absolute;right:0;top:46px;background:#fff;border:1px solid #FFE1EC;border-radius:14px;box-shadow:0 12px 30px rgba(255,94,138,0.22);overflow:hidden;z-index:20;min-width:128px')}>
+                  <Pressable onPress={vm.editMedia} style={s('display:flex;align-items:center;gap:lg;padding:xl 3xl')}>
+                    <Svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" color="#17303B"><Path d="M4 20 L4 16 L15 5 L19 9 L8 20 Z" /><Path d="M13 7 L17 11" /></Svg>
+                    <Text style={s('font-size:13px;font-weight:600;color:#17303B')}>수정하기</Text>
+                  </Pressable>
+                  <View style={s('height:1px;background:#FFE1EC')} />
                   <Pressable onPress={vm.deleteMedia} style={s('display:flex;align-items:center;gap:lg;padding:xl 3xl')}>
                     <Svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" color="#E5484D"><Path d="M5 7 h14 M9 7 V5 h6 v2 M6 7 l1 13 h10 l1 -13" /></Svg>
                     <Text style={s('font-size:13px;font-weight:600;color:#E5484D')}>삭제하기</Text>

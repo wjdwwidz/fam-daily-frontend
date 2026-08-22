@@ -60,7 +60,8 @@ export async function updateMyPhoto(asset) {
 }
 
 // 사진·영상 여러 개를 한 요청으로 (글 하나에 담긴다)
-export async function postFiles(path, assets, failMsg, fields) {
+// 수정(PATCH)도 같은 모양이라 method 만 바꿔서 재사용한다. assets 가 비면 파일 없이 텍스트만 간다.
+export async function postFiles(path, assets, failMsg, fields, method = 'POST') {
   const form = new FormData()
   for (const a of assets) appendAsset(form, 'files', a)
   if (fields) {
@@ -70,7 +71,7 @@ export async function postFiles(path, assets, failMsg, fields) {
   }
   const token = await getToken()
   const res = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
+    method,
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: form,
   })
