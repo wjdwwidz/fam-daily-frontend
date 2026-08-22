@@ -14,6 +14,9 @@ export function createMediaActions({ ref, setState, go, showToast }) {
     }
   }
 
+  // 한 글에 담을 수 있는 최대 개수 (서버의 MAX_FILES 와 같은 값).
+  const MAX_PICK = 10
+
   // 사진 선택 — 기기 안의 파일로 미리보기만. 실제 업로드는 '올리기' 누를 때.
   // (고르기만 하고 나가면 서버엔 아무것도 안 남는다)
   const pickUploadPhoto = async () => {
@@ -21,12 +24,15 @@ export function createMediaActions({ ref, setState, go, showToast }) {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (perm.status !== 'granted') return
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        // 배열 형태가 현재 API. MediaTypeOptions 는 deprecated.
+        // 사진과 영상 둘 다
+        mediaTypes: ['images', 'videos'],
+        allowsMultipleSelection: true,
+        selectionLimit: MAX_PICK,
         quality: 0.7,
       })
-      if (result.canceled || !result.assets || !result.assets[0]) return
-      const asset = result.assets[0]
-      setState({ uploadPhoto: asset.uri, uploadAsset: asset, uploadError: null })
+      if (result.canceled || !result.assets || !result.assets.length) return
+      setState({ uploadAssets: result.assets, uploadError: null })
     } catch {}
   }
 
@@ -34,8 +40,8 @@ export function createMediaActions({ ref, setState, go, showToast }) {
 
   const submitUpload = async () => {
     const cur = ref.current
-    const asset = cur.uploadAsset
-    if (!asset) {
+    const assets = cur.uploadAssets || []
+    if (!assets.length) {
       setState({ uploadError: '사진을 먼저 선택해주세요.' })
       return
     }
@@ -44,14 +50,15 @@ export function createMediaActions({ ref, setState, go, showToast }) {
       setState({ uploadError: '가족 공간을 먼저 선택해주세요.' })
       return
     }
+    const caption = (cur.uploadCaption || '').trim()
     setState({ uploadSaving: true, uploadError: null })
     try {
-      await api.createMedia(groupId, asset, (cur.uploadCaption || '').trim())
+      // 고른 것 전부가 한 요청으로 가서 글 하나가 된다.
+      await api.createMedia(groupId, assets, caption)
       await loadMedia(groupId)
       setState({
         uploadSaving: false,
-        uploadPhoto: undefined, uploadAsset: undefined,
-        uploadCaption: undefined, uploadError: null,
+        uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
       })
       showToast('일상을 올렸어요')
       go('gallery')
@@ -62,10 +69,7 @@ export function createMediaActions({ ref, setState, go, showToast }) {
 
   // 올리기 화면 진입 — 이전에 고르다 만 초안은 버린다.
   const openUpload = () => {
-    setState({
-      uploadPhoto: undefined, uploadAsset: undefined,
-      uploadCaption: undefined, uploadError: null,
-    })
+    setState({ uploadAssets: undefined, uploadCaption: undefined, uploadError: null })
     go('upload')
   }
 

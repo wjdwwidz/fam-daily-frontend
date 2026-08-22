@@ -1,4 +1,6 @@
-import { View, Text, Pressable, TextInput, Image } from 'react-native'
+import { View, Text, Pressable, TextInput, Image, ScrollView } from 'react-native'
+import Photo from '../components/Photo.jsx'
+import VideoItem from '../components/VideoItem.jsx'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
@@ -16,24 +18,44 @@ export default function Upload() {
         <View style={s('width:40px')}></View>
       </View>
       <View style={s('padding:sm screenX 0')}>
-        <Pressable onPress={vm.pickUploadPhoto} style={s('margin-top:3xl;height:200px;border-radius:28px;overflow:hidden;border:2px dashed #BEE6F7;background:#F3FAFE;flex-direction:column;align-items:center;justify-content:center;gap:xl')}>
-          {vm.uploadPhoto ? (
-            <Image source={{ uri: vm.uploadPhoto }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-          ) : (
-            <>
-              <View style={s('width:60px;height:60px;border-radius:26px;background:#FFF0F5;align-items:center;justify-content:center;color:#FF5E8A')}>
-                <Svg viewBox="0 0 24 24" width={28} height={28} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" color="#FF5E8A"><Path d="M12 16 V5" /><Path d="M8 9 L12 5 L16 9" /><Path d="M5 15 v3 a1 1 0 0 0 1 1 h12 a1 1 0 0 0 1 -1 v-3" /></Svg>
-              </View>
-              <View style={s('text-align:center')}>
-                <Text style={s('font-size:12.6px;font-weight:700;color:#17303B')}>{vm.uploadHint}</Text>
-                <Text style={s('font-size:11px;color:#9DB2BD;margin-top:xs')}>갤러리에서 선택하세요</Text>
-              </View>
-            </>
-          )}
-        </Pressable>
-        {vm.uploadPhoto && (
+        {vm.uploadCount === 0 && (
+          <Pressable onPress={vm.pickUploadPhoto} style={s('margin-top:3xl;height:200px;border-radius:28px;overflow:hidden;border:2px dashed #BEE6F7;background:#F3FAFE;flex-direction:column;align-items:center;justify-content:center;gap:xl')}>
+            <View style={s('width:60px;height:60px;border-radius:26px;background:#FFF0F5;align-items:center;justify-content:center;color:#FF5E8A')}>
+              <Svg viewBox="0 0 24 24" width={28} height={28} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" color="#FF5E8A"><Path d="M12 16 V5" /><Path d="M8 9 L12 5 L16 9" /><Path d="M5 15 v3 a1 1 0 0 0 1 1 h12 a1 1 0 0 0 1 -1 v-3" /></Svg>
+            </View>
+            <View style={s('text-align:center')}>
+              <Text style={s('font-size:12.6px;font-weight:700;color:#17303B')}>{vm.uploadHint}</Text>
+              <Text style={s('font-size:11px;color:#9DB2BD;margin-top:xs')}>사진·영상을 여러 개 고를 수 있어요 (최대 10개)</Text>
+            </View>
+          </Pressable>
+        )}
+        {vm.uploadCount === 1 && (
+          <View style={s('margin-top:3xl')}>
+            {vm.uploadItems[0].isVideo
+              ? <VideoItem uri={vm.uploadItems[0].uri} radius={28} />
+              : <Photo uri={vm.uploadItems[0].uri} radius={28} />}
+          </View>
+        )}
+        {vm.uploadCount > 1 && (
+          <View style={s('margin-top:3xl')}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s('gap:md')}>
+              {vm.uploadItems.map((it, i) => (
+                <View key={i} style={{ width: 140, height: 140, borderRadius: 18, overflow: 'hidden', backgroundColor: '#FCEEF4' }}>
+                  <Image source={{ uri: it.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  {it.isVideo && (
+                    <View style={s('position:absolute;right:6px;bottom:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center')}>
+                      <Svg viewBox="0 0 24 24" width={11} height={11} fill="#fff" stroke="none" style={{ marginLeft: 1 }}><Path d="M8 5 L19 12 L8 19 Z" /></Svg>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </ScrollView>
+            <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md')}>{vm.uploadCount}개 선택됨</Text>
+          </View>
+        )}
+        {vm.uploadCount > 0 && (
           <Pressable onPress={vm.pickUploadPhoto} style={s('align-self:center;margin-top:lg')}>
-            <Text style={s('font-size:11.5px;color:#FF5E8A;font-weight:700')}>다른 사진 고르기</Text>
+            <Text style={s('font-size:11.5px;color:#FF5E8A;font-weight:700')}>다시 고르기</Text>
           </Pressable>
         )}
         <Text style={s('margin-top:4xl;font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>설명</Text>

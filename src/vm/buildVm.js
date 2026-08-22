@@ -133,12 +133,10 @@ export function buildVm(app) {
         ? `position:absolute;left:${cx + AV / 2 - 21}px;top:${cy + AV / 2 - 21}px;width:22px;height:22px;border-radius:50%;background:#FF5E8A;border:2px solid #fff;align-items:center;justify-content:center;z-index:${isA ? 7 : 3};box-shadow:0 2px 6px rgba(255,94,138,0.4)`
         : `display:none`,
       badgeClick: m.me ? openProfile : undefined,
-      labelStyle: `position:absolute;left:${cx - 40}px;top:${cy + AV / 2 + 3}px;width:80px;text-align:center;font-size:10.5px;font-weight:700;color:${isA ? '#17303B' : '#A9B4BD'};z-index:2`,
+      labelStyle: `position:absolute;left:${cx - 40}px;top:${cy + AV / 2 + 12}px;width:80px;text-align:center;font-size:10.5px;font-weight:700;color:${isA ? '#17303B' : '#A9B4BD'};z-index:2`,
     }
   })
   const activeMember = members[active]
-  const tailStyle = `position:absolute;left:${C}px;top:${C}px;width:0;height:0;transform:rotate(${-90 + (active * 360) / N}deg);z-index:3`
-  const dotStyle = `position:absolute;left:0;top:-7px;width:14px;height:14px;border-radius:50%;transform:translateX(60px);background:#FF5E8A;box-shadow:0 2px 6px rgba(255,94,138,0.3)`
 
   // 실제 그룹 단어(백엔드) → 화면용 형태로 변환.
   // 저장 직후 목록 갱신이 실패한 경우의 폴백에도 재사용하려고 함수로 뺐다.
@@ -177,10 +175,14 @@ export function buildVm(app) {
   // 목록과 상세가 같은 모양을 쓰도록 shaper 하나로 모은다.
   const shapeMedia = (m) => ({
     id: m.id,
-    photoUrl: m.photoUrl,
+    // 글 하나에 사진·영상 여러 개
+    items: m.items || [],
+    coverUrl: m.coverUrl || null,
+    count: (m.items || []).length,
     title: m.caption || '',
     date: fmtDate(m.createdAt),
-    isVideo: false,
+    // 대표(첫 장)가 영상이면 목록에 재생 배지를 띄운다
+    isVideo: (m.items || [])[0]?.type === 'video',
     mine: !!myId && m.author?.userId === myId,
     by: {
       name: m.author?.nickname || m.author?.name || '가족',
@@ -344,7 +346,7 @@ export function buildVm(app) {
     qnaLoading: !!st.qnaLoading,
     isQnaHistory: scr === 'qnahistory',
     openQnaHistory: () => go('qnahistory'),
-    ringMembers, activeMember, tailStyle, dotStyle,
+    ringMembers, activeMember,
     ringAvatarSize: AV,
     membersFromLink: !!st.membersFromLink,
     answerOpen: !!st.answerOpen,
@@ -453,10 +455,15 @@ export function buildVm(app) {
     fillSuggestedQuestion: () => setState({ questionDraft: suggestQuestion() }),
     submitQuestion,
     goUpload: openUpload,
-    // 새 일상 올리기
-    uploadPhoto: st.uploadPhoto || null,
+    // 새 일상 올리기 (사진·영상 여러 개가 글 하나)
+    uploadItems: (st.uploadAssets || []).map((a) => ({
+      uri: a.uri,
+      isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
+    })),
+    uploadCount: (st.uploadAssets || []).length,
     uploadCaption: st.uploadCaption ?? '',
     uploadSaving: !!st.uploadSaving,
+    // 여러 장일 때 몇 장째인지
     uploadError: st.uploadError || null,
     pickUploadPhoto, onUploadCaption, submitUpload,
     mediaLoading: !!st.mediaLoading,

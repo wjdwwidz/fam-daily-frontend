@@ -1,7 +1,9 @@
-import { View, Text, Pressable, Image } from 'react-native'
+import { View, Text, Pressable } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import Avatar from '../components/Avatar.jsx'
+import Photo from '../components/Photo.jsx'
+import VideoItem from '../components/VideoItem.jsx'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -38,8 +40,12 @@ export default function Media() {
         </View>
       </View>
 
-      <View style={s('height:300px;position:relative;background:#FCEEF4;display:flex;align-items:center;justify-content:center;margin:0 5xl;border-radius:28px;overflow:hidden')}>
-        <Image source={{ uri: m.photoUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+      <View style={s('margin:0 5xl;gap:lg')}>
+        {m.items.map((it, i) =>
+          it.type === 'video'
+            ? <VideoItem key={i} uri={it.url} radius={28} />
+            : <Photo key={i} uri={it.url} radius={28} />
+        )}
       </View>
 
       <View style={s('padding:4xl screenX 0')}>

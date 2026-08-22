@@ -35,7 +35,12 @@ export function createWordActions({ ref, setState, navTo, go, showToast }) {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (perm.status !== 'granted') return
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        // 배열 형태가 현재 API. MediaTypeOptions 는 deprecated.
+        mediaTypes: ['images'],
+        // 한 장만 쓴다(assets[0]). 기본값 selectionLimit:0 은 '시스템 최대치'라
+        // 사진첩이 다중 선택으로 열리고, 탭하면 체크만 될 뿐 확정 버튼을 따로 눌러야 한다.
+        allowsMultipleSelection: false,
+        selectionLimit: 1,
         quality: 0.7,
       })
       if (result.canceled || !result.assets || !result.assets[0]) return
