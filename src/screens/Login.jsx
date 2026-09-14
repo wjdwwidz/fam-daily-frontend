@@ -3,6 +3,7 @@ import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import { Flower5, Flower6, Leaf } from '../components/Flower.jsx'
 import mascot from '../../assets/img/mascot.png'
+import { openPrivacy } from '../lib/legal.js'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -32,7 +33,7 @@ export default function Login() {
       {vm.authError && <Text style={s('font-size:12px;color:#E5484D;margin-top:2xl;text-align:center;line-height:1.5')}>{vm.authError}</Text>}
 
       <Text style={s('font-size:11.5px;color:#9DB2BD;margin-top:6xl;line-height:1.5;text-align:center')}>
-        가입 시 <Text style={s('color:#6A7E88')}>이용약관</Text>과 <Text style={s('color:#6A7E88')}>개인정보 방침</Text>에{'\n'}동의하는 것으로 간주됩니다
+        시작하면 <Text onPress={openPrivacy} style={s('color:#6A7E88;text-decoration-line:underline')}>개인정보 처리방침</Text>에{'\n'}동의하게 돼요
       </Text>
     </View>
   )
