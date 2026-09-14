@@ -6,6 +6,7 @@ import { MOCK_JOIN_GROUPS } from '../data/mockGroups.js'
 import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import * as Clipboard from 'expo-clipboard'
 import { Platform, Share } from 'react-native'
+import { MAX_WORD_PHOTOS } from '../state/wordActions.js'
 
 // 일상(갤러리) 폴더 탭 색. 멤버 아바타 색을 쓰면 탭마다 색이 튀어 무지개가 된다.
 // 브랜드 핑크(#FF5E8A)와 같은 밝기에서 마젠타 쪽으로 살짝 밀어 또렷하게.
@@ -60,9 +61,12 @@ export function buildVm(app) {
     if (onYes) onYes()
   }
 
-  // 사진 원본 보기: openPhotoViewer(url)
-  const openPhotoViewer = (url) => { if (url) setState({ photoViewerUrl: url }) }
-  const closePhotoViewer = () => setState({ photoViewerUrl: null })
+  // 사진 원본 보기: openPhotoViewer(url) 또는 openPhotoViewer([url, ...], 시작 번호)
+  const openPhotoViewer = (urls, index = 0) => {
+    const list = (Array.isArray(urls) ? urls : [urls]).filter(Boolean)
+    if (list.length) setState({ photoViewer: { urls: list, index: Math.min(Math.max(0, index), list.length - 1) } })
+  }
+  const closePhotoViewer = () => setState({ photoViewer: null })
 
   const deleteMedia = () => { setState({ menuOpen: null }); const id = st.media?.id; if (id) removeMedia(id) }
   const editMedia = () => { setState({ menuOpen: null }); startEditMedia() }
@@ -166,8 +170,10 @@ export function buildVm(app) {
       reading: w.reading || '',
       meaning: w.meaning || '',
       example: w.example || '',
-      photo: !!w.photoUrl,
-      photoUrl: w.photoUrl || null,
+      // 사진 여러 장. 예전 서버/단어는 photoUrl 한 장만 준다.
+      photoUrls: w.photoUrls?.length ? w.photoUrls : (w.photoUrl ? [w.photoUrl] : []),
+      photo: !!(w.photoUrls?.length || w.photoUrl),
+      photoUrl: w.photoUrls?.[0] || w.photoUrl || null,
       ph: '사진',
       tint: '#FFF0F5',
       date: fmtDate(w.createdAt),
@@ -445,12 +451,16 @@ export function buildVm(app) {
     startEditWord, startAddWord,
     // 삭제는 항상 확인 모달을 거친다
     confirm: st.confirm || null, confirmOpen: !!st.confirm, askConfirm, closeConfirm, confirmYes,
-    photoViewerUrl: st.photoViewerUrl || null, photoViewerOpen: !!st.photoViewerUrl, openPhotoViewer, closePhotoViewer,
+    photoViewerUrls: st.photoViewer?.urls || [], photoViewerIndex: st.photoViewer?.index || 0,
+    photoViewerOpen: !!st.photoViewer, openPhotoViewer, closePhotoViewer,
     deleteWord: () => askConfirm({ title: '이 단어를 삭제하시겠습니까?', message: '삭제하면 되돌릴 수 없어요.', onYes: deleteWord }),
     deleteMedia: () => askConfirm({ title: '이 게시물을 삭제하시겠습니까?', message: '삭제하면 되돌릴 수 없어요.', onYes: deleteMedia }),
     onWordTerm, onWordReading, onWordMeaning, onWordExample,
-    removeWordPhoto, pickWordPhoto, noWordPhoto: !(st.wordDraft && st.wordDraft.photo),
-    photoUploading: !!st.photoUploading, photoError: st.photoError || null,
+    removeWordPhoto, pickWordPhoto,
+    wordPhotos: (st.wordDraft && st.wordDraft.photos) || [],
+    wordPhotoMax: MAX_WORD_PHOTOS,
+    canAddWordPhoto: ((st.wordDraft && st.wordDraft.photos) || []).length < MAX_WORD_PHOTOS,
+    photoError: st.photoError || null,
     wordError: st.wordError || null, // 단어 저장 실패 사유 (사전 화면에 표시)
     toast: st.toast || null, // 하단 알림 문구
     saveWord, cancelEdit,

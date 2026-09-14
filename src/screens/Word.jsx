@@ -1,9 +1,41 @@
-import { View, Text, Image, Pressable, TextInput } from 'react-native'
+import { useState } from 'react'
+import { View, Text, Image, Pressable, TextInput, ScrollView } from 'react-native'
 import Svg, { Path, Circle, Rect } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import Avatar from '../components/Avatar.jsx'
 
 import { useVm } from '../vm/useVm.js'
+
+// 상세보기 사진: 틀(220px)에 맞춰 잘라 보여주고 옆으로 넘긴다. 누르면 그 장부터 원본 뷰어로.
+function WordPhotos({ urls, onOpen }) {
+  const [width, setWidth] = useState(0)
+  const [index, setIndex] = useState(0)
+  return (
+    <View style={s('margin-top:4xl;position:relative;border-radius:18px;overflow:hidden')} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={(e) => width && setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
+      >
+        {urls.map((url, i) => (
+          <Pressable key={url} onPress={() => onOpen(i)} style={[s('height:220px;cursor:pointer'), { width: width || '100%' }]}>
+            <Image source={{ uri: url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+          </Pressable>
+        ))}
+      </ScrollView>
+      {urls.length > 1 && (
+        <View pointerEvents="none" style={s('position:absolute;right:10px;top:10px;background:rgba(23,48,59,0.55);border-radius:999px;padding:hair md')}>
+          <Text style={s('color:#fff;font-size:11px;font-weight:700')}>{index + 1}/{urls.length}</Text>
+        </View>
+      )}
+      <View pointerEvents="none" style={s('position:absolute;right:10px;bottom:10px;width:28px;height:28px;border-radius:50%;background:rgba(23,48,59,0.55);display:flex;align-items:center;justify-content:center')}>
+        <Svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M14 4 h6 v6 M20 4 l-7 7 M10 20 H4 v-6 M4 20 l7 -7" /></Svg>
+      </View>
+    </View>
+  )
+}
 
 export default function Word() {
   const vm = useVm()
@@ -33,24 +65,28 @@ export default function Word() {
           <TextInput value={vm.wordDraft.meaning} onChangeText={vm.onWordMeaning} multiline textAlignVertical="top" style={s('width:100%;box-sizing:border-box;border:1px solid #FFE1EC;border-radius:12px;padding:xl 2xl;font-size:14px;font-family:inherit;color:#17303B;outline:none;background:#FFFAFC;resize:none;line-height:1.6')} />
           <Text style={s('font-size:11px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin:fieldGap 0 labelGap')}>이럴 때 써요</Text>
           <TextInput value={vm.wordDraft.example} onChangeText={vm.onWordExample} multiline textAlignVertical="top" style={s('width:100%;box-sizing:border-box;border:1px solid #FFE1EC;border-radius:12px;padding:xl 2xl;font-size:14px;font-family:inherit;color:#17303B;outline:none;background:#FFFAFC;resize:none;line-height:1.6')} />
-          {vm.wordDraft.photo && (
-            <View style={s('margin-top:2xl;position:relative')}>
-              <Image source={typeof vm.wordDraft.photo === 'string' ? { uri: vm.wordDraft.photo } : vm.wordDraft.photo} style={s('width:100%;height:200px;border-radius:14px')} resizeMode="cover" />
-              <Pressable onPress={vm.removeWordPhoto} style={s('position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:50%;background:rgba(23,48,59,0.55);display:flex;align-items:center;justify-content:center;cursor:pointer')}>
-                <Text style={s('color:#fff;font-size:15px')}>×</Text>
-              </Pressable>
-              {vm.photoUploading && (
-                <View style={s('position:absolute;inset:0;border-radius:14px;background:rgba(23,48,59,0.45);display:flex;align-items:center;justify-content:center')}>
-                  <Text style={s('color:#fff;font-size:13px;font-weight:700')}>업로드 중…</Text>
+          {vm.wordPhotos.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s('margin-top:2xl')} contentContainerStyle={{ gap: 8 }}>
+              {vm.wordPhotos.map((p) => (
+                <View key={p.key} style={{ width: 96, height: 96, borderRadius: 14, overflow: 'hidden', backgroundColor: '#FCEEF4' }}>
+                  <Image source={{ uri: p.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  {p.uploading && (
+                    <View style={s('position:absolute;inset:0;background:rgba(23,48,59,0.45);display:flex;align-items:center;justify-content:center')}>
+                      <Text style={s('color:#fff;font-size:11px;font-weight:700')}>올리는 중…</Text>
+                    </View>
+                  )}
+                  <Pressable onPress={() => vm.removeWordPhoto(p.key)} style={s('position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(23,48,59,0.55);display:flex;align-items:center;justify-content:center;cursor:pointer')}>
+                    <Text style={s('color:#fff;font-size:13px')}>×</Text>
+                  </Pressable>
                 </View>
-              )}
-            </View>
+              ))}
+            </ScrollView>
           )}
           {vm.photoError && <Text style={s('margin-top:md;font-size:11.5px;color:#E5484D')}>{vm.photoError}</Text>}
-          {vm.noWordPhoto && (
+          {vm.canAddWordPhoto && (
             <Pressable onPress={vm.pickWordPhoto} style={s('margin-top:2xl;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:md;padding:2xl;border:1.5px dashed #FFC4D8;border-radius:14px;cursor:pointer;background:#FFF6FA')}>
               <Svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="#FF5E8A" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Rect x={3} y={5} width={18} height={14} rx={3} /><Circle cx={9} cy={11} r={2} /><Path d="M21 17l-5-5-4 4-2-2-4 4" /></Svg>
-              <Text style={s('color:#FF5E8A;font-size:13.5px;font-weight:700')}>사진 추가하기</Text>
+              <Text style={s('color:#FF5E8A;font-size:13.5px;font-weight:700')}>사진 추가하기 ({vm.wordPhotos.length}/{vm.wordPhotoMax})</Text>
             </Pressable>
           )}
           {vm.wordError && <Text style={s('margin-top:2xl;font-size:12px;color:#E5484D;text-align:center')}>{vm.wordError}</Text>}
@@ -88,14 +124,9 @@ export default function Word() {
 
         <Text style={s('font-size:12px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin-bottom:md')}>💬 이럴 때 써요</Text>
         <Text style={s('font-size:14.5px;color:#3F4E58;line-height:1.7')}>{vm.currentWord.example}</Text>
-        {vm.currentWord.photoUrl && (
-          // 틀에는 잘라서 보여주고, 누르면 원본 전체를 본다
-          <Pressable onPress={() => vm.openPhotoViewer(vm.currentWord.photoUrl)} style={s('margin-top:4xl;position:relative;cursor:pointer')}>
-            <Image source={{ uri: vm.currentWord.photoUrl }} style={s('width:100%;height:220px;border-radius:18px')} resizeMode="cover" />
-            <View style={s('position:absolute;right:10px;bottom:10px;width:28px;height:28px;border-radius:50%;background:rgba(23,48,59,0.55);display:flex;align-items:center;justify-content:center')}>
-              <Svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M14 4 h6 v6 M20 4 l-7 7 M10 20 H4 v-6 M4 20 l7 -7" /></Svg>
-            </View>
-          </Pressable>
+        {vm.currentWord.photoUrls?.length > 0 && (
+          // key: 다른 단어로 바뀌면 넘긴 위치(1/3 등)를 처음으로
+          <WordPhotos key={vm.currentWord.id} urls={vm.currentWord.photoUrls} onOpen={(i) => vm.openPhotoViewer(vm.currentWord.photoUrls, i)} />
         )}
         </View>
       </View>
