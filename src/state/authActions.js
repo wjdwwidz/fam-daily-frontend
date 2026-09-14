@@ -57,12 +57,17 @@ export function createAuthActions({ ref, setState, go }) {
   // 이게 없으면 폰이 앱을 완전히 종료할 때마다 카카오 로그인을 다시 해야 한다.
   // 토큰이 만료·무효(401)일 때만 지운다. 네트워크 오류에도 지우면 잠깐 끊겼다는 이유로 로그아웃된다.
   const restoreSession = async () => {
+    // 웹: 초대 링크로 들어왔으면 코드를 보관해 두고, 카카오 로그인에서 돌아왔으면 토큰부터 저장한다
+    api.consumeWebJoinLink()
+    await api.consumeWebAuthCallback()
     const token = await getToken()
     if (!token) return
     setState({ authLoading: true, authError: null })
     try {
       const me = await api.me()
-      setState({ authLoading: false, me, groupsLoading: true })
+      // 초대 링크로 들어온 사람은 로그인 뒤 코드가 채워진 참여 화면으로 보낸다
+      const joinCode = api.takePendingJoinCode()
+      setState({ authLoading: false, me, groupsLoading: true, ...(joinCode ? { joinCode, authNext: 'joinSpace' } : {}) })
       await afterAuth()
     } catch (e) {
       if (e.status === 401) await clearToken()

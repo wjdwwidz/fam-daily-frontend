@@ -396,14 +396,15 @@ export function buildVm(app) {
     inviteCopied: !!st.inviteCopied,
     openInvite,
     closeInvite: () => setState({ inviteOpen: false, inviteCopied: false }),
+    // 초대 문구: 서버가 준 링크(웹 참여 주소)가 있으면 함께 보낸다. 링크를 누르면 코드가 채워진 참여 화면으로 간다.
     copyInvite: async () => {
       if (!st.inviteCode) return
-      const text = `우리끼리 가족앱 초대!\n참여 코드: ${st.inviteCode}\nhttps://fam-daily-frontend.vercel.app`
+      const text = `우리끼리 가족앱 초대!\n참여 코드: ${st.inviteCode}${st.inviteLink ? `\n아래 링크를 누르면 바로 참여할 수 있어요\n${st.inviteLink}` : ''}`
       try { await Clipboard.setStringAsync(text); setState({ inviteCopied: true }) } catch {}
     },
     shareInvite: async () => {
       if (!st.inviteCode) return
-      const text = `우리끼리 가족앱 초대!\n참여 코드: ${st.inviteCode}\nhttps://fam-daily-frontend.vercel.app`
+      const text = `우리끼리 가족앱 초대!\n참여 코드: ${st.inviteCode}${st.inviteLink ? `\n아래 링크를 누르면 바로 참여할 수 있어요\n${st.inviteLink}` : ''}`
       if (typeof navigator !== 'undefined' && navigator.share) {
         try { await navigator.share({ title: '우리끼리 가족 초대', text }) } catch {}
       } else {

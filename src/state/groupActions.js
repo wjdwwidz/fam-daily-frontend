@@ -89,10 +89,10 @@ export function createGroupActions({ ref, setState }, afterAuth) {
   const openInvite = async () => {
     const gid = ref.current.currentGroup?.id
     if (!gid) return
-    setState({ inviteOpen: true, inviteLoading: true, inviteCode: null, inviteError: null, inviteCopied: false })
+    setState({ inviteOpen: true, inviteLoading: true, inviteCode: null, inviteLink: null, inviteError: null, inviteCopied: false })
     try {
-      const res = await api.createInvite(gid) // { code, link, expiresAt }
-      setState({ inviteLoading: false, inviteCode: res.code })
+      const res = await api.createInvite(gid) // { code, link, expiresAt } — link 는 웹 주소가 설정된 경우에만
+      setState({ inviteLoading: false, inviteCode: res.code, inviteLink: res.link || null })
     } catch (e) {
       setState({ inviteLoading: false, inviteError: e.message })
     }

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import Constants from 'expo-constants'
 import * as SecureStore from 'expo-secure-store'
 
@@ -22,23 +23,38 @@ export const API_BASE = `${SERVER_BASE}/api`
 const TOKEN_KEY = 'famdaily_token'
 let memToken = null
 
+// 토큰 보관: 앱은 기기의 보안 저장소, 웹은 브라우저 저장소(localStorage).
+// expo-secure-store 는 웹에서 동작하지 않아, 그대로 두면 새로고침할 때마다 로그아웃된다.
+const tokenStore =
+  Platform.OS === 'web'
+    ? {
+        get: async () => window.localStorage.getItem(TOKEN_KEY),
+        set: async (t) => window.localStorage.setItem(TOKEN_KEY, t),
+        remove: async () => window.localStorage.removeItem(TOKEN_KEY),
+      }
+    : {
+        get: () => SecureStore.getItemAsync(TOKEN_KEY),
+        set: (t) => SecureStore.setItemAsync(TOKEN_KEY, t),
+        remove: () => SecureStore.deleteItemAsync(TOKEN_KEY),
+      }
+
 export async function getToken() {
   if (memToken) return memToken
   try {
-    memToken = await SecureStore.getItemAsync(TOKEN_KEY)
+    memToken = await tokenStore.get()
   } catch {}
   return memToken
 }
 export async function setToken(t) {
   memToken = t
   try {
-    await SecureStore.setItemAsync(TOKEN_KEY, t)
+    await tokenStore.set(t)
   } catch {}
 }
 export async function clearToken() {
   memToken = null
   try {
-    await SecureStore.deleteItemAsync(TOKEN_KEY)
+    await tokenStore.remove()
   } catch {}
 }
 
