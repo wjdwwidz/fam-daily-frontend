@@ -1,4 +1,4 @@
-import { api, setToken, clearToken } from '../lib/api.js'
+import { api, getToken, setToken, clearToken } from '../lib/api.js'
 import * as ImagePicker from 'expo-image-picker'
 
 // 인증 흐름 (로그인/가입/카카오/로그아웃). 공유 컨텍스트 {ref,setState,go} 주입.
@@ -50,6 +50,23 @@ export function createAuthActions({ ref, setState, go }) {
       await afterAuth()
     } catch (e) {
       setState({ authLoading: false, authError: e.message })
+    }
+  }
+
+  // 앱을 켤 때 저장된 토큰으로 로그인 상태를 되살린다.
+  // 이게 없으면 폰이 앱을 완전히 종료할 때마다 카카오 로그인을 다시 해야 한다.
+  // 토큰이 만료·무효(401)일 때만 지운다. 네트워크 오류에도 지우면 잠깐 끊겼다는 이유로 로그아웃된다.
+  const restoreSession = async () => {
+    const token = await getToken()
+    if (!token) return
+    setState({ authLoading: true, authError: null })
+    try {
+      const me = await api.me()
+      setState({ authLoading: false, me, groupsLoading: true })
+      await afterAuth()
+    } catch (e) {
+      if (e.status === 401) await clearToken()
+      setState({ authLoading: false, authError: e.status === 401 ? null : e.message })
     }
   }
 
@@ -127,5 +144,5 @@ export function createAuthActions({ ref, setState, go }) {
     } catch {}
   }
 
-  return { afterAuth, logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto }
+  return { afterAuth, logout, deleteAccount, kakaoLogin, restoreSession, saveProfile, pickProfilePhoto }
 }

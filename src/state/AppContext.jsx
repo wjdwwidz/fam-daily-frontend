@@ -49,6 +49,11 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
   const qna = createQnaActions(core)
   const media = createMediaActions(core)
 
+  // 앱을 켤 때 한 번: 저장된 로그인 되살리기 (로그인 화면은 확인하는 동안 로딩만 보여준다)
+  useEffect(() => {
+    auth.restoreSession()
+  }, [])
+
   const value = { ...core, back, initialScreen, variant, ...auth, ...groups, ...words, ...qna, ...media }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

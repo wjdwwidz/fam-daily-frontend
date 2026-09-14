@@ -68,7 +68,10 @@ export async function request(path, { method = 'GET', body, auth = true } = {}) 
   }
   if (!res.ok) {
     const m = (data && (data.message || data.error)) || `요청 실패 (${res.status})`
-    throw new Error(Array.isArray(m) ? m.join(', ') : m)
+    const err = new Error(Array.isArray(m) ? m.join(', ') : m)
+    // 호출하는 쪽이 "로그인 만료(401)"와 "일시적인 오류"를 구분할 수 있게 상태 코드를 붙인다
+    err.status = res.status
+    throw err
   }
   return data
 }
