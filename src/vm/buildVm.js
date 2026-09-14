@@ -5,6 +5,7 @@ import { CALENDAR_SINGLE, CALENDAR_RANGES, CALENDAR_EVENTS } from '../data/mockC
 import { MOCK_JOIN_GROUPS } from '../data/mockGroups.js'
 import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import * as Clipboard from 'expo-clipboard'
+import { Platform, Share } from 'react-native'
 
 // 일상(갤러리) 폴더 탭 색. 멤버 아바타 색을 쓰면 탭마다 색이 튀어 무지개가 된다.
 // 브랜드 핑크(#FF5E8A)와 같은 밝기에서 마젠타 쪽으로 살짝 밀어 또렷하게.
@@ -405,11 +406,21 @@ export function buildVm(app) {
     shareInvite: async () => {
       if (!st.inviteCode) return
       const text = `우리끼리 가족앱 초대!\n참여 코드: ${st.inviteCode}${st.inviteLink ? `\n아래 링크를 누르면 바로 참여할 수 있어요\n${st.inviteLink}` : ''}`
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        try { await navigator.share({ title: '우리끼리 가족 초대', text }) } catch {}
-      } else {
-        try { await Clipboard.setStringAsync(text); setState({ inviteCopied: true }) } catch {}
+      // 휴대폰의 공유 창을 연다 — 목록에서 카카오톡을 고르면 채팅방으로 보낼 수 있다.
+      // 앱은 RN Share, 웹(아이폰 Safari 등)은 navigator.share. 둘 다 없으면(PC 브라우저) 복사로 대신한다.
+      try {
+        if (Platform.OS !== 'web') {
+          await Share.share({ message: text })
+          return
+        }
+        if (typeof navigator !== 'undefined' && navigator.share) {
+          await navigator.share({ title: '우리끼리 가족 초대', text })
+          return
+        }
+      } catch {
+        return // 공유 창을 그냥 닫은 경우
       }
+      try { await Clipboard.setStringAsync(text); setState({ inviteCopied: true }) } catch {}
     },
     searchOpen: !!st.searchOpen,
     openSearch: () => setState({ searchOpen: true }),
