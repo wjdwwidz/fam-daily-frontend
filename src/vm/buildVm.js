@@ -3,9 +3,10 @@
 import { QUESTION_BANK } from '../data/questionBank.js'
 import { CALENDAR_SINGLE, CALENDAR_RANGES, CALENDAR_EVENTS } from '../data/mockCalendar.js'
 import { MOCK_JOIN_GROUPS } from '../data/mockGroups.js'
-import { seedComments } from '../data/mockComments.js'
 import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import * as Clipboard from 'expo-clipboard'
+import { Platform, Share } from 'react-native'
+import { MAX_WORD_PHOTOS } from '../state/wordActions.js'
 
 // 일상(갤러리) 폴더 탭 색. 멤버 아바타 색을 쓰면 탭마다 색이 튀어 무지개가 된다.
 // 브랜드 핑크(#FF5E8A)와 같은 밝기에서 마젠타 쪽으로 살짝 밀어 또렷하게.
@@ -42,23 +43,13 @@ export function buildVm(app) {
   const {
     st, setState, go, navTo, back,
     variant = 'grid', initialScreen = 'login',
-    logout, kakaoLogin, googleLogin, saveProfile, pickProfilePhoto,
-    doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite,
+    logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto,
+    doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite, deleteGroup,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
+    refreshGroups,
     loadQna, submitAnswer, submitQuestion,
+    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
   } = app
-
-  const commentsFor = (key) => (st.commentsByKey || seedComments())[key] || []
-  const addComment = () => {
-    const key = st.media ? st.media.title : null
-    const text = (st.commentDraft || '').trim()
-    if (!key || !text) return
-    const map = { ...(st.commentsByKey || seedComments()) }
-    map[key] = [...(map[key] || []), { name: '엄마', ini: '엄', c: '#FF5E8A', text, when: '방금' }]
-    setState({ commentsByKey: map, commentDraft: '' })
-  }
-  const onCommentInput = (text) => setState({ commentDraft: text })
-  const onCommentKey = () => addComment()
 
   const toggleMenu = (which) => setState((s2) => ({ menuOpen: s2.menuOpen === which ? null : which }))
 
@@ -71,25 +62,29 @@ export function buildVm(app) {
     if (onYes) onYes()
   }
 
-  const startEditMedia = () => { const m = st.media || media[0] || {}; setState({ menuOpen: null, editPost: 'media', mediaDraft: { ...m } }) }
-  const onMediaTitle = (text) => setState((s2) => ({ mediaDraft: { ...s2.mediaDraft, title: text } }))
-  const saveMedia = () => setState((s2) => ({ media: { ...(s2.media || {}), ...s2.mediaDraft }, editPost: null }))
-  const deleteMedia = () => setState({ menuOpen: null, screen: 'gallery' })
-  const cancelEdit = () => setState({ editPost: null })
-
-  const startEditCmt = (i, text) => setState({ editCmt: i, editCmtDraft: text })
-  const onEditCmtInput = (text) => setState({ editCmtDraft: text })
-  const saveCmt = (i) => {
-    const key = (st.media || media[0] || {}).title
-    const text = (st.editCmtDraft || '').trim()
-    if (!key || !text) { setState({ editCmt: null }); return }
-    const map = { ...(st.commentsByKey || seedComments()) }
-    const list = [...(map[key] || [])]
-    if (list[i]) list[i] = { ...list[i], text }
-    map[key] = list
-    setState({ commentsByKey: map, editCmt: null, editCmtDraft: '' })
+  // 사진 원본 보기: openPhotoViewer(url) 또는 openPhotoViewer([url, ...], 시작 번호)
+  const openPhotoViewer = (urls, index = 0) => {
+    const list = (Array.isArray(urls) ? urls : [urls]).filter(Boolean)
+    if (list.length) setState({ photoViewer: { urls: list, index: Math.min(Math.max(0, index), list.length - 1) } })
   }
-  const onEditCmtKey = () => saveCmt(st.editCmt)
+  const closePhotoViewer = () => setState({ photoViewer: null })
+
+  const deleteMedia = () => { setState({ menuOpen: null }); const id = st.media?.id; if (id) removeMedia(id) }
+  const editMedia = () => { setState({ menuOpen: null }); startEditMedia() }
+
+  // 올리기 화면은 '새 글'과 '수정' 둘 다 쓴다.
+  // 수정 중인데 사진을 아직 다시 안 골랐으면 기존 사진을 미리보기로 보여준다.
+  const editingMedia = !!st.editMediaId
+  const pickedAssets = st.uploadAssets || []
+  const uploadPreview = pickedAssets.length
+    ? pickedAssets.map((a) => ({
+        uri: a.uri,
+        isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
+      }))
+    : editingMedia
+      ? (st.editMediaItems || []).map((it) => ({ uri: it.url, isVideo: it.type === 'video' }))
+      : []
+  const cancelEdit = () => setState({ editPost: null })
 
   const v = variant === 'grid' ? 'grid' : 'cards'
   const scr = st.screen || initialScreen || 'login'
@@ -107,8 +102,8 @@ export function buildVm(app) {
       name: label,
       role: m.name || '', // 부제엔 실제 이름
       ini: String(label).slice(0, 1),
-      // 내 사진은 /auth/me 로 이미 알고 있다. 멤버 응답에 photoUrl 이 없어도 채운다.
-      photoUrl: m.photoUrl || (isMe ? st.me?.photoUrl : null) || null,
+      // 가족마다 다른 사진. 이 가족에서 정하지 않았으면 계정 사진으로 대신하지 않고 이니셜로 보인다.
+      photoUrl: m.photoUrl || null,
       admin: m.role === 'OWNER',
       me: isMe,
       mood: m.mood || (isMe ? myMood : ''),
@@ -118,10 +113,12 @@ export function buildVm(app) {
   })
   if (members.length === 0) {
     const label = st.currentGroup?.myNickname || st.me?.name || '나'
-    members.push({ name: label, role: st.me?.name || '', ini: String(label).slice(0, 1), photoUrl: st.me?.photoUrl || null, admin: true, me: true, mood: myMood, emoji: '', slotId: 'prof-0' })
+    members.push({ name: label, role: st.me?.name || '', ini: String(label).slice(0, 1), photoUrl: st.currentGroup?.myPhotoUrl || null, admin: true, me: true, mood: myMood, emoji: '', slotId: 'prof-0' })
   }
   const memberCount = st.groupMembers ? st.groupMembers.length : (st.currentGroup?.memberCount ?? members.length)
   const myInitial = String(st.currentGroup?.myNickname || st.me?.name || '나').slice(0, 1)
+  // 이 가족에서 쓰는 내 사진 (구성원 목록이 더 최신이면 그걸 쓴다). 없으면 이니셜.
+  const myGroupPhoto = members.find((m) => m.me)?.photoUrl || st.currentGroup?.myPhotoUrl || null
 
   // 사람 → 프로필 사진을 한 군데로 통일.
   // 단어 작성자처럼 payload 에 사진이 없는 경우, 이미 로드된 멤버 목록에서
@@ -144,7 +141,7 @@ export function buildVm(app) {
   const openProfile = () => {
     setState({
       profileName: undefined, profileNickname: undefined, profileMood: undefined,
-      profilePhoto: undefined, profilePhotoAsset: undefined, profileError: null,
+      profilePhoto: undefined, profilePhotoAsset: undefined, profilePhotoRemove: undefined, profileError: null,
     })
     go('profile')
   }
@@ -162,12 +159,10 @@ export function buildVm(app) {
         ? `position:absolute;left:${cx + AV / 2 - 21}px;top:${cy + AV / 2 - 21}px;width:22px;height:22px;border-radius:50%;background:#FF5E8A;border:2px solid #fff;align-items:center;justify-content:center;z-index:${isA ? 7 : 3};box-shadow:0 2px 6px rgba(255,94,138,0.4)`
         : `display:none`,
       badgeClick: m.me ? openProfile : undefined,
-      labelStyle: `position:absolute;left:${cx - 40}px;top:${cy + AV / 2 + 3}px;width:80px;text-align:center;font-size:10.5px;font-weight:700;color:${isA ? '#17303B' : '#A9B4BD'};z-index:2`,
+      labelStyle: `position:absolute;left:${cx - 40}px;top:${cy + AV / 2 + 12}px;width:80px;text-align:center;font-size:10.5px;font-weight:700;color:${isA ? '#17303B' : '#A9B4BD'};z-index:2`,
     }
   })
   const activeMember = members[active]
-  const tailStyle = `position:absolute;left:${C}px;top:${C}px;width:0;height:0;transform:rotate(${-90 + (active * 360) / N}deg);z-index:3`
-  const dotStyle = `position:absolute;left:0;top:-7px;width:14px;height:14px;border-radius:50%;transform:translateX(60px);background:#FF5E8A;box-shadow:0 2px 6px rgba(255,94,138,0.3)`
 
   // 실제 그룹 단어(백엔드) → 화면용 형태로 변환.
   // 저장 직후 목록 갱신이 실패한 경우의 폴백에도 재사용하려고 함수로 뺐다.
@@ -178,8 +173,10 @@ export function buildVm(app) {
       reading: w.reading || '',
       meaning: w.meaning || '',
       example: w.example || '',
-      photo: !!w.photoUrl,
-      photoUrl: w.photoUrl || null,
+      // 사진 여러 장. 예전 서버/단어는 photoUrl 한 장만 준다.
+      photoUrls: w.photoUrls?.length ? w.photoUrls : (w.photoUrl ? [w.photoUrl] : []),
+      photo: !!(w.photoUrls?.length || w.photoUrl),
+      photoUrl: w.photoUrls?.[0] || w.photoUrl || null,
       ph: '사진',
       tint: '#FFF0F5',
       date: fmtDate(w.createdAt),
@@ -202,24 +199,35 @@ export function buildVm(app) {
     dictGroups[gIdx[ch]].items.push(w)
   })
 
-  const gbase = [] // 추억(갤러리)은 백엔드 연동 전까지 빈 목록 (목업 제거)
-  const media = gbase.map((g) => ({ ...g, isVideo: g.type === 'video', open: () => navTo({ screen: 'media', media: g, mediaLiked: false }) }))
+  // 일상(갤러리) — 백엔드에서 불러온 사진 목록.
+  // 목록과 상세가 같은 모양을 쓰도록 shaper 하나로 모은다.
+  const shapeMedia = (m) => ({
+    id: m.id,
+    // 글 하나에 사진·영상 여러 개
+    items: m.items || [],
+    coverUrl: m.coverUrl || null,
+    count: (m.items || []).length,
+    title: m.caption || '',
+    date: fmtDate(m.createdAt),
+    // 대표(첫 장)가 영상이면 목록에 재생 배지를 띄운다
+    isVideo: (m.items || [])[0]?.type === 'video',
+    mine: !!myId && m.author?.userId === myId,
+    by: {
+      name: m.author?.nickname || m.author?.name || '가족',
+      ini: String(m.author?.nickname || m.author?.name || '?').slice(0, 1),
+      photoUrl: personPhoto(m.author),
+    },
+  })
+  const media = (st.groupMedia || []).map((m) => ({
+    ...shapeMedia(m),
+    open: () => navTo({ screen: 'media', media: m, mediaLiked: false }),
+  }))
   const gFilter = st.galleryFilter || 'all'
   const galleryMedia = gFilter === 'all' ? media : media.filter((m) => m.by && m.by.name === gFilter)
   const galleryTabs = [{ label: '전체', key: 'all' }].concat(members.map((m) => ({ label: m.name, key: m.name }))).map((t) => {
     const sel = t.key === gFilter
     return { label: t.label, sel, bg: sel ? FOLDER_TAB_COLOR : '#fff', color: sel ? '#fff' : '#6A7E88', border: sel ? FOLDER_TAB_COLOR : '#FFE1EC', pick: () => setState({ galleryFilter: t.key }) }
   })
-  const curMedia = st.media || media[0] || {}
-  const cmts = commentsFor(curMedia.title).map((c, i) => ({
-    ...c,
-    editing: st.editCmt === i,
-    viewing: st.editCmt !== i,
-    draft: st.editCmt === i ? (st.editCmtDraft || '') : c.text,
-    edit: () => startEditCmt(i, c.text),
-    save: () => saveCmt(i),
-  }))
-
   const single = CALENDAR_SINGLE
   const ranges = CALENDAR_RANGES
   const days = []
@@ -304,8 +312,24 @@ export function buildVm(app) {
         i: String(m.nickname || m.name || '').slice(0, 1),
         photoUrl: personPhoto(m),
       })),
-      pick: () => { setState({ currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null }); go('home'); loadMembers(g.id); loadWords(g.id); loadQna(g.id) },
+      current: !!st.currentGroup && g.id === st.currentGroup.id,
+      pick: () => {
+        // 지금 가족을 다시 고르면 불러올 것 없이 홈으로
+        if (st.currentGroup && g.id === st.currentGroup.id) {
+          setState({ screen: 'home', _hist: [], spaceSheetOpen: false })
+          return
+        }
+        // 다른 가족으로 전환: 이전 가족의 화면 상태를 비우고, 뒤로가기로 이전 가족 화면에 돌아가지 않게 히스토리도 비운다
+        setState({
+          currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [],
+          word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null,
+          screen: 'home', _hist: [], spaceSheetOpen: false,
+        })
+        loadMembers(g.id); loadWords(g.id); loadQna(g.id); loadMedia(g.id)
+      },
     })),
+    // 앱 안(가족 탭)에서 연 가족 선택 화면이면 뒤로가기는 이전 화면으로, 로그인 직후면 로그아웃
+    spaceSelectInApp: !!st.currentGroup,
     currentGroup: st.currentGroup || null,
     myNickname: st.currentGroup?.myNickname || '나',
     myInitial,
@@ -327,24 +351,49 @@ export function buildVm(app) {
     onProfileName: (t) => setState({ profileName: t, profileError: null }),
     onProfileNickname: (t) => setState({ profileNickname: t, profileError: null }),
     onProfileMood: (t) => setState({ profileMood: t, profileError: null }),
-    profilePhoto: st.profilePhoto ?? (st.me?.photoUrl ?? null), // 편집 중 미리보기용
-    myPhoto: st.me?.photoUrl || null, // 저장된 내 프로필 사진 (아바타 표시용)
+    // 사진은 가족마다 따로 — 지금 가족에서 쓰는 사진을 편집한다.
+    // profilePhoto: 편집 중 미리보기 (undefined = 안 건드림, null = 지우기로 함)
+    profilePhoto: st.profilePhoto !== undefined ? st.profilePhoto : myGroupPhoto,
+    myPhoto: myGroupPhoto, // 저장된 이 가족 사진 (아바타 표시용)
     pickProfilePhoto,
+    removeProfilePhoto: () => setState({ profilePhoto: null, profilePhotoAsset: undefined, profilePhotoRemove: true, profileError: null }),
     profilePhotoUploading: !!st.profilePhotoUploading,
     saveProfile,
     profileSaving: !!st.profileSaving,
     profileError: st.profileError || null,
     groupsLoading: !!st.groupsLoading,
-    goSpaceSelect: () => go('spaceSelect'),
+    // 가족 전환 화면 — 그 사이 초대받은 가족이 보이도록 열 때마다 목록을 새로 받는다
+    goSpaceSelect: () => { go('spaceSelect'); refreshGroups() },
+    // 가족 전환 시트 (하단 '홈' 길게 누르기). 열 때마다 목록을 새로 받는다.
+    spaceSheetOpen: !!st.spaceSheetOpen,
+    openSpaceSheet: () => { setState({ spaceSheetOpen: true }); refreshGroups() },
+    closeSpaceSheet: () => setState({ spaceSheetOpen: false }),
+    sheetGoCreate: () => { setState({ spaceSheetOpen: false }); go('createSpace') },
+    sheetGoJoin: () => { setState({ spaceSheetOpen: false }); go('joinSpace') },
     // 인증
     isAuth: scr === 'auth',
     authMode: st.authMode || 'login',
     authError: st.authError || null, authLoading: !!st.authLoading,
     authNotice: st.authNotice || null,
     kakaoLogin,
-    googleLogin,
     setAuthMode: (m) => setState({ authMode: m, authError: null }),
     logout,
+    // 가족 삭제 — 방장(canEditGroupName)에게만 버튼이 보이고, 서버도 방장만 허용한다
+    deleteGroup: () => askConfirm({
+      title: '이 가족을 삭제할까요?',
+      message: `'${st.currentGroup?.name || '이 가족'}'의 사전·일상·문답과 사진이 모두 지워져요.\n구성원 모두에게서 사라지고 되돌릴 수 없어요.`,
+      yesText: '삭제하기',
+      onYes: deleteGroup,
+    }),
+    groupDeleting: !!st.groupDeleting,
+    groupDeleteError: st.groupDeleteError || null,
+    deleteAccount: () => askConfirm({
+      title: '정말 탈퇴하시겠어요?',
+      message: '이름과 프로필 사진은 바로 삭제되고 되돌릴 수 없어요.\n가족 공간에 남긴 사진·단어·문답은 호칭과 함께 남아요.\n혼자 있는 가족 공간은 함께 삭제돼요.',
+      yesText: '탈퇴하기',
+      onYes: deleteAccount,
+    }),
+    accountDeleting: !!st.accountDeleting,
     me: st.me || null,
     // 그룹 만들기/참여 입력
     createName: st.createName ?? '', createNickname: st.createNickname ?? '',
@@ -358,7 +407,6 @@ export function buildVm(app) {
     onJoinNickname: (t) => setState({ joinNickname: t, joinNickErr: false }),
     doJoinGroup,
     actionLoading: !!st.actionLoading, actionError: st.actionError || null,
-    readMedia: st.editPost !== 'media',
     showNav: ['home', 'record', 'dict', 'gallery', 'members', 'qna'].indexOf(scr) !== -1,
     members, words, media, days, events, dictGroups,
     galleryMedia, galleryTabs, galleryEmpty: galleryMedia.length === 0,
@@ -367,7 +415,7 @@ export function buildVm(app) {
     qnaLoading: !!st.qnaLoading,
     isQnaHistory: scr === 'qnahistory',
     openQnaHistory: () => go('qnahistory'),
-    ringMembers, activeMember, tailStyle, dotStyle,
+    ringMembers, activeMember,
     ringAvatarSize: AV,
     membersFromLink: !!st.membersFromLink,
     answerOpen: !!st.answerOpen,
@@ -397,19 +445,30 @@ export function buildVm(app) {
     inviteCopied: !!st.inviteCopied,
     openInvite,
     closeInvite: () => setState({ inviteOpen: false, inviteCopied: false }),
+    // 초대 문구: 서버가 준 링크(웹 참여 주소)가 있으면 함께 보낸다. 링크를 누르면 코드가 채워진 참여 화면으로 간다.
     copyInvite: async () => {
       if (!st.inviteCode) return
-      const text = `우리끼리 가족앱 초대!\n참여 코드: ${st.inviteCode}\nhttps://fam-daily-frontend.vercel.app`
+      const text = `우리끼리 가족앱 초대!\n참여 코드: ${st.inviteCode}${st.inviteLink ? `\n아래 링크를 누르면 바로 참여할 수 있어요\n${st.inviteLink}` : ''}`
       try { await Clipboard.setStringAsync(text); setState({ inviteCopied: true }) } catch {}
     },
     shareInvite: async () => {
       if (!st.inviteCode) return
-      const text = `우리끼리 가족앱 초대!\n참여 코드: ${st.inviteCode}\nhttps://fam-daily-frontend.vercel.app`
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        try { await navigator.share({ title: '우리끼리 가족 초대', text }) } catch {}
-      } else {
-        try { await Clipboard.setStringAsync(text); setState({ inviteCopied: true }) } catch {}
+      const text = `우리끼리 가족앱 초대!\n참여 코드: ${st.inviteCode}${st.inviteLink ? `\n아래 링크를 누르면 바로 참여할 수 있어요\n${st.inviteLink}` : ''}`
+      // 휴대폰의 공유 창을 연다 — 목록에서 카카오톡을 고르면 채팅방으로 보낼 수 있다.
+      // 앱은 RN Share, 웹(아이폰 Safari 등)은 navigator.share. 둘 다 없으면(PC 브라우저) 복사로 대신한다.
+      try {
+        if (Platform.OS !== 'web') {
+          await Share.share({ message: text })
+          return
+        }
+        if (typeof navigator !== 'undefined' && navigator.share) {
+          await navigator.share({ title: '우리끼리 가족 초대', text })
+          return
+        }
+      } catch {
+        return // 공유 창을 그냥 닫은 경우
       }
+      try { await Clipboard.setStringAsync(text); setState({ inviteCopied: true }) } catch {}
     },
     searchOpen: !!st.searchOpen,
     openSearch: () => setState({ searchOpen: true }),
@@ -423,32 +482,28 @@ export function buildVm(app) {
       (st.word && words.find((w) => w.id === st.word.id)) ||
       (st.word && (st.word.by ? st.word : wordVm(st.word))) ||
       words[0],
-    currentMedia: st.media || media[0] || null,
+    currentMedia: st.media ? shapeMedia(st.media) : (media[0] || null),
     mediaLiked: !!st.mediaLiked,
-    mediaHearts: ((st.media || media[0] || {}).hearts || 0) + (st.mediaLiked ? 1 : 0),
-    toggleMediaLike: () => setState((s2) => ({ mediaLiked: !s2.mediaLiked })),
-    likeBtnStyle: 'flex-direction:row;align-items:center;justify-content:center;gap:5px;height:32px;padding:0 13px;border-radius:16px;font-size:12.5px;font-weight:800;' + (st.mediaLiked ? 'background:#FF5E8A;color:#fff;border:1px solid #FF5E8A' : 'background:#FFF0F5;color:#FF5E8A;border:1px solid #FFD5E4'),
-    comments: cmts,
-    commentCount: cmts.length,
-    commentDraft: st.commentDraft || '',
-    onCommentInput, onCommentKey, addComment,
-    onEditCmtInput, onEditCmtKey,
     isMenuWord: st.menuOpen === 'word', isMenuMedia: st.menuOpen === 'media',
     toggleMenuWord: () => toggleMenu('word'), toggleMenuMedia: () => toggleMenu('media'),
-    startEditWord, startAddWord, startEditMedia,
+    startEditWord, startAddWord,
     // 삭제는 항상 확인 모달을 거친다
     confirm: st.confirm || null, confirmOpen: !!st.confirm, askConfirm, closeConfirm, confirmYes,
+    photoViewerUrls: st.photoViewer?.urls || [], photoViewerIndex: st.photoViewer?.index || 0,
+    photoViewerOpen: !!st.photoViewer, openPhotoViewer, closePhotoViewer,
     deleteWord: () => askConfirm({ title: '이 단어를 삭제하시겠습니까?', message: '삭제하면 되돌릴 수 없어요.', onYes: deleteWord }),
     deleteMedia: () => askConfirm({ title: '이 게시물을 삭제하시겠습니까?', message: '삭제하면 되돌릴 수 없어요.', onYes: deleteMedia }),
     onWordTerm, onWordReading, onWordMeaning, onWordExample,
-    removeWordPhoto, pickWordPhoto, noWordPhoto: !(st.wordDraft && st.wordDraft.photo),
-    photoUploading: !!st.photoUploading, photoError: st.photoError || null,
+    removeWordPhoto, pickWordPhoto,
+    wordPhotos: (st.wordDraft && st.wordDraft.photos) || [],
+    wordPhotoMax: MAX_WORD_PHOTOS,
+    canAddWordPhoto: ((st.wordDraft && st.wordDraft.photos) || []).length < MAX_WORD_PHOTOS,
+    photoError: st.photoError || null,
     wordError: st.wordError || null, // 단어 저장 실패 사유 (사전 화면에 표시)
     toast: st.toast || null, // 하단 알림 문구
-    saveWord, onMediaTitle, saveMedia, cancelEdit,
+    saveWord, cancelEdit,
     editWord: st.editPost === 'word', readWord: st.editPost !== 'word',
-    editMedia: st.editPost === 'media',
-    wordDraft: st.wordDraft || {}, mediaDraft: st.mediaDraft || {},
+    wordDraft: st.wordDraft || {},
     navHome: navC(scr === 'home'), navDict: navC(scr === 'dict'), navQna: navC(scr === 'qna'),
     navRecord: navC(scr === 'record'),
     navGallery: navC(scr === 'gallery'), navMembers: navC(scr === 'members'),
@@ -484,7 +539,22 @@ export function buildVm(app) {
     closeQuestion: () => setState({ questionOpen: false }),
     fillSuggestedQuestion: () => setState({ questionDraft: suggestQuestion() }),
     submitQuestion,
-    goUpload: () => go('upload'),
+    goUpload: openUpload,
+    // 새 일상 올리기 (사진·영상 여러 개가 글 하나)
+    uploadItems: uploadPreview,
+    uploadCount: uploadPreview.length,
+    isEditUpload: editingMedia,
+    uploadTitle: editingMedia ? '일상 수정하기' : '새 일상 올리기',
+    // 여러 개를 한 개씩 올리므로 진행 상황을 버튼에 같이 보여준다
+    uploadCta: st.uploadSaving
+      ? (editingMedia ? '수정 중…' : '올리는 중…') +
+        (st.uploadTotal > 1 ? ` ${st.uploadDone || 0}/${st.uploadTotal}` : '')
+      : (editingMedia ? '수정하기' : '올리기'),
+    uploadCaption: st.uploadCaption ?? '',
+    uploadSaving: !!st.uploadSaving,
+    uploadError: st.uploadError || null,
+    pickUploadPhoto, onUploadCaption, submitUpload, editMedia,
+    mediaLoading: !!st.mediaLoading,
     openTodayWord: () => navTo({ screen: 'word', word: words[0] }),
     setPhoto: () => setState({ uploadType: 'photo' }),
     setVideo: () => setState({ uploadType: 'video' }),

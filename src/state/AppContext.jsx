@@ -3,6 +3,7 @@ import { createAuthActions } from './authActions.js'
 import { createGroupActions } from './groupActions.js'
 import { createWordActions } from './wordActions.js'
 import { createQnaActions } from './qnaActions.js'
+import { createMediaActions } from './mediaActions.js'
 
 // 앱 전역 상태 + 네비게이션 + 도메인 액션을 담는 컨텍스트.
 // 화면/오버레이는 useApp() 으로 필요한 것만 꺼내 쓴다.
@@ -41,13 +42,19 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
     setTimeout(() => setState((p) => (p.toast === text ? { toast: null } : {})), ms)
   }
 
-  const core = { st, setState, ref, go, navTo, showToast }
+  const core = { st, setState, ref, go, navTo, back, showToast }
   const auth = createAuthActions(core)
   const groups = createGroupActions(core, auth.afterAuth)
   const words = createWordActions(core)
   const qna = createQnaActions(core)
+  const media = createMediaActions(core)
 
-  const value = { ...core, back, initialScreen, variant, ...auth, ...groups, ...words, ...qna }
+  // 앱을 켤 때 한 번: 저장된 로그인 되살리기 (로그인 화면은 확인하는 동안 로딩만 보여준다)
+  useEffect(() => {
+    auth.restoreSession()
+  }, [])
+
+  const value = { ...core, back, initialScreen, variant, ...auth, ...groups, ...words, ...qna, ...media }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

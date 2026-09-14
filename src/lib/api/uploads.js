@@ -2,22 +2,33 @@ import { API_BASE, getToken } from './client.js'
 
 // 이미지 업로드 (multipart/form-data, field=file) → 서버가 준 public URL 반환
 // folder: 버킷 내 정리용 폴더 (예: 'words')
-function toForm(asset) {
-  const form = new FormData()
+function appendAsset(form, field, asset) {
   if (asset.file) {
     // 웹: expo-image-picker 가 File 객체를 제공
-    form.append('file', asset.file)
+    form.append(field, asset.file)
   } else {
     // 네이티브: { uri, name, type } 형태로 첨부
     const type = asset.mimeType || 'image/jpeg'
-    const name = asset.fileName || `photo.${type.split('/')[1] || 'jpg'}`
-    form.append('file', { uri: asset.uri, name, type })
+    const ext = (type.split('/')[1] || 'jpg').split(';')[0]
+    const name = asset.fileName || `upload.${ext}`
+    form.append(field, { uri: asset.uri, name, type })
   }
+}
+
+function toForm(asset) {
+  const form = new FormData()
+  appendAsset(form, 'file', asset)
   return form
 }
 
-async function postFile(path, asset, failMsg) {
+export async function postFile(path, asset, failMsg, fields) {
   const form = toForm(asset)
+  // 파일과 같이 보낼 텍스트 필드 (예: caption)
+  if (fields) {
+    for (const [k, v] of Object.entries(fields)) {
+      if (v !== undefined && v !== null) form.append(k, String(v))
+    }
+  }
   const token = await getToken()
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',

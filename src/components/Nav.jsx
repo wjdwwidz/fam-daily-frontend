@@ -16,7 +16,8 @@ import { useVm } from '../vm/useVm.js'
 export default function Nav() {
   const vm = useVm()
   const tabs = [
-    { key: 'home', label: '홈', onPress: vm.goHome, color: vm.navHome },
+    // 홈을 길게 누르면 가족 전환 시트
+    { key: 'home', label: '홈', onPress: vm.goHome, onLongPress: vm.openSpaceSheet, color: vm.navHome },
     { key: 'record', label: '기록', onPress: vm.goRecord, color: vm.navRecord },
     { key: 'gallery', label: '일상', onPress: vm.goGallery, color: vm.navGallery },
     { key: 'members', label: '가족', onPress: vm.goMembers, color: vm.navMembers },
@@ -31,7 +32,15 @@ export default function Nav() {
         }}
       >
         {tabs.map((t) => (
-          <Pressable key={t.key} onPress={t.onPress} style={{ flex: 1, minWidth: 0, alignItems: 'center', gap:4 }}> <Icon name={t.key ==='members' ? 'members' : t.key} color={t.color} />
+          <Pressable
+            key={t.key}
+            onPress={t.onPress}
+            onLongPress={t.onLongPress}
+            delayLongPress={400}
+            // 웹(아이폰): 길게 누를 때 글자 선택·확대 표시가 뜨지 않게
+            style={{ flex: 1, minWidth: 0, alignItems: 'center', gap: 4, userSelect: 'none' }}
+          >
+            <Icon name={t.key ==='members' ? 'members' : t.key} color={t.color} />
             <Text style={{ fontSize: 10.5, fontWeight: '600', color: t.color }}>{t.label}</Text>
           </Pressable>
         ))}

@@ -1,16 +1,22 @@
-import { api, setToken, clearToken } from '../lib/api.js'
+import { api, getToken, setToken, clearToken } from '../lib/api.js'
 import * as ImagePicker from 'expo-image-picker'
 
 // 인증 흐름 (로그인/가입/카카오/로그아웃). 공유 컨텍스트 {ref,setState,go} 주입.
 export function createAuthActions({ ref, setState, go }) {
-  // 로그인 성공 후: 내 그룹 목록 로드 → 다음 화면으로
-  const afterAuth = async () => {
+  // 내 가족 목록 새로 받기 (로그인 직후, 가족 전환 화면을 열 때).
+  // 실패하면 들고 있던 목록을 그대로 둔다 — 전환 화면이 갑자기 비어 보이지 않게.
+  const refreshGroups = async () => {
     try {
       const groups = await api.listGroups()
       setState({ groups, groupsLoading: false })
     } catch {
-      setState({ groups: [], groupsLoading: false })
+      setState((p) => ({ groups: p.groups || [], groupsLoading: false }))
     }
+  }
+
+  // 로그인 성공 후: 내 그룹 목록 로드 → 다음 화면으로
+  const afterAuth = async () => {
+    await refreshGroups()
     // 초대 링크로 들어왔으면 로그인 후 바로 참여(코드 입력) 화면으로
     const next = ref.current.authNext || 'spaceSelect'
     setState({ authNext: null })
@@ -19,8 +25,22 @@ export function createAuthActions({ ref, setState, go }) {
 
   const logout = async () => {
     await clearToken()
-    setState({ me: null, groups: [] })
+    // 지금 가족도 비운다. 남아 있으면 다시 로그인했을 때 가족 선택 화면이 '앱 안에서 연 것'으로 보인다.
+    setState({ me: null, groups: [], currentGroup: null })
     go('login')
+  }
+
+  // 회원 탈퇴 — 서버에서 계정이 지워진 뒤에만 토큰을 버린다. 실패하면 로그인 상태 그대로 둔다.
+  const deleteAccount = async () => {
+    setState({ accountDeleting: true, profileError: null })
+    try {
+      await api.deleteMe()
+    } catch (e) {
+      setState({ accountDeleting: false, profileError: e.message })
+      return
+    }
+    setState({ accountDeleting: false })
+    await logout()
   }
 
   // 카카오 로그인 (실제 OAuth) — 인앱 브라우저 → 백엔드 → 딥링크로 토큰 수신
@@ -40,9 +60,26 @@ export function createAuthActions({ ref, setState, go }) {
     }
   }
 
-  // 구글 로그인 — 아직 미연동. 실제 구글 OAuth 붙이기 전까지 임시 안내만.
-  const googleLogin = async () => {
-    setState({ authError: '구글 로그인은 아직 준비 중이에요. 카카오로 시작해주세요.' })
+  // 앱을 켤 때 저장된 토큰으로 로그인 상태를 되살린다.
+  // 이게 없으면 폰이 앱을 완전히 종료할 때마다 카카오 로그인을 다시 해야 한다.
+  // 토큰이 만료·무효(401)일 때만 지운다. 네트워크 오류에도 지우면 잠깐 끊겼다는 이유로 로그아웃된다.
+  const restoreSession = async () => {
+    // 웹: 초대 링크로 들어왔으면 코드를 보관해 두고, 카카오 로그인에서 돌아왔으면 토큰부터 저장한다
+    api.consumeWebJoinLink()
+    await api.consumeWebAuthCallback()
+    const token = await getToken()
+    if (!token) return
+    setState({ authLoading: true, authError: null })
+    try {
+      const me = await api.me()
+      // 초대 링크로 들어온 사람은 로그인 뒤 코드가 채워진 참여 화면으로 보낸다
+      const joinCode = api.takePendingJoinCode()
+      setState({ authLoading: false, me, groupsLoading: true, ...(joinCode ? { joinCode, authNext: 'joinSpace' } : {}) })
+      await afterAuth()
+    } catch (e) {
+      if (e.status === 401) await clearToken()
+      setState({ authLoading: false, authError: e.status === 401 ? null : e.message })
+    }
   }
 
   // 프로필 저장: 이름(User) + 가족 내 호칭(Membership). 바뀐 것만 호출.
@@ -56,15 +93,24 @@ export function createAuthActions({ ref, setState, go }) {
       return
     }
     const pendingPhoto = cur.profilePhotoAsset // 고르기만 하고 아직 안 올린 사진
+    const removePhoto = !pendingPhoto && cur.profilePhotoRemove // '사진 지우기'를 눌렀음
+    const photoGid = cur.currentGroup?.id
     setState({ profileSaving: true, profileError: null })
     try {
-      // 사진은 여기서 처음 서버로 올라간다. 실패하면 저장 전체를 중단한다.
+      // 사진은 가족마다 따로 — 지금 가족의 내 사진만 바꾼다. 실패하면 저장 전체를 중단한다.
       // 업로드와 DB 기록을 서버가 한 요청으로 묶어주므로, 실패해도 고아 파일이 안 남는다.
-      if (pendingPhoto) {
+      if (photoGid && (pendingPhoto || removePhoto)) {
         setState({ profilePhotoUploading: true })
         try {
-          const me = await api.updateMyPhoto(pendingPhoto)
-          setState({ me })
+          const g = pendingPhoto
+            ? await api.updateMyGroupPhoto(photoGid, pendingPhoto)
+            : await api.deleteMyGroupPhoto(photoGid)
+          const myPhotoUrl = (g.members || []).find((m) => m.userId === ref.current.me?.id)?.photoUrl ?? null
+          setState((p) => ({
+            groupMembers: g.members || [],
+            currentGroup: { ...p.currentGroup, myPhotoUrl },
+            groups: (p.groups || []).map((x) => (x.id === photoGid ? { ...x, myPhotoUrl } : x)),
+          }))
         } finally {
           setState({ profilePhotoUploading: false })
         }
@@ -91,7 +137,7 @@ export function createAuthActions({ ref, setState, go }) {
           setState({ groupMembers: g.members || [] })
         } catch {}
       }
-      setState({ profileSaving: false, profileName: undefined, profileNickname: undefined, profileMood: undefined, profilePhoto: undefined, profilePhotoAsset: undefined })
+      setState({ profileSaving: false, profileName: undefined, profileNickname: undefined, profileMood: undefined, profilePhoto: undefined, profilePhotoAsset: undefined, profilePhotoRemove: undefined })
       go('members')
     } catch (e) {
       setState({ profileSaving: false, profileError: e.message })
@@ -105,14 +151,19 @@ export function createAuthActions({ ref, setState, go }) {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (perm.status !== 'granted') return
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        // 배열 형태가 현재 API. MediaTypeOptions 는 deprecated.
+        mediaTypes: ['images'],
+        // 한 장만 쓴다(assets[0]). 기본값 selectionLimit:0 은 '시스템 최대치'라
+        // 사진첩이 다중 선택으로 열리고, 탭하면 체크만 될 뿐 확정 버튼을 따로 눌러야 한다.
+        allowsMultipleSelection: false,
+        selectionLimit: 1,
         quality: 0.7,
       })
       if (result.canceled || !result.assets || !result.assets[0]) return
       const asset = result.assets[0]
-      setState({ profilePhoto: asset.uri, profilePhotoAsset: asset, profileError: null })
+      setState({ profilePhoto: asset.uri, profilePhotoAsset: asset, profilePhotoRemove: undefined, profileError: null })
     } catch {}
   }
 
-  return { afterAuth, logout, kakaoLogin, googleLogin, saveProfile, pickProfilePhoto }
+  return { afterAuth, refreshGroups, logout, deleteAccount, kakaoLogin, restoreSession, saveProfile, pickProfilePhoto }
 }

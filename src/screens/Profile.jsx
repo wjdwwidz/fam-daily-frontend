@@ -36,7 +36,12 @@ export default function Profile() {
             </Svg>
           </View>
         </Pressable>
-        <Text style={s('font-size:11px;color:#9DB2BD;margin-top:lg')}>사진을 눌러 바꿔보세요</Text>
+        <Text style={s('font-size:11px;color:#9DB2BD;margin-top:lg')}>사진을 눌러 바꿔보세요 · 이 가족에서만 쓰는 사진이에요</Text>
+        {!!vm.profilePhoto && (
+          <Pressable onPress={vm.removeProfilePhoto} hitSlop={8} style={s('margin-top:sm;padding:xs lg')}>
+            <Text style={s('font-size:11.5px;color:#8497A1;font-weight:600')}>사진 지우기</Text>
+          </Pressable>
+        )}
       </View>
 
       <View style={s('padding:2xl screenX 0')}>
@@ -55,6 +60,10 @@ export default function Profile() {
 
         <Pressable onPress={vm.saveProfile} disabled={vm.profileSaving} style={s(`margin:ctaTop 0 ctaBottom;height:54px;border-radius:17px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;opacity:${vm.profileSaving ? 0.7 : 1}`)}>
           <Text style={s('font-size:13.9px;font-weight:700;color:#fff')}>{vm.profileSaving ? '저장 중…' : '저장하기'}</Text>
+        </Pressable>
+
+        <Pressable onPress={vm.deleteAccount} disabled={vm.accountDeleting} style={s('align-items:center;padding:md 0')}>
+          <Text style={s('font-size:12px;color:#9DB2BD')}>{vm.accountDeleting ? '탈퇴 처리 중…' : '회원 탈퇴'}</Text>
         </Pressable>
       </View>
     </View>

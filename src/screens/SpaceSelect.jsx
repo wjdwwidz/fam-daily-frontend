@@ -1,7 +1,7 @@
 import { View, Text, Image, Pressable, ActivityIndicator } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
-import Avatar from '../components/Avatar.jsx'
+import SpaceCard from '../components/SpaceCard.jsx'
 import mascot from '../../assets/img/mascot.png'
 
 import { useVm } from '../vm/useVm.js'
@@ -11,7 +11,7 @@ export default function SpaceSelect() {
   const empty = !vm.groupsLoading && vm.mySpaces.length === 0
   return (
     <View style={s('flex:1;padding:3xl 6xl 6xl')}>
-      <Pressable onPress={vm.logout} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);align-items:center;justify-content:center;margin-bottom:2xl')}>
+      <Pressable onPress={vm.spaceSelectInApp ? vm.back : vm.logout} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);align-items:center;justify-content:center;margin-bottom:2xl')}>
         <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="#17303B" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
       </Pressable>
       <View style={s('flex-direction:row;align-items:center;gap:xl;margin-bottom:sm')}>
@@ -34,18 +34,7 @@ export default function SpaceSelect() {
       )}
 
       {vm.mySpaces.map((g, i) => (
-        <Pressable key={i} onPress={g.pick} style={s('flex-direction:row;align-items:center;gap:2xl;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:22px;padding:3xl 4xl;margin-bottom:btnGap')}>
-          <View style={s('flex-direction:row')}>
-            {g.avatars.slice(0, 4).map((a, j) => (
-              <Avatar key={j} photoUrl={a.photoUrl} ini={a.i} size={36} style={{ borderWidth: 2, borderColor: '#fff', marginLeft: j === 0 ? 0 : -11 }} />
-            ))}
-          </View>
-          <View style={s('flex:1;min-width:0')}>
-            <Text style={s('font-size:15.5px;font-weight:800;color:#17303B')}>{g.name}</Text>
-            <Text style={s('font-size:12px;color:#9DB2BD;margin-top:hair')}>{g.sub}</Text>
-          </View>
-          <Svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#D9C3CC" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 6 L15 12 L9 18" /></Svg>
-        </Pressable>
+        <SpaceCard key={i} space={g} onPress={g.pick} />
       ))}
 
       <View style={s('flex-direction:column;gap:btnGap;margin-top:0')}>
