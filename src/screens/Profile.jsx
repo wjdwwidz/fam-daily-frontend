@@ -56,6 +56,10 @@ export default function Profile() {
         <Pressable onPress={vm.saveProfile} disabled={vm.profileSaving} style={s(`margin:ctaTop 0 ctaBottom;height:54px;border-radius:17px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;opacity:${vm.profileSaving ? 0.7 : 1}`)}>
           <Text style={s('font-size:13.9px;font-weight:700;color:#fff')}>{vm.profileSaving ? '저장 중…' : '저장하기'}</Text>
         </Pressable>
+
+        <Pressable onPress={vm.deleteAccount} disabled={vm.accountDeleting} style={s('align-items:center;padding:md 0')}>
+          <Text style={s('font-size:12px;color:#9DB2BD')}>{vm.accountDeleting ? '탈퇴 처리 중…' : '회원 탈퇴'}</Text>
+        </Pressable>
       </View>
     </View>
   )
