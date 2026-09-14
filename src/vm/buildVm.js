@@ -41,7 +41,7 @@ export function buildVm(app) {
   const {
     st, setState, go, navTo, back,
     variant = 'grid', initialScreen = 'login',
-    logout, kakaoLogin, googleLogin, saveProfile, pickProfilePhoto,
+    logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto,
     doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     loadQna, submitAnswer, submitQuestion,
@@ -336,9 +336,15 @@ export function buildVm(app) {
     authError: st.authError || null, authLoading: !!st.authLoading,
     authNotice: st.authNotice || null,
     kakaoLogin,
-    googleLogin,
     setAuthMode: (m) => setState({ authMode: m, authError: null }),
     logout,
+    deleteAccount: () => askConfirm({
+      title: '정말 탈퇴하시겠어요?',
+      message: '이름과 프로필 사진은 바로 삭제되고 되돌릴 수 없어요.\n가족 공간에 남긴 사진·단어·문답은 호칭과 함께 남아요.\n혼자 있는 가족 공간은 함께 삭제돼요.',
+      yesText: '탈퇴하기',
+      onYes: deleteAccount,
+    }),
+    accountDeleting: !!st.accountDeleting,
     me: st.me || null,
     // 그룹 만들기/참여 입력
     createName: st.createName ?? '', createNickname: st.createNickname ?? '',

@@ -21,4 +21,5 @@ export const authApi = {
   kakaoLogin,
   me: () => request('/auth/me'),
   updateMe: (patch) => request('/auth/me', { method: 'PATCH', body: patch }),
+  deleteMe: () => request('/auth/me', { method: 'DELETE' }),
 }

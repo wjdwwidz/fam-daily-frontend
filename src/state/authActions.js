@@ -23,6 +23,19 @@ export function createAuthActions({ ref, setState, go }) {
     go('login')
   }
 
+  // 회원 탈퇴 — 서버에서 계정이 지워진 뒤에만 토큰을 버린다. 실패하면 로그인 상태 그대로 둔다.
+  const deleteAccount = async () => {
+    setState({ accountDeleting: true, profileError: null })
+    try {
+      await api.deleteMe()
+    } catch (e) {
+      setState({ accountDeleting: false, profileError: e.message })
+      return
+    }
+    setState({ accountDeleting: false })
+    await logout()
+  }
+
   // 카카오 로그인 (실제 OAuth) — 인앱 브라우저 → 백엔드 → 딥링크로 토큰 수신
   const kakaoLogin = async () => {
     setState({ authLoading: true, authError: null })
@@ -38,11 +51,6 @@ export function createAuthActions({ ref, setState, go }) {
     } catch (e) {
       setState({ authLoading: false, authError: e.message })
     }
-  }
-
-  // 구글 로그인 — 아직 미연동. 실제 구글 OAuth 붙이기 전까지 임시 안내만.
-  const googleLogin = async () => {
-    setState({ authError: '구글 로그인은 아직 준비 중이에요. 카카오로 시작해주세요.' })
   }
 
   // 프로필 저장: 이름(User) + 가족 내 호칭(Membership). 바뀐 것만 호출.
@@ -119,5 +127,5 @@ export function createAuthActions({ ref, setState, go }) {
     } catch {}
   }
 
-  return { afterAuth, logout, kakaoLogin, googleLogin, saveProfile, pickProfilePhoto }
+  return { afterAuth, logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto }
 }
