@@ -73,7 +73,8 @@ export function createWordActions({ ref, setState, navTo, go, showToast }) {
       reading: (draft.reading || '').trim(),
       meaning,
       example: (draft.example || '').trim(),
-      photoUrl: draft.photo || undefined,
+      // 사진을 지웠으면 null 을 보내야 서버가 비운다. undefined 는 JSON 에서 빠져 '안 바꿈'이 된다.
+      photoUrl: draft.photo || null,
     }
     setState({ actionLoading: true, wordError: null })
     try {
