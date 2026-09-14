@@ -36,6 +36,12 @@
       ],
       "expo-video"
     ],
-    "scheme": "famdaily"
+    "scheme": "famdaily",
+    "extra": {
+      "eas": {
+        "projectId": "5764520b-e55a-40be-a26d-4d7bf63e1222"
+      }
+    },
+    "owner": "hye14"
   }
 }
