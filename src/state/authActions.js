@@ -3,14 +3,20 @@ import * as ImagePicker from 'expo-image-picker'
 
 // 인증 흐름 (로그인/가입/카카오/로그아웃). 공유 컨텍스트 {ref,setState,go} 주입.
 export function createAuthActions({ ref, setState, go }) {
-  // 로그인 성공 후: 내 그룹 목록 로드 → 다음 화면으로
-  const afterAuth = async () => {
+  // 내 가족 목록 새로 받기 (로그인 직후, 가족 전환 화면을 열 때).
+  // 실패하면 들고 있던 목록을 그대로 둔다 — 전환 화면이 갑자기 비어 보이지 않게.
+  const refreshGroups = async () => {
     try {
       const groups = await api.listGroups()
       setState({ groups, groupsLoading: false })
     } catch {
-      setState({ groups: [], groupsLoading: false })
+      setState((p) => ({ groups: p.groups || [], groupsLoading: false }))
     }
+  }
+
+  // 로그인 성공 후: 내 그룹 목록 로드 → 다음 화면으로
+  const afterAuth = async () => {
+    await refreshGroups()
     // 초대 링크로 들어왔으면 로그인 후 바로 참여(코드 입력) 화면으로
     const next = ref.current.authNext || 'spaceSelect'
     setState({ authNext: null })
@@ -19,7 +25,8 @@ export function createAuthActions({ ref, setState, go }) {
 
   const logout = async () => {
     await clearToken()
-    setState({ me: null, groups: [] })
+    // 지금 가족도 비운다. 남아 있으면 다시 로그인했을 때 가족 선택 화면이 '앱 안에서 연 것'으로 보인다.
+    setState({ me: null, groups: [], currentGroup: null })
     go('login')
   }
 
@@ -149,5 +156,5 @@ export function createAuthActions({ ref, setState, go }) {
     } catch {}
   }
 
-  return { afterAuth, logout, deleteAccount, kakaoLogin, restoreSession, saveProfile, pickProfilePhoto }
+  return { afterAuth, refreshGroups, logout, deleteAccount, kakaoLogin, restoreSession, saveProfile, pickProfilePhoto }
 }

@@ -45,7 +45,13 @@ export default function Members() {
             </View>
           )}
           {vm.groupNameError && <Text style={s('font-size:11px;color:#E5484D;margin-top:xs')}>{vm.groupNameError}</Text>}
-          <Text style={s('font-size:11.3px;color:#6A7E88;margin-top:hair')}>{vm.memberCount}명이 함께하고 있어요</Text>
+          <View style={s('flex-direction:row;align-items:center;gap:lg;margin-top:hair')}>
+            <Text style={s('font-size:11.3px;color:#6A7E88')}>{vm.memberCount}명이 함께하고 있어요</Text>
+            {/* 여러 가족에 참여할 수 있다 — 가족 선택 화면으로 */}
+            <Pressable onPress={vm.goSpaceSelect} hitSlop={8}>
+              <Text style={s('font-size:11.3px;font-weight:700;color:#FF5E8A')}>다른 가족 ›</Text>
+            </Pressable>
+          </View>
         </View>
         <Pressable onPress={vm.openInvite} style={s('width:44px;height:44px;border-radius:14px;background:#FF5E8A;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;box-shadow:0 8px 18px rgba(255,94,138,0.32)')}>
           <Svg viewBox="0 0 24 24" width={22} height={22} fill="none" stroke="#fff" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">

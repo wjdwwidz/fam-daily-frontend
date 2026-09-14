@@ -46,6 +46,7 @@ export function buildVm(app) {
     logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto,
     doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
+    refreshGroups,
     loadQna, submitAnswer, submitQuestion,
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
   } = app
@@ -309,8 +310,24 @@ export function buildVm(app) {
         i: String(m.nickname || m.name || '').slice(0, 1),
         photoUrl: personPhoto(m),
       })),
-      pick: () => { setState({ currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [] }); go('home'); loadMembers(g.id); loadWords(g.id); loadQna(g.id); loadMedia(g.id) },
+      current: !!st.currentGroup && g.id === st.currentGroup.id,
+      pick: () => {
+        // 지금 가족을 다시 고르면 불러올 것 없이 홈으로
+        if (st.currentGroup && g.id === st.currentGroup.id) {
+          setState({ screen: 'home', _hist: [], spaceSheetOpen: false })
+          return
+        }
+        // 다른 가족으로 전환: 이전 가족의 화면 상태를 비우고, 뒤로가기로 이전 가족 화면에 돌아가지 않게 히스토리도 비운다
+        setState({
+          currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [],
+          word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null,
+          screen: 'home', _hist: [], spaceSheetOpen: false,
+        })
+        loadMembers(g.id); loadWords(g.id); loadQna(g.id); loadMedia(g.id)
+      },
     })),
+    // 앱 안(가족 탭)에서 연 가족 선택 화면이면 뒤로가기는 이전 화면으로, 로그인 직후면 로그아웃
+    spaceSelectInApp: !!st.currentGroup,
     currentGroup: st.currentGroup || null,
     myNickname: st.currentGroup?.myNickname || '나',
     myInitial,
@@ -340,7 +357,14 @@ export function buildVm(app) {
     profileSaving: !!st.profileSaving,
     profileError: st.profileError || null,
     groupsLoading: !!st.groupsLoading,
-    goSpaceSelect: () => go('spaceSelect'),
+    // 가족 전환 화면 — 그 사이 초대받은 가족이 보이도록 열 때마다 목록을 새로 받는다
+    goSpaceSelect: () => { go('spaceSelect'); refreshGroups() },
+    // 가족 전환 시트 (하단 '홈' 길게 누르기). 열 때마다 목록을 새로 받는다.
+    spaceSheetOpen: !!st.spaceSheetOpen,
+    openSpaceSheet: () => { setState({ spaceSheetOpen: true }); refreshGroups() },
+    closeSpaceSheet: () => setState({ spaceSheetOpen: false }),
+    sheetGoCreate: () => { setState({ spaceSheetOpen: false }); go('createSpace') },
+    sheetGoJoin: () => { setState({ spaceSheetOpen: false }); go('joinSpace') },
     // 인증
     isAuth: scr === 'auth',
     authMode: st.authMode || 'login',
