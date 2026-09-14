@@ -60,6 +60,10 @@ export function buildVm(app) {
     if (onYes) onYes()
   }
 
+  // 사진 원본 보기: openPhotoViewer(url)
+  const openPhotoViewer = (url) => { if (url) setState({ photoViewerUrl: url }) }
+  const closePhotoViewer = () => setState({ photoViewerUrl: null })
+
   const deleteMedia = () => { setState({ menuOpen: null }); const id = st.media?.id; if (id) removeMedia(id) }
   const editMedia = () => { setState({ menuOpen: null }); startEditMedia() }
 
@@ -441,6 +445,7 @@ export function buildVm(app) {
     startEditWord, startAddWord,
     // 삭제는 항상 확인 모달을 거친다
     confirm: st.confirm || null, confirmOpen: !!st.confirm, askConfirm, closeConfirm, confirmYes,
+    photoViewerUrl: st.photoViewerUrl || null, photoViewerOpen: !!st.photoViewerUrl, openPhotoViewer, closePhotoViewer,
     deleteWord: () => askConfirm({ title: '이 단어를 삭제하시겠습니까?', message: '삭제하면 되돌릴 수 없어요.', onYes: deleteWord }),
     deleteMedia: () => askConfirm({ title: '이 게시물을 삭제하시겠습니까?', message: '삭제하면 되돌릴 수 없어요.', onYes: deleteMedia }),
     onWordTerm, onWordReading, onWordMeaning, onWordExample,

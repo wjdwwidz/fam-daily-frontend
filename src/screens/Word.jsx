@@ -89,7 +89,13 @@ export default function Word() {
         <Text style={s('font-size:12px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px;margin-bottom:md')}>💬 이럴 때 써요</Text>
         <Text style={s('font-size:14.5px;color:#3F4E58;line-height:1.7')}>{vm.currentWord.example}</Text>
         {vm.currentWord.photoUrl && (
-          <Image source={{ uri: vm.currentWord.photoUrl }} style={s('margin-top:4xl;width:100%;height:220px;border-radius:18px')} resizeMode="cover" />
+          // 틀에는 잘라서 보여주고, 누르면 원본 전체를 본다
+          <Pressable onPress={() => vm.openPhotoViewer(vm.currentWord.photoUrl)} style={s('margin-top:4xl;position:relative;cursor:pointer')}>
+            <Image source={{ uri: vm.currentWord.photoUrl }} style={s('width:100%;height:220px;border-radius:18px')} resizeMode="cover" />
+            <View style={s('position:absolute;right:10px;bottom:10px;width:28px;height:28px;border-radius:50%;background:rgba(23,48,59,0.55);display:flex;align-items:center;justify-content:center')}>
+              <Svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M14 4 h6 v6 M20 4 l-7 7 M10 20 H4 v-6 M4 20 l7 -7" /></Svg>
+            </View>
+          </Pressable>
         )}
         </View>
       </View>
