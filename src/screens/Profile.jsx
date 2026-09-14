@@ -36,7 +36,12 @@ export default function Profile() {
             </Svg>
           </View>
         </Pressable>
-        <Text style={s('font-size:11px;color:#9DB2BD;margin-top:lg')}>사진을 눌러 바꿔보세요</Text>
+        <Text style={s('font-size:11px;color:#9DB2BD;margin-top:lg')}>사진을 눌러 바꿔보세요 · 이 가족에서만 쓰는 사진이에요</Text>
+        {!!vm.profilePhoto && (
+          <Pressable onPress={vm.removeProfilePhoto} hitSlop={8} style={s('margin-top:sm;padding:xs lg')}>
+            <Text style={s('font-size:11.5px;color:#8497A1;font-weight:600')}>사진 지우기</Text>
+          </Pressable>
+        )}
       </View>
 
       <View style={s('padding:2xl screenX 0')}>

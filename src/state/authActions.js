@@ -93,15 +93,24 @@ export function createAuthActions({ ref, setState, go }) {
       return
     }
     const pendingPhoto = cur.profilePhotoAsset // 고르기만 하고 아직 안 올린 사진
+    const removePhoto = !pendingPhoto && cur.profilePhotoRemove // '사진 지우기'를 눌렀음
+    const photoGid = cur.currentGroup?.id
     setState({ profileSaving: true, profileError: null })
     try {
-      // 사진은 여기서 처음 서버로 올라간다. 실패하면 저장 전체를 중단한다.
+      // 사진은 가족마다 따로 — 지금 가족의 내 사진만 바꾼다. 실패하면 저장 전체를 중단한다.
       // 업로드와 DB 기록을 서버가 한 요청으로 묶어주므로, 실패해도 고아 파일이 안 남는다.
-      if (pendingPhoto) {
+      if (photoGid && (pendingPhoto || removePhoto)) {
         setState({ profilePhotoUploading: true })
         try {
-          const me = await api.updateMyPhoto(pendingPhoto)
-          setState({ me })
+          const g = pendingPhoto
+            ? await api.updateMyGroupPhoto(photoGid, pendingPhoto)
+            : await api.deleteMyGroupPhoto(photoGid)
+          const myPhotoUrl = (g.members || []).find((m) => m.userId === ref.current.me?.id)?.photoUrl ?? null
+          setState((p) => ({
+            groupMembers: g.members || [],
+            currentGroup: { ...p.currentGroup, myPhotoUrl },
+            groups: (p.groups || []).map((x) => (x.id === photoGid ? { ...x, myPhotoUrl } : x)),
+          }))
         } finally {
           setState({ profilePhotoUploading: false })
         }
@@ -128,7 +137,7 @@ export function createAuthActions({ ref, setState, go }) {
           setState({ groupMembers: g.members || [] })
         } catch {}
       }
-      setState({ profileSaving: false, profileName: undefined, profileNickname: undefined, profileMood: undefined, profilePhoto: undefined, profilePhotoAsset: undefined })
+      setState({ profileSaving: false, profileName: undefined, profileNickname: undefined, profileMood: undefined, profilePhoto: undefined, profilePhotoAsset: undefined, profilePhotoRemove: undefined })
       go('members')
     } catch (e) {
       setState({ profileSaving: false, profileError: e.message })
@@ -152,7 +161,7 @@ export function createAuthActions({ ref, setState, go }) {
       })
       if (result.canceled || !result.assets || !result.assets[0]) return
       const asset = result.assets[0]
-      setState({ profilePhoto: asset.uri, profilePhotoAsset: asset, profileError: null })
+      setState({ profilePhoto: asset.uri, profilePhotoAsset: asset, profilePhotoRemove: undefined, profileError: null })
     } catch {}
   }
 

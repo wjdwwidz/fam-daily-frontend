@@ -102,8 +102,8 @@ export function buildVm(app) {
       name: label,
       role: m.name || '', // 부제엔 실제 이름
       ini: String(label).slice(0, 1),
-      // 내 사진은 /auth/me 로 이미 알고 있다. 멤버 응답에 photoUrl 이 없어도 채운다.
-      photoUrl: m.photoUrl || (isMe ? st.me?.photoUrl : null) || null,
+      // 가족마다 다른 사진. 이 가족에서 정하지 않았으면 계정 사진으로 대신하지 않고 이니셜로 보인다.
+      photoUrl: m.photoUrl || null,
       admin: m.role === 'OWNER',
       me: isMe,
       mood: m.mood || (isMe ? myMood : ''),
@@ -113,10 +113,12 @@ export function buildVm(app) {
   })
   if (members.length === 0) {
     const label = st.currentGroup?.myNickname || st.me?.name || '나'
-    members.push({ name: label, role: st.me?.name || '', ini: String(label).slice(0, 1), photoUrl: st.me?.photoUrl || null, admin: true, me: true, mood: myMood, emoji: '', slotId: 'prof-0' })
+    members.push({ name: label, role: st.me?.name || '', ini: String(label).slice(0, 1), photoUrl: st.currentGroup?.myPhotoUrl || null, admin: true, me: true, mood: myMood, emoji: '', slotId: 'prof-0' })
   }
   const memberCount = st.groupMembers ? st.groupMembers.length : (st.currentGroup?.memberCount ?? members.length)
   const myInitial = String(st.currentGroup?.myNickname || st.me?.name || '나').slice(0, 1)
+  // 이 가족에서 쓰는 내 사진 (구성원 목록이 더 최신이면 그걸 쓴다). 없으면 이니셜.
+  const myGroupPhoto = members.find((m) => m.me)?.photoUrl || st.currentGroup?.myPhotoUrl || null
 
   // 사람 → 프로필 사진을 한 군데로 통일.
   // 단어 작성자처럼 payload 에 사진이 없는 경우, 이미 로드된 멤버 목록에서
@@ -139,7 +141,7 @@ export function buildVm(app) {
   const openProfile = () => {
     setState({
       profileName: undefined, profileNickname: undefined, profileMood: undefined,
-      profilePhoto: undefined, profilePhotoAsset: undefined, profileError: null,
+      profilePhoto: undefined, profilePhotoAsset: undefined, profilePhotoRemove: undefined, profileError: null,
     })
     go('profile')
   }
@@ -349,9 +351,12 @@ export function buildVm(app) {
     onProfileName: (t) => setState({ profileName: t, profileError: null }),
     onProfileNickname: (t) => setState({ profileNickname: t, profileError: null }),
     onProfileMood: (t) => setState({ profileMood: t, profileError: null }),
-    profilePhoto: st.profilePhoto ?? (st.me?.photoUrl ?? null), // 편집 중 미리보기용
-    myPhoto: st.me?.photoUrl || null, // 저장된 내 프로필 사진 (아바타 표시용)
+    // 사진은 가족마다 따로 — 지금 가족에서 쓰는 사진을 편집한다.
+    // profilePhoto: 편집 중 미리보기 (undefined = 안 건드림, null = 지우기로 함)
+    profilePhoto: st.profilePhoto !== undefined ? st.profilePhoto : myGroupPhoto,
+    myPhoto: myGroupPhoto, // 저장된 이 가족 사진 (아바타 표시용)
     pickProfilePhoto,
+    removeProfilePhoto: () => setState({ profilePhoto: null, profilePhotoAsset: undefined, profilePhotoRemove: true, profileError: null }),
     profilePhotoUploading: !!st.profilePhotoUploading,
     saveProfile,
     profileSaving: !!st.profileSaving,
