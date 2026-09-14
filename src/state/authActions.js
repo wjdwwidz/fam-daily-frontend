@@ -1,4 +1,5 @@
 import { api, getToken, setToken, clearToken } from '../lib/api.js'
+import { prepareImage, PROFILE_MAX_SIDE, PROFILE_QUALITY } from '../lib/image.js'
 import * as ImagePicker from 'expo-image-picker'
 
 // 인증 흐름 (로그인/가입/카카오/로그아웃). 공유 컨텍스트 {ref,setState,go} 주입.
@@ -102,8 +103,9 @@ export function createAuthActions({ ref, setState, go }) {
       if (photoGid && (pendingPhoto || removePhoto)) {
         setState({ profilePhotoUploading: true })
         try {
+          // 프로필은 아바타로만 보여서 작게(512px) 줄여 올린다
           const g = pendingPhoto
-            ? await api.updateMyGroupPhoto(photoGid, pendingPhoto)
+            ? await api.updateMyGroupPhoto(photoGid, await prepareImage(pendingPhoto, { maxSide: PROFILE_MAX_SIDE, quality: PROFILE_QUALITY }))
             : await api.deleteMyGroupPhoto(photoGid)
           const myPhotoUrl = (g.members || []).find((m) => m.userId === ref.current.me?.id)?.photoUrl ?? null
           setState((p) => ({
@@ -157,7 +159,8 @@ export function createAuthActions({ ref, setState, go }) {
         // 사진첩이 다중 선택으로 열리고, 탭하면 체크만 될 뿐 확정 버튼을 따로 눌러야 한다.
         allowsMultipleSelection: false,
         selectionLimit: 1,
-        quality: 0.7,
+        // 압축은 저장할 때 prepareImage 가 한 번만 한다
+        quality: 1,
       })
       if (result.canceled || !result.assets || !result.assets[0]) return
       const asset = result.assets[0]

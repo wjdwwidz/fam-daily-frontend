@@ -1,4 +1,5 @@
 import { api } from '../lib/api.js'
+import { prepareImage } from '../lib/image.js'
 import * as ImagePicker from 'expo-image-picker'
 
 // 일상 사진 액션: 목록 로드 / 사진 고르기 / 올리기 / 수정 / 삭제.
@@ -29,7 +30,8 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
         mediaTypes: ['images', 'videos'],
         allowsMultipleSelection: true,
         selectionLimit: MAX_PICK,
-        quality: 0.7,
+        // 압축은 올릴 때 prepareImage 가 한 번만 한다 (여기서도 하면 두 번 압축돼 화질이 떨어진다)
+        quality: 1,
       })
       if (result.canceled || !result.assets || !result.assets.length) return
       setState({ uploadAssets: result.assets, uploadError: null })
@@ -59,14 +61,17 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       // 여기서 멈춰도 글이 안 만들어질 뿐이고, 남은 파일은 서버가 나중에 치운다.
       let uploadIds
       if (assets.length) {
-        const files = assets.map((a) => ({
+        // 사진은 줄이고 JPEG 로 바꿔서 올린다 (영상은 그대로). 메모리를 아끼려고 한 장씩.
+        const ready = []
+        for (const a of assets) ready.push(await prepareImage(a))
+        const files = ready.map((a) => ({
           contentType: api.assetContentType(a),
           size: a.fileSize,
           fileName: a.fileName,
         }))
         const slots = await api.prepareUpload(groupId, files)
-        for (let i = 0; i < assets.length; i++) {
-          await api.putToSignedUrl(slots[i].signedUrl, assets[i], files[i].contentType)
+        for (let i = 0; i < ready.length; i++) {
+          await api.putToSignedUrl(slots[i].signedUrl, ready[i], files[i].contentType)
           setState({ uploadDone: i + 1 })
         }
         uploadIds = slots.map((s) => s.uploadId)

@@ -1,4 +1,5 @@
 import { api } from '../lib/api.js'
+import { prepareImage } from '../lib/image.js'
 import * as ImagePicker from 'expo-image-picker'
 
 // 한 단어에 넣을 수 있는 최대 사진 수 (서버의 MAX_WORD_PHOTOS 와 같은 값).
@@ -55,7 +56,8 @@ export function createWordActions({ ref, setState, navTo, go, showToast }) {
         // 확정 버튼을 따로 눌러야 해서, 한 장 고를 때는 불편하다.
         allowsMultipleSelection: remain > 1,
         selectionLimit: remain,
-        quality: 0.7,
+        // 압축은 올릴 때 prepareImage 가 한 번만 한다
+        quality: 1,
       })
       if (result.canceled || !result.assets || !result.assets.length) return
       const added = result.assets.slice(0, remain).map((asset) => ({ key: nextKey(), uri: asset.uri, url: null, uploading: true, asset }))
@@ -65,7 +67,8 @@ export function createWordActions({ ref, setState, navTo, go, showToast }) {
       // 2) 한 장씩 업로드 → public URL 로 교체 (저장 시 이 URL 들이 photoUrls 로 전송됨)
       for (const item of added) {
         try {
-          const url = await api.uploadImage(item.asset, 'words')
+          // 줄이고 JPEG 로 바꿔서 올린다 (미리보기는 고른 원본 그대로)
+          const url = await api.uploadImage(await prepareImage(item.asset), 'words')
           updatePhotos((photos) => photos.map((p) => (p.key === item.key ? { ...p, url, uploading: false } : p)))
         } catch (e) {
           updatePhotos((photos) => photos.filter((p) => p.key !== item.key))
