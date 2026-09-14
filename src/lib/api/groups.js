@@ -6,6 +6,7 @@ export const groupsApi = {
   joinGroup: (code, nickname) => request('/groups/join', { method: 'POST', body: { code, nickname } }),
   getGroup: (id) => request(`/groups/${id}`),
   updateGroupName: (id, name) => request(`/groups/${id}`, { method: 'PATCH', body: { name } }),
+  deleteGroup: (id) => request(`/groups/${id}`, { method: 'DELETE' }),
   updateMyNickname: (id, nickname) => request(`/groups/${id}/me`, { method: 'PATCH', body: { nickname } }),
   setMood: (id, text, emoji) => request(`/groups/${id}/mood`, { method: 'PUT', body: { text, emoji } }),
   createInvite: (id) => request(`/groups/${id}/invites`, { method: 'POST', body: {} }),

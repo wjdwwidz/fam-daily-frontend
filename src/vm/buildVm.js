@@ -44,7 +44,7 @@ export function buildVm(app) {
     st, setState, go, navTo, back,
     variant = 'grid', initialScreen = 'login',
     logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto,
-    doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite,
+    doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite, deleteGroup,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
@@ -373,6 +373,15 @@ export function buildVm(app) {
     kakaoLogin,
     setAuthMode: (m) => setState({ authMode: m, authError: null }),
     logout,
+    // 가족 삭제 — 방장(canEditGroupName)에게만 버튼이 보이고, 서버도 방장만 허용한다
+    deleteGroup: () => askConfirm({
+      title: '이 가족을 삭제할까요?',
+      message: `'${st.currentGroup?.name || '이 가족'}'의 사전·일상·문답과 사진이 모두 지워져요.\n구성원 모두에게서 사라지고 되돌릴 수 없어요.`,
+      yesText: '삭제하기',
+      onYes: deleteGroup,
+    }),
+    groupDeleting: !!st.groupDeleting,
+    groupDeleteError: st.groupDeleteError || null,
     deleteAccount: () => askConfirm({
       title: '정말 탈퇴하시겠어요?',
       message: '이름과 프로필 사진은 바로 삭제되고 되돌릴 수 없어요.\n가족 공간에 남긴 사진·단어·문답은 호칭과 함께 남아요.\n혼자 있는 가족 공간은 함께 삭제돼요.',

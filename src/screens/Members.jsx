@@ -87,6 +87,16 @@ export default function Members() {
           </View>
         ))}
       </View>
+
+      {/* 가족 삭제는 방장만 (서버도 같은 규칙). 실수로 누르지 않게 목록 맨 아래 작은 글씨로 */}
+      {vm.canEditGroupName && (
+        <View style={s('align-items:center;margin-top:6xl')}>
+          <Pressable onPress={vm.deleteGroup} disabled={vm.groupDeleting} hitSlop={8} style={s('padding:md 2xl')}>
+            <Text style={s('font-size:12px;color:#E5484D;font-weight:600')}>{vm.groupDeleting ? '삭제하는 중…' : '가족 삭제하기'}</Text>
+          </Pressable>
+          {vm.groupDeleteError && <Text style={s('font-size:11.5px;color:#E5484D;margin-top:xs')}>{vm.groupDeleteError}</Text>}
+        </View>
+      )}
     </View>
   )
 }

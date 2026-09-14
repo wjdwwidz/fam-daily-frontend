@@ -69,6 +69,27 @@ export function createGroupActions({ ref, setState }, afterAuth) {
   }
   const cancelEditGroupName = () => setState({ editingGroupName: false, groupNameError: null })
 
+  // 가족 공간 삭제(방장만) → 이 가족의 화면 상태를 비우고 가족 선택 화면으로.
+  // 뒤로가기로 지운 가족 화면에 돌아가지 않게 히스토리도 비운다.
+  const deleteGroup = async () => {
+    const gid = ref.current.currentGroup?.id
+    if (!gid) return
+    setState({ groupDeleting: true, groupDeleteError: null })
+    try {
+      await api.deleteGroup(gid)
+      setState((p) => ({
+        groupDeleting: false,
+        currentGroup: null, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [],
+        word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, spaceSheetOpen: false,
+        groups: (p.groups || []).filter((g) => g.id !== gid),
+        screen: 'spaceSelect', _hist: [],
+      }))
+      await afterAuth() // 목록을 서버에서 다시 받는다 (이미 가족 선택 화면이라 이동은 없음)
+    } catch (e) {
+      setState({ groupDeleting: false, groupDeleteError: e.message })
+    }
+  }
+
   // 오늘의 한마디(무드) 저장 → 멤버 목록 갱신
   const sendMood = async () => {
     const cur = ref.current
@@ -98,5 +119,5 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     }
   }
 
-  return { doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite }
+  return { doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, deleteGroup, sendMood, openInvite }
 }
