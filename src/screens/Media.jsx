@@ -13,7 +13,8 @@ export default function Media() {
   if (!m) return null
   return (
     <View style={s('padding:0 0 120px')}>
-      <View style={s('display:flex;align-items:center;justify-content:space-between;padding:sm 4xl 2xl')}>
+      {/* zIndex 는 형제끼리만 비교된다. 헤더 줄 자체를 올려야 ⋯ 메뉴가 아래 사진 위로 뜬다. (Android 는 elevation 도 필요) */}
+      <View style={[s('display:flex;align-items:center;justify-content:space-between;padding:sm 4xl 2xl'), { zIndex: 50, elevation: 50 }]}>
         <Pressable onPress={vm.back} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;color:#17303B')}>
           <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#17303B"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
         </Pressable>
