@@ -44,7 +44,7 @@ export function buildVm(app) {
     st, setState, go, navTo, back,
     variant = 'grid', initialScreen = 'login',
     logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto,
-    doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite, deleteGroup,
+    doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
@@ -222,6 +222,39 @@ export function buildVm(app) {
     ...shapeMedia(m),
     open: () => navTo({ screen: 'media', media: m, mediaLiked: false }),
   }))
+
+  // 홈 '최근 활동' — 사전 추가·일상 올림·질문·답변 (서버가 최신순으로 섞어 준다).
+  // 문구: "{이름}님이 {prefix}{highlight}{suffix}"
+  const clip = (t, n = 14) => {
+    const str = String(t || '').trim()
+    return str.length > n ? `${str.slice(0, n)}…` : str
+  }
+  const toQna = () => navTo({ screen: 'record', recordTab: 'qna' })
+  const recentActivity = (st.groupActivity || []).map((a) => {
+    const name = a.author?.nickname || a.author?.name || '가족'
+    const base = {
+      key: `${a.type}-${a.id}`,
+      by: { name, ini: String(name).slice(0, 1), photoUrl: personPhoto(a.author) },
+      date: fmtDate(a.createdAt),
+      prefix: '',
+    }
+    if (a.type === 'word') {
+      return {
+        ...base, highlight: clip(a.text), suffix: ' 추가',
+        // 이미 불러온 사전에서 찾아 상세로. 없으면(방금 지워짐 등) 사전 탭으로
+        open: () => { const w = words.find((x) => x.id === a.targetId); if (w) w.open(); else navTo({ screen: 'record', recordTab: 'dict' }) },
+      }
+    }
+    if (a.type === 'media') {
+      return {
+        ...base, highlight: '일상', suffix: ' 올림',
+        open: () => { const m = (st.groupMedia || []).find((x) => x.id === a.targetId); if (m) navTo({ screen: 'media', media: m, mediaLiked: false }); else go('gallery') },
+      }
+    }
+    // 질문 하나만 여는 화면은 없어서 문답 탭(오늘의 질문 + 지난 질문)으로
+    if (a.type === 'question') return { ...base, prefix: '질문 ', highlight: `"${clip(a.text)}"`, suffix: ' 등록', open: toQna }
+    return { ...base, highlight: `"${clip(a.text)}"`, suffix: '에 답변', open: toQna }
+  })
   const gFilter = st.galleryFilter || 'all'
   const galleryMedia = gFilter === 'all' ? media : media.filter((m) => m.by && m.by.name === gFilter)
   const galleryTabs = [{ label: '전체', key: 'all' }].concat(members.map((m) => ({ label: m.name, key: m.name }))).map((t) => {
@@ -322,7 +355,7 @@ export function buildVm(app) {
         // 다른 가족으로 전환: 이전 가족의 화면 상태를 비우고, 뒤로가기로 이전 가족 화면에 돌아가지 않게 히스토리도 비운다
         setState({
           currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [],
-          word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null,
+          word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, groupActivity: [],
           screen: 'home', _hist: [], spaceSheetOpen: false,
         })
         loadMembers(g.id); loadWords(g.id); loadQna(g.id); loadMedia(g.id)
@@ -474,7 +507,14 @@ export function buildVm(app) {
     openSearch: () => setState({ searchOpen: true }),
     closeSearch: () => setState({ searchOpen: false }),
     stopEvt: () => {},
-    recentWords: words.slice(0, 3),
+    recentActivity,
+    activityLoading: !!st.activityLoading,
+    loadActivity: () => loadActivity(st.currentGroup?.id),
+    // 홈 날짜 (오늘, 기기 시간 기준)
+    todayLabel: (() => {
+      const d = new Date()
+      return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+    })(),
     todayWord: words[0],
     // st.word 는 열었던 시점의 스냅샷이라, 저장 직후엔 같은 id 를 최신 목록에서 다시 찾아 반영한다.
     // 목록에 없으면(갱신 실패 등) 서버 응답을 화면 형태로 변환해 쓴다 — by/date 누락 방지.

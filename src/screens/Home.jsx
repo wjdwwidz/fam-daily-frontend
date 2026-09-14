@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, useEffect } from 'react'
 import { View, Text, Image, Pressable, TextInput } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
@@ -9,6 +9,10 @@ import { useVm } from '../vm/useVm.js'
 
 export default function Home() {
   const vm = useVm()
+  // 홈에 들어올 때마다(그리고 가족을 바꾸면) 최근 활동을 새로 받는다 —
+  // 다른 화면에서 글을 쓰고 돌아와도 바로 보이게
+  const groupId = vm.currentGroup?.id
+  useEffect(() => { vm.loadActivity() }, [groupId])
   return (
     <View style={s('padding:screenTop screenX screenBottom')}>
       <View style={s('display:flex;align-items:flex-start;justify-content:space-between;margin:sm 0 lg')}>
@@ -51,7 +55,7 @@ export default function Home() {
 
       <View style={s('display:flex;align-items:flex-end;justify-content:space-between;margin:xs hair lg')}>
         <View>
-          <Text style={s('font-size:12.5px;font-weight:500;color:#FF5E8A;letter-spacing:0.3px')}>2026.07.07</Text>
+          <Text style={s('font-size:12.5px;font-weight:500;color:#FF5E8A;letter-spacing:0.3px')}>{vm.todayLabel}</Text>
         </View>
       </View>
       <View style={s('display:flex;align-items:center;gap:lg;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:md md md xl;margin-bottom:5xl')}>
@@ -72,11 +76,16 @@ export default function Home() {
 
       <Text style={s('margin:xs hair lg;font-size:13px;font-weight:500;color:#7C8B95')}>최근 활동</Text>
       <View style={s('background:rgba(255,255,255,0.45);border:1px solid rgba(255,225,236,0.6);border-radius:26px;padding:hair 3xl;')}>
-        {vm.recentWords.map((w, i) => (
-          <Pressable key={i} onPress={w.open} style={s('display:flex;align-items:center;gap:xl;padding:lg 0;border-bottom:1px solid rgba(239,244,247,0.7);cursor:pointer')}>
-            <Avatar photoUrl={w.by.photoUrl} ini={w.by.ini} size={30} />
-            <Text style={s('flex:1;font-size:11.5px;color:#57646E')}><Text style={s('color:#17303B;font-weight:700')}>{w.by.name}</Text>님이 <Text style={s('color:#FF5E8A;font-weight:700')}>{w.term}</Text> 추가</Text>
-            <Text style={s('font-size:10px;color:#B4C1CA')}>{w.date}</Text>
+        {vm.recentActivity.length === 0 && (
+          <Text style={s('padding:3xl 0;text-align:center;font-size:11.5px;color:#9DB2BD')}>
+            {vm.activityLoading ? '불러오는 중…' : '아직 활동이 없어요'}
+          </Text>
+        )}
+        {vm.recentActivity.map((a) => (
+          <Pressable key={a.key} onPress={a.open} style={s('display:flex;align-items:center;gap:xl;padding:lg 0;border-bottom:1px solid rgba(239,244,247,0.7);cursor:pointer')}>
+            <Avatar photoUrl={a.by.photoUrl} ini={a.by.ini} size={30} />
+            <Text numberOfLines={1} style={s('flex:1;font-size:11.5px;color:#57646E')}><Text style={s('color:#17303B;font-weight:700')}>{a.by.name}</Text>님이 {a.prefix}<Text style={s('color:#FF5E8A;font-weight:700')}>{a.highlight}</Text>{a.suffix}</Text>
+            <Text style={s('font-size:10px;color:#B4C1CA')}>{a.date}</Text>
           </Pressable>
         ))}
       </View>

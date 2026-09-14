@@ -69,6 +69,23 @@ export function createGroupActions({ ref, setState }, afterAuth) {
   }
   const cancelEditGroupName = () => setState({ editingGroupName: false, groupNameError: null })
 
+  // 홈 '최근 활동' 불러오기. 실패하면 들고 있던 목록을 그대로 둔다.
+  const loadActivity = async (groupId) => {
+    if (!groupId) return
+    setState({ activityLoading: true })
+    try {
+      const list = await api.groupActivity(groupId, 5)
+      // 불러오는 사이 다른 가족으로 전환했으면 이 결과는 버린다
+      if (ref.current.currentGroup?.id !== groupId) {
+        setState({ activityLoading: false })
+        return
+      }
+      setState({ groupActivity: list, activityLoading: false })
+    } catch {
+      setState({ activityLoading: false })
+    }
+  }
+
   // 가족 공간 삭제(방장만) → 이 가족의 화면 상태를 비우고 가족 선택 화면으로.
   // 뒤로가기로 지운 가족 화면에 돌아가지 않게 히스토리도 비운다.
   const deleteGroup = async () => {
@@ -80,7 +97,7 @@ export function createGroupActions({ ref, setState }, afterAuth) {
       setState((p) => ({
         groupDeleting: false,
         currentGroup: null, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [],
-        word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, spaceSheetOpen: false,
+        word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, spaceSheetOpen: false, groupActivity: [],
         groups: (p.groups || []).filter((g) => g.id !== gid),
         screen: 'spaceSelect', _hist: [],
       }))
@@ -119,5 +136,5 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     }
   }
 
-  return { doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, deleteGroup, sendMood, openInvite }
+  return { doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, deleteGroup, loadActivity, sendMood, openInvite }
 }
