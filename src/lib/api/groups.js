@@ -8,6 +8,8 @@ export const groupsApi = {
   getGroup: (id) => request(`/groups/${id}`),
   updateGroupName: (id, name) => request(`/groups/${id}`, { method: 'PATCH', body: { name } }),
   deleteGroup: (id) => request(`/groups/${id}`, { method: 'DELETE' }),
+  // 홈 '최근 활동' — 사전 추가·일상·질문·답변을 서버가 최신순으로 섞어 준다
+  groupActivity: (id, limit = 5) => request(`/groups/${id}/activity?limit=${limit}`),
   updateMyNickname: (id, nickname) => request(`/groups/${id}/me`, { method: 'PATCH', body: { nickname } }),
   // 이 가족에서 쓰는 내 사진 — 업로드+저장을 서버가 한 요청으로 처리한다. 둘 다 갱신된 그룹 상세를 돌려준다.
   updateMyGroupPhoto: (id, asset) => postFile(`/groups/${id}/me/photo`, asset, '프로필 사진 저장에 실패했어요.'),
