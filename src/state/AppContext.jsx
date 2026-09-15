@@ -22,12 +22,17 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
   const navTo = (patch) => setState((p) => ({ ...patch, _hist: [...(p._hist || []), cur0(p)] }))
   const back = () =>
     setState((p) => {
+      const onWord = cur0(p) === 'word'
+      // 기존 단어를 수정하던 중이면 화면을 떠나지 않고 수정만 끝낸다 (상세 보기로)
+      if (onWord && p.editPost === 'word' && p.word?.id) return { editPost: null, wordError: null }
+      // 사전 화면을 떠날 때는 수정 상태를 비운다. 남겨두면 다음에 여는 단어가 빈 수정 화면으로 뜬다.
+      const leaveWord = onWord ? { editPost: null, wordError: null } : {}
       const h = p._hist || []
-      if (h.length) return { screen: h[h.length - 1], _hist: h.slice(0, -1) }
+      if (h.length) return { screen: h[h.length - 1], _hist: h.slice(0, -1), ...leaveWord }
       // 히스토리가 없으면 화면별 기본 이전 화면으로 폴백
       // 사전/문답은 '기록' 탭으로 병합됨 — 옛 화면명('dict','qna')으로 보내면 라우팅에서 떨어진다
       const map = { word: 'record', media: 'gallery', upload: 'home', members: 'home', qnahistory: 'record', spaceSelect: 'login', space: 'spaceSelect', createSpace: 'space', joinSpace: 'space', signup: 'login' }
-      return { screen: map[cur0(p)] || 'home' }
+      return { screen: map[cur0(p)] || 'home', ...leaveWord }
     })
 
   // 무드 링 자동 순환
