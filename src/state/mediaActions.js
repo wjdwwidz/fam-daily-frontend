@@ -138,5 +138,71 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     }
   }
 
-  return { loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia }
+  // ── 댓글 ─────────────────────────────────────────────────────────
+  const MAX_COMMENT = 300 // 서버의 MAX_COMMENT_LENGTH 와 같은 값
+
+  // 응답이 올 때 이미 다른 글을 보고 있으면 버린다
+  const applyComments = (mediaId, res) => {
+    if (ref.current.media?.id !== mediaId) return
+    setState({ comments: res.comments || [], commentCount: res.count || 0, commentsFor: mediaId, commentsLoading: false })
+  }
+
+  const loadComments = async (mediaId) => {
+    if (!mediaId) return
+    setState({ commentsLoading: true, commentError: null })
+    try {
+      applyComments(mediaId, await api.listComments(mediaId))
+    } catch (e) {
+      setState({ commentsLoading: false, commentError: e.message })
+    }
+  }
+
+  const onCommentDraft = (text) => setState({ commentDraft: text, commentError: null })
+  // 답글은 최상위 댓글에만 붙는다 — 답글에 답해도 서버가 같은 댓글 아래로 모은다
+  const startReply = (c) => setState({ commentReplyTo: { id: c.id, name: c.by.name }, commentEditingId: null, commentError: null })
+  const startEditComment = (c) => setState({ commentEditingId: c.id, commentDraft: c.text, commentReplyTo: null, commentError: null })
+  const cancelCommentMode = () => setState({ commentReplyTo: null, commentEditingId: null, commentDraft: '', commentError: null })
+
+  const submitComment = async () => {
+    const cur = ref.current
+    const mediaId = cur.media?.id
+    const text = (cur.commentDraft || '').trim()
+    if (!mediaId || cur.commentSaving) return
+    if (!text) {
+      setState({ commentError: '댓글 내용을 입력해주세요.' })
+      return
+    }
+    if (text.length > MAX_COMMENT) {
+      setState({ commentError: `댓글은 ${MAX_COMMENT}자까지 쓸 수 있어요.` })
+      return
+    }
+    setState({ commentSaving: true, commentError: null })
+    try {
+      const res = cur.commentEditingId
+        ? await api.editComment(cur.commentEditingId, text)
+        : await api.addComment(mediaId, text, cur.commentReplyTo?.id)
+      applyComments(mediaId, res)
+      setState({ commentSaving: false, commentDraft: '', commentReplyTo: null, commentEditingId: null })
+    } catch (e) {
+      setState({ commentSaving: false, commentError: e.message })
+    }
+  }
+
+  const removeComment = async (commentId) => {
+    const mediaId = ref.current.media?.id
+    if (!mediaId) return
+    try {
+      applyComments(mediaId, await api.deleteComment(commentId))
+      // 수정하던 댓글을 지웠으면 입력칸도 비운다
+      if (ref.current.commentEditingId === commentId) cancelCommentMode()
+      showToast('댓글을 삭제했어요')
+    } catch (e) {
+      showToast(e.message)
+    }
+  }
+
+  return {
+    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
+    loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
+  }
 }

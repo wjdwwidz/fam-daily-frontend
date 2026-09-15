@@ -49,6 +49,7 @@ export function buildVm(app) {
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
+    loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
   } = app
 
   const toggleMenu = (which) => setState((s2) => ({ menuOpen: s2.menuOpen === which ? null : which }))
@@ -220,10 +221,37 @@ export function buildVm(app) {
       photoUrl: personPhoto(m.author),
     },
   })
+  // 일상 글 열기 — 이전 글에서 쓰던 댓글 입력(답글·수정 중)은 비운다
+  const openMediaDetail = (m) =>
+    navTo({ screen: 'media', media: m, mediaLiked: false, commentDraft: '', commentReplyTo: null, commentEditingId: null, commentError: null })
   const media = (st.groupMedia || []).map((m) => ({
     ...shapeMedia(m),
-    open: () => navTo({ screen: 'media', media: m, mediaLiked: false }),
+    open: () => openMediaDetail(m),
   }))
+
+  // 일상 댓글 → 화면 형태. 답글은 replies 에 한 단계로 붙어 온다.
+  const shapeComment = (c) => {
+    const name = c.author?.nickname || c.author?.name || '가족'
+    const obj = {
+      id: c.id,
+      deleted: !!c.deleted,
+      text: c.text || '',
+      time: `${fmtDate(c.createdAt)} ${fmtTime(c.createdAt)}`,
+      edited: !!c.edited,
+      mine: !!c.mine,
+      by: { name, ini: String(name).slice(0, 1), photoUrl: personPhoto(c.author) },
+      replies: (c.replies || []).map(shapeComment),
+    }
+    obj.reply = () => startReply(obj)
+    obj.edit = () => startEditComment(obj)
+    obj.remove = () => askConfirm({
+      title: '댓글을 삭제할까요?',
+      message: obj.replies.length ? '답글은 남고, 이 댓글은 "삭제된 댓글"로 보여요.' : '삭제하면 되돌릴 수 없어요.',
+      yesText: '삭제',
+      onYes: () => removeComment(c.id),
+    })
+    return obj
+  }
 
   // 홈 '최근 활동' — 사전 추가·일상 올림·질문·답변 (서버가 최신순으로 섞어 준다).
   // 문구: "{이름}님이 {prefix}{highlight}{suffix}"
@@ -250,7 +278,14 @@ export function buildVm(app) {
     if (a.type === 'media') {
       return {
         ...base, highlight: '일상', suffix: ' 올림',
-        open: () => { const m = (st.groupMedia || []).find((x) => x.id === a.targetId); if (m) navTo({ screen: 'media', media: m, mediaLiked: false }); else go('gallery') },
+        open: () => { const m = (st.groupMedia || []).find((x) => x.id === a.targetId); if (m) openMediaDetail(m); else go('gallery') },
+      }
+    }
+    // 댓글: 댓글 내용을 보여주고, 누르면 그 일상 글로 (targetId 는 글)
+    if (a.type === 'comment') {
+      return {
+        ...base, highlight: `"${clip(a.text)}"`, suffix: ' 댓글',
+        open: () => { const m = (st.groupMedia || []).find((x) => x.id === a.targetId); if (m) openMediaDetail(m); else go('gallery') },
       }
     }
     // 질문 하나만 여는 화면은 없어서 문답 탭(오늘의 질문 + 지난 질문)으로
@@ -525,6 +560,17 @@ export function buildVm(app) {
       (st.word && (st.word.by ? st.word : wordVm(st.word))) ||
       words[0],
     currentMedia: st.media ? shapeMedia(st.media) : (media[0] || null),
+    // 일상 댓글 — 지금 보고 있는 글의 것만 (다른 글의 목록이 잠깐 비치지 않게)
+    mediaComments: st.media && st.commentsFor === st.media.id ? (st.comments || []).map(shapeComment) : [],
+    commentCount: st.media && st.commentsFor === st.media.id ? (st.commentCount || 0) : 0,
+    commentsLoading: !!st.commentsLoading,
+    commentDraft: st.commentDraft || '',
+    commentReplyTo: st.commentReplyTo || null,
+    commentEditing: !!st.commentEditingId,
+    commentSaving: !!st.commentSaving,
+    commentError: st.commentError || null,
+    loadComments: () => loadComments(st.media?.id),
+    onCommentDraft, submitComment, cancelCommentMode,
     mediaLiked: !!st.mediaLiked,
     isMenuWord: st.menuOpen === 'word', isMenuMedia: st.menuOpen === 'media',
     toggleMenuWord: () => toggleMenu('word'), toggleMenuMedia: () => toggleMenu('media'),

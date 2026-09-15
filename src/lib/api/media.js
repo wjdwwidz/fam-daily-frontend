@@ -24,6 +24,13 @@ export const mediaApi = {
       method: 'PATCH',
       body: uploadIds?.length ? { uploadIds, caption } : { caption },
     }),
+
+  // 댓글 — 쓰기 요청은 모두 갱신된 목록 { count, comments } 을 돌려준다
+  listComments: (mediaId) => request(`/media/${mediaId}/comments`),
+  addComment: (mediaId, text, parentId) =>
+    request(`/media/${mediaId}/comments`, { method: 'POST', body: parentId ? { text, parentId } : { text } }),
+  editComment: (commentId, text) => request(`/comments/${commentId}`, { method: 'PATCH', body: { text } }),
+  deleteComment: (commentId) => request(`/comments/${commentId}`, { method: 'DELETE' }),
 }
 
 // 서명 URL 로 파일을 직접 올린다.
