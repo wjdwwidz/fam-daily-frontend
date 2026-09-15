@@ -1,4 +1,5 @@
-import { View, Text, Pressable } from 'react-native'
+import { useEffect } from 'react'
+import { View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import Avatar from '../components/Avatar.jsx'
@@ -7,9 +8,50 @@ import VideoItem from '../components/VideoItem.jsx'
 
 import { useVm } from '../vm/useVm.js'
 
+// 댓글·답글 한 줄. 답글은 부모 아래에 들여써서 같은 모양으로 그린다.
+function CommentRow({ c }) {
+  if (c.deleted) {
+    return (
+      <View style={s('background:#FCEEF4;border-radius:14px;padding:lg xl')}>
+        <Text style={s('font-size:12px;color:#9DB2BD')}>삭제된 댓글이에요</Text>
+      </View>
+    )
+  }
+  return (
+    <View style={s('flex-direction:row;align-items:flex-start;gap:lg')}>
+      <Avatar photoUrl={c.by.photoUrl} ini={c.by.ini} size={30} />
+      <View style={s('flex:1;min-width:0;background:#FCEEF4;border-radius:14px;padding:lg xl')}>
+        <View style={s('flex-direction:row;align-items:center;gap:md;flex-wrap:wrap')}>
+          <Text style={s('font-size:12px;font-weight:700;color:#17303B')}>{c.by.name}</Text>
+          <Text style={s('font-size:10.5px;color:#B4C1CA')}>{c.time}{c.edited ? ' · 수정됨' : ''}</Text>
+        </View>
+        <Text style={s('font-size:13px;color:#3F4E58;line-height:1.55;margin-top:xs')}>{c.text}</Text>
+        <View style={s('flex-direction:row;align-items:center;gap:2xl;margin-top:md')}>
+          <Pressable onPress={c.reply} hitSlop={8}>
+            <Text style={s('font-size:11px;font-weight:700;color:#8497A1')}>답글</Text>
+          </Pressable>
+          {c.mine && (
+            <>
+              <Pressable onPress={c.edit} hitSlop={8}>
+                <Text style={s('font-size:11px;font-weight:700;color:#FF5E8A')}>수정</Text>
+              </Pressable>
+              <Pressable onPress={c.remove} hitSlop={8}>
+                <Text style={s('font-size:11px;font-weight:700;color:#E5484D')}>삭제</Text>
+              </Pressable>
+            </>
+          )}
+        </View>
+      </View>
+    </View>
+  )
+}
+
 export default function Media() {
   const vm = useVm()
   const m = vm.currentMedia
+  // 글이 바뀔 때마다 그 글의 댓글을 불러온다 (early return 보다 먼저 — 훅 순서 고정)
+  const mediaId = m?.id
+  useEffect(() => { if (mediaId) vm.loadComments() }, [mediaId])
   if (!m) return null
   return (
     <View style={s('padding:0 0 120px')}>
@@ -67,6 +109,63 @@ export default function Media() {
           <Text style={s('font-size:14px;color:#2B3A43;line-height:1.6;white-space:pre-wrap')}>{m.title}</Text>
         </View>
       )}
+
+      {/* 댓글 */}
+      <View style={s('margin:6xl 5xl 0;gap:lg')}>
+        <View style={s('flex-direction:row;align-items:center;gap:md;padding-top:3xl;border-top:1px solid #F0DEE6')}>
+          <Text style={s('font-size:12px;font-weight:800;color:#FF5E8A;letter-spacing:0.4px')}>댓글</Text>
+          {vm.commentCount > 0 && <Text style={s('font-size:12px;font-weight:700;color:#8497A1')}>{vm.commentCount}</Text>}
+          {vm.commentsLoading && <ActivityIndicator size="small" color="#FF5E8A" />}
+        </View>
+
+        {!vm.commentsLoading && vm.mediaComments.length === 0 && (
+          <Text style={s('font-size:12.5px;color:#9DB2BD;padding:md 0')}>아직 댓글이 없어요. 첫 댓글을 남겨보세요</Text>
+        )}
+
+        {vm.mediaComments.map((c) => (
+          <View key={c.id} style={s('gap:md')}>
+            <CommentRow c={c} />
+            {c.replies.map((r) => (
+              <View key={r.id} style={s('padding-left:5xl')}>
+                <CommentRow c={r} />
+              </View>
+            ))}
+          </View>
+        ))}
+
+        {/* 답글·수정 중이면 무엇을 하고 있는지 알려주고 취소할 수 있게 */}
+        {(vm.commentReplyTo || vm.commentEditing) && (
+          <View style={s('flex-direction:row;align-items:center;justify-content:space-between;margin-top:md;background:#FFF0F5;border-radius:10px;padding:md xl')}>
+            <Text style={s('font-size:11.5px;font-weight:700;color:#FF5E8A')}>
+              {vm.commentEditing ? '댓글 수정 중' : `${vm.commentReplyTo.name}님에게 답글`}
+            </Text>
+            <Pressable onPress={vm.cancelCommentMode} hitSlop={8}>
+              <Text style={s('font-size:11.5px;font-weight:700;color:#8497A1')}>취소</Text>
+            </Pressable>
+          </View>
+        )}
+
+        <View style={s('flex-direction:row;align-items:flex-end;gap:lg;margin-top:md')}>
+          <Avatar photoUrl={vm.myPhoto} ini={vm.myInitial} size={32} />
+          <TextInput
+            value={vm.commentDraft}
+            onChangeText={vm.onCommentDraft}
+            placeholder={vm.commentReplyTo ? `${vm.commentReplyTo.name}님에게 답글 남기기` : '댓글을 남겨보세요'}
+            placeholderTextColor="#9DB2BD"
+            multiline
+            maxLength={300}
+            style={s('flex:1;min-width:0;min-height:40px;max-height:120px;background:#fff;border:1px solid #FFE1EC;border-radius:14px;padding:md xl;font-size:13px;color:#17303B;font-family:inherit;outline:none')}
+          />
+          <Pressable
+            onPress={vm.submitComment}
+            disabled={vm.commentSaving || !vm.commentDraft.trim()}
+            style={s(`height:40px;padding:0 xl;border-radius:12px;align-items:center;justify-content:center;background:${vm.commentDraft.trim() ? '#FF5E8A' : '#F3C6D5'};opacity:${vm.commentSaving ? 0.7 : 1}`)}
+          >
+            <Text style={s('font-size:12.5px;font-weight:700;color:#fff')}>{vm.commentSaving ? '…' : vm.commentEditing ? '수정' : '등록'}</Text>
+          </Pressable>
+        </View>
+        {vm.commentError && <Text style={s('font-size:11.5px;color:#E5484D')}>{vm.commentError}</Text>}
+      </View>
     </View>
   )
 }
