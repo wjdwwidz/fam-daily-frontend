@@ -1,4 +1,5 @@
-import { View, ScrollView } from 'react-native'
+import { useEffect } from 'react'
+import { View, ScrollView, Platform } from 'react-native'
 import { s } from './lib/style.js'
 import { Flower6 } from './components/Flower.jsx'
 import Nav from './components/Nav.jsx'
@@ -35,6 +36,19 @@ import SpaceSheet from './overlays/SpaceSheet.jsx'
 // 상태/뷰모델은 각 화면이 useVm() 으로 직접 가져간다.
 export default function FamilyPhonePop() {
   const vm = useVm()
+
+  // 웹: 일상을 뒤에서 올리는 중에 탭을 닫거나 새로고침하면 한 번 확인한다
+  // (닫으면 그 글은 올라가지 않는다)
+  const uploading = vm.uploadingCount > 0
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !uploading) return
+    const onBeforeUnload = (e) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [uploading])
 
   const Screen =
     vm.isLogin ? Login : vm.isAuth ? Auth : vm.isSpaceSelect ? SpaceSelect : vm.isSignup ? Signup : vm.isSpace ? Space : vm.isCreateSpace ? CreateSpace :

@@ -1,5 +1,6 @@
 import { api } from '../lib/api.js'
 import { prepareImage } from '../lib/image.js'
+import { runOnce } from './runOnce.js'
 import * as ImagePicker from 'expo-image-picker'
 
 // 일상 사진 액션: 목록 로드 / 사진 고르기 / 올리기 / 수정 / 삭제.
@@ -40,7 +41,53 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
 
   const onUploadCaption = (v) => setState({ uploadCaption: v })
 
-  const submitUpload = async () => {
+  // ── 뒤에서 올리기 ─────────────────────────────────────────────────
+  //
+  // 새 일상 글은 '올리기'를 누르면 바로 목록으로 돌아가고, 업로드는 뒤에서 한다.
+  // 목록 맨 위에 '올리는 중' 카드(uploadJobs)가 보이고, 끝나면 실제 글로 바뀐다.
+  // 실패하면 카드에 다시 시도·삭제가 남는다. 앱을 완전히 끄면 그 글은 올라가지 않고,
+  // 반쯤 올라간 파일은 서버가 나중에 치운다(SweepService).
+  const updateJob = (id, patch) =>
+    setState((p) => ({ uploadJobs: (p.uploadJobs || []).map((j) => (j.id === id ? { ...j, ...patch } : j)) }))
+
+  // 같은 작업이 두 번 돌지 않게 작업마다 runOnce 로 막는다
+  const runUploadJob = (job) => runOnce(`upload:${job.id}`, async () => {
+    updateJob(job.id, { status: 'uploading', done: 0, error: null })
+    try {
+      // 사진은 줄이고 JPEG 로 바꿔서 올린다 (영상은 그대로). 메모리를 아끼려고 한 장씩.
+      const ready = []
+      for (const a of job.assets) ready.push(await prepareImage(a))
+      const files = ready.map((a) => ({
+        contentType: api.assetContentType(a),
+        size: a.fileSize,
+        fileName: a.fileName,
+      }))
+      // 파일은 서버를 거치지 않고 스토리지로 직접 간다
+      const slots = await api.prepareUpload(job.groupId, files)
+      for (let i = 0; i < ready.length; i++) {
+        await api.putToSignedUrl(slots[i].signedUrl, ready[i], files[i].contentType)
+        updateJob(job.id, { done: i + 1 })
+      }
+      await api.commitUpload(job.groupId, slots.map((s) => s.uploadId), job.caption)
+      // 목록을 먼저 받은 뒤 카드를 없앤다 — 반대면 실제 글이 뜨기 전에 잠깐 비어 보인다
+      if (ref.current.currentGroup?.id === job.groupId) await loadMedia(job.groupId)
+      setState((p) => ({ uploadJobs: (p.uploadJobs || []).filter((j) => j.id !== job.id) }))
+      showToast('일상을 올렸어요')
+    } catch (e) {
+      updateJob(job.id, { status: 'failed', error: e?.message || '올리지 못했어요. 다시 시도해주세요.' })
+    }
+  })
+
+  const retryUploadJob = (id) => {
+    const job = (ref.current.uploadJobs || []).find((j) => j.id === id)
+    if (job) runUploadJob(job)
+  }
+  // 실패한 작업만 지운다 (올리는 중인 작업은 멈출 방법이 없어서 지우지 않는다)
+  const discardUploadJob = (id) =>
+    setState((p) => ({ uploadJobs: (p.uploadJobs || []).filter((j) => !(j.id === id && j.status === 'failed')) }))
+
+  // 올리기 버튼을 빠르게 여러 번 눌러도 글은 하나만 만든다
+  const submitUpload = () => runOnce('submitUpload', async () => {
     const cur = ref.current
     const assets = cur.uploadAssets || []
     const editId = cur.editMediaId
@@ -55,6 +102,24 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       return
     }
     const caption = (cur.uploadCaption || '').trim()
+
+    // 새 글: 작업만 넣고 바로 목록으로. 업로드는 기다리지 않는다.
+    if (!editId) {
+      const job = {
+        id: `up-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        groupId, assets, caption,
+        status: 'uploading', done: 0, total: assets.length, error: null,
+      }
+      setState((p) => ({
+        uploadJobs: [job, ...(p.uploadJobs || [])],
+        uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
+      }))
+      go('gallery')
+      runUploadJob(job)
+      return
+    }
+
+    // 수정(사진 교체)은 끝날 때까지 기다린다 — 도중에 떠나면 원래 글이 어정쩡해질 수 있다
     setState({ uploadSaving: true, uploadError: null, uploadDone: 0, uploadTotal: assets.length })
     try {
       // 사진을 골랐으면 먼저 스토리지에 직접 올린다(서버를 거치지 않음).
@@ -76,34 +141,21 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
         }
         uploadIds = slots.map((s) => s.uploadId)
       }
-      if (editId) {
-        // uploadIds 가 있으면 서버가 파일까지 교체하고 옛 파일을 지운다.
-        const updated = await api.updateMedia(editId, uploadIds, caption)
-        await loadMedia(groupId)
-        setState({
-          uploadSaving: false, editMediaId: null, editMediaItems: undefined,
-          uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
-          uploadDone: 0, uploadTotal: 0,
-          media: updated, // 되돌아갈 상세 화면이 바뀐 내용을 보도록
-        })
-        showToast('일상을 수정했어요')
-        back()
-        return
-      }
-      // 올린 자리들이 글 하나로 확정된다.
-      await api.commitUpload(groupId, uploadIds, caption)
+      // uploadIds 가 있으면 서버가 파일까지 교체하고 옛 파일을 지운다.
+      const updated = await api.updateMedia(editId, uploadIds, caption)
       await loadMedia(groupId)
       setState({
-        uploadSaving: false,
+        uploadSaving: false, editMediaId: null, editMediaItems: undefined,
         uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
         uploadDone: 0, uploadTotal: 0,
+        media: updated, // 되돌아갈 상세 화면이 바뀐 내용을 보도록
       })
-      showToast('일상을 올렸어요')
-      go('gallery')
+      showToast('일상을 수정했어요')
+      back()
     } catch (e) {
       setState({ uploadSaving: false, uploadError: e.message })
     }
-  }
+  })
 
   // 올리기 화면 진입 — 이전에 고르다 만 초안은 버린다.
   const openUpload = () => {
@@ -163,7 +215,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
   const startEditComment = (c) => setState({ commentEditingId: c.id, commentDraft: c.text, commentReplyTo: null, commentError: null })
   const cancelCommentMode = () => setState({ commentReplyTo: null, commentEditingId: null, commentDraft: '', commentError: null })
 
-  const submitComment = async () => {
+  const submitComment = () => runOnce('submitComment', async () => {
     const cur = ref.current
     const mediaId = cur.media?.id
     const text = (cur.commentDraft || '').trim()
@@ -186,7 +238,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     } catch (e) {
       setState({ commentSaving: false, commentError: e.message })
     }
-  }
+  })
 
   const removeComment = async (commentId) => {
     const mediaId = ref.current.media?.id
@@ -203,6 +255,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
 
   return {
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
+    retryUploadJob, discardUploadJob,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
   }
 }

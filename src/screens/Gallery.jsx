@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView } from 'react-native'
+import { View, Text, Pressable, ScrollView, Image, ActivityIndicator } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import Photo from '../components/Photo.jsx'
@@ -56,6 +56,43 @@ export default function Gallery() {
       </ScrollView>
       {/* 폴더 몸통 — 탭이 얹혀 있는 서랍 느낌 */}
       <View style={{ height: 8, backgroundColor: '#FBEDF3', borderRadius: 4, marginTop: -2, marginBottom: 14 }} />
+
+      {/* 뒤에서 올리는 중인 일상 — 카드·그리드 보기 모두 맨 위에 */}
+      {vm.uploadJobs.length > 0 && (
+        <View style={s('gap:md;margin-bottom:xl')}>
+          {vm.uploadJobs.map((j) => (
+            <View key={j.id} style={s(`flex-direction:row;align-items:center;gap:xl;background:#fff;border:1px solid ${j.failed ? '#F7C9CF' : '#FFE1EC'};border-radius:18px;padding:md xl md md`)}>
+              <View style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', backgroundColor: '#FCEEF4', alignItems: 'center', justifyContent: 'center' }}>
+                {j.cover && !j.isVideo ? (
+                  <Image source={{ uri: j.cover }} style={{ width: '100%', height: '100%', opacity: j.failed ? 0.5 : 1 }} resizeMode="cover" />
+                ) : (
+                  <Svg viewBox="0 0 24 24" width={18} height={18} fill="#C39BB0" stroke="none"><Path d="M8 5 L19 12 L8 19 Z" /></Svg>
+                )}
+              </View>
+              <View style={s('flex:1;min-width:0')}>
+                <Text numberOfLines={1} style={s(`font-size:13px;font-weight:700;color:${j.failed ? '#E5484D' : '#17303B'}`)}>
+                  {j.failed ? '올리지 못했어요' : `올리는 중${j.progress ? ` ${j.progress}` : ''}…`}
+                </Text>
+                <Text numberOfLines={2} style={s('font-size:11px;color:#9DB2BD;margin-top:hair')}>
+                  {j.failed ? j.error : '올리는 중에는 앱을 닫지 마세요'}
+                </Text>
+              </View>
+              {j.failed ? (
+                <View style={s('flex-direction:row;align-items:center;gap:lg')}>
+                  <Pressable onPress={j.retry} hitSlop={8} style={s('padding:sm lg;border-radius:10px;background:#FF5E8A')}>
+                    <Text style={s('font-size:11.5px;font-weight:700;color:#fff')}>다시 시도</Text>
+                  </Pressable>
+                  <Pressable onPress={j.discard} hitSlop={8}>
+                    <Text style={s('font-size:11.5px;font-weight:700;color:#8497A1')}>삭제</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <ActivityIndicator size="small" color="#FF5E8A" />
+              )}
+            </View>
+          ))}
+        </View>
+      )}
 
       {vm.isCards && (
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>

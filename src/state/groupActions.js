@@ -1,8 +1,10 @@
 import { api } from '../lib/api.js'
+import { runOnce } from './runOnce.js'
 
 // 그룹 만들기/참여. afterAuth 는 성공 후 그룹 목록을 다시 불러오려고 주입받음.
 export function createGroupActions({ ref, setState }, afterAuth) {
-  const doCreateGroup = async () => {
+  // 만들기·참여 버튼을 여러 번 눌러도 한 번만 보낸다 (가족이 두 개 생기지 않게)
+  const doCreateGroup = () => runOnce('createGroup', async () => {
     const name = (ref.current.createName || '').trim()
     const nickname = (ref.current.createNickname || '').trim()
     if (!name || !nickname) {
@@ -17,9 +19,9 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     } catch (e) {
       setState({ actionLoading: false, actionError: e.message })
     }
-  }
+  })
 
-  const doJoinGroup = async () => {
+  const doJoinGroup = () => runOnce('joinGroup', async () => {
     let code = (ref.current.joinCode || '').trim()
     if (code.includes('/')) code = code.split('/').pop()
     const nickname = (ref.current.joinNickname || '').trim()
@@ -35,7 +37,7 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     } catch (e) {
       setState({ actionLoading: false, actionError: e.message })
     }
-  }
+  })
 
   // 현재 그룹의 실제 구성원 로드 (userId·호칭·역할 포함) — 홈 링/멤버 화면용
   const loadMembers = async (groupId) => {
