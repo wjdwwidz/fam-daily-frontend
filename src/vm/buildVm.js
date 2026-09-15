@@ -186,7 +186,9 @@ export function buildVm(app) {
         photoUrl: personPhoto(w.author),
       },
     }
-    obj.open = () => navTo({ screen: 'word', word: obj })
+    // 단어를 열 때는 늘 '보기'로. 추가·수정하다 뒤로 나가면 editPost 가 남아서,
+    // 비우지 않으면 다음에 여는 단어가 빈 수정 화면으로 뜬다.
+    obj.open = () => navTo({ screen: 'word', word: obj, editPost: null, menuOpen: null, wordError: null })
     return obj
   }
   const words = (st.groupWords || []).map(wordVm)
@@ -595,7 +597,7 @@ export function buildVm(app) {
     uploadError: st.uploadError || null,
     pickUploadPhoto, onUploadCaption, submitUpload, editMedia,
     mediaLoading: !!st.mediaLoading,
-    openTodayWord: () => navTo({ screen: 'word', word: words[0] }),
+    openTodayWord: () => navTo({ screen: 'word', word: words[0], editPost: null, menuOpen: null, wordError: null }),
     setPhoto: () => setState({ uploadType: 'photo' }),
     setVideo: () => setState({ uploadType: 'video' }),
     back,
