@@ -1,4 +1,5 @@
 import { api } from '../lib/api.js'
+import { runOnce } from './runOnce.js'
 
 // 가족 문답 액션: 로드 + 답변/질문 등록.
 export function createQnaActions({ ref, setState }) {
@@ -14,7 +15,8 @@ export function createQnaActions({ ref, setState }) {
     }
   }
 
-  const submitAnswer = async () => {
+  // 등록 버튼을 여러 번 눌러도 한 번만 보낸다
+  const submitAnswer = () => runOnce('submitAnswer', async () => {
     const text = (ref.current.answerDraft || '').trim()
     const editingId = ref.current.editingAnswerId
     const qid = ref.current.qnaCurrent?.question?.id
@@ -28,9 +30,9 @@ export function createQnaActions({ ref, setState }) {
     } catch (e) {
       setState({ actionLoading: false, answerOpen: false, editingAnswerId: null, authError: e.message })
     }
-  }
+  })
 
-  const submitQuestion = async () => {
+  const submitQuestion = () => runOnce('submitQuestion', async () => {
     const text = (ref.current.questionDraft || '').trim()
     const groupId = ref.current.currentGroup?.id
     if (!text || !groupId) { setState({ questionOpen: false }); return }
@@ -42,7 +44,7 @@ export function createQnaActions({ ref, setState }) {
     } catch (e) {
       setState({ actionLoading: false, questionOpen: false, authError: e.message })
     }
-  }
+  })
 
   return { loadQna, submitAnswer, submitQuestion }
 }

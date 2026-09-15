@@ -94,8 +94,8 @@ export default function Word() {
             <Pressable onPress={vm.cancelEdit} style={s('flex:1;align-items:center;justify-content:center;padding:btnY 2xl;border-radius:14px;border:1px solid #FFE1EC;cursor:pointer')}>
               <Text style={s('color:#8497A1;font-size:14px;font-weight:700')}>취소</Text>
             </Pressable>
-            <Pressable onPress={vm.saveWord} style={s('flex:2;align-items:center;justify-content:center;padding:btnY 2xl;border-radius:14px;background:#FF5E8A;cursor:pointer;box-shadow:0 10px 22px rgba(255,94,138,0.3)')}>
-              <Text style={s('color:#fff;font-size:14px;font-weight:800')}>저장하기</Text>
+            <Pressable onPress={vm.saveWord} disabled={vm.actionLoading} style={s(`flex:2;align-items:center;justify-content:center;padding:btnY 2xl;border-radius:14px;background:#FF5E8A;cursor:pointer;box-shadow:0 10px 22px rgba(255,94,138,0.3);opacity:${vm.actionLoading ? 0.7 : 1}`)}>
+              <Text style={s('color:#fff;font-size:14px;font-weight:800')}>{vm.actionLoading ? '저장 중…' : '저장하기'}</Text>
             </Pressable>
           </View>
         </View>

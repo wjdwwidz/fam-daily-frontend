@@ -1,5 +1,6 @@
 import { api } from '../lib/api.js'
 import { prepareImage } from '../lib/image.js'
+import { runOnce } from './runOnce.js'
 import * as ImagePicker from 'expo-image-picker'
 
 // 한 단어에 넣을 수 있는 최대 사진 수 (서버의 MAX_WORD_PHOTOS 와 같은 값).
@@ -78,7 +79,8 @@ export function createWordActions({ ref, setState, navTo, go, showToast }) {
     } catch {}
   }
 
-  const saveWord = async () => {
+  // 저장 버튼을 여러 번 눌러도 한 번만 저장한다 (예전엔 단어가 몇 개씩 등록됐다)
+  const saveWord = () => runOnce('saveWord', async () => {
     const draft = ref.current.wordDraft || {}
     const term = (draft.term || '').trim()
     const meaning = (draft.meaning || '').trim()
@@ -114,7 +116,7 @@ export function createWordActions({ ref, setState, navTo, go, showToast }) {
       // 예전엔 authError 로 넣어서 사전 화면에 아무것도 안 떴다 → 저장 실패가 조용히 묻힘
       setState({ actionLoading: false, wordError: e.message })
     }
-  }
+  })
 
   const deleteWord = async () => {
     const id = ref.current.word?.id
