@@ -31,7 +31,9 @@ export const mediaApi = {
 // { uri, name, type } 을 FormData 에 담는 형태를 쓴다.
 export async function putToSignedUrl(signedUrl, asset, contentType) {
   const form = new FormData()
-  form.append('cacheControl', '3600')
+  // 캐시 1년 — 파일 이름이 매번 새로 만들어지고 덮어쓰지 않아서 오래 캐시해도 안전하다
+  // (서버를 거치는 업로드도 같은 값: 백엔드 StorageService 의 FILE_CACHE_SECONDS)
+  form.append('cacheControl', '31536000')
   if (asset.file) {
     form.append('', asset.file) // 웹: File 객체
   } else {

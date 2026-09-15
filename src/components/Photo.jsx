@@ -9,15 +9,29 @@ import { Image, View } from 'react-native'
 //
 // 크기는 Image.getSize 로 받는다. onLoad 의 nativeEvent.source 는 네이티브에만 있고
 // 웹(react-native-web)에서는 비어 있어, 그것만 믿으면 웹에서 계속 잘린다.
+//
+// 읽은 비율은 주소별로 기억한다. 탭을 옮기면 화면이 새로 그려지는데, 그때마다 사진을 다시 열어
+// 크기를 읽으면 느리고 칸이 fallback 비율에서 원래 비율로 튄다. (앱을 끄면 비워진다)
+const ratioByUri = new Map()
+
 export default function Photo({ uri, fallbackRatio = 4 / 3, radius = 0, background = '#FCEEF4', style }) {
-  const [ratio, setRatio] = useState(null)
+  const [ratio, setRatio] = useState(() => ratioByUri.get(uri) ?? null)
   useEffect(() => {
     if (!uri) return
+    const known = ratioByUri.get(uri)
+    if (known) {
+      setRatio(known)
+      return
+    }
     let alive = true
     setRatio(null)
     Image.getSize(
       uri,
-      (w, h) => { if (alive && w && h) setRatio(w / h) },
+      (w, h) => {
+        if (!w || !h) return
+        ratioByUri.set(uri, w / h)
+        if (alive) setRatio(w / h)
+      },
       () => {}, // 영상 등 크기를 못 읽으면 fallback 비율 유지
     )
     return () => { alive = false }
