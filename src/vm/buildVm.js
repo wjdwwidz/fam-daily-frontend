@@ -50,6 +50,7 @@ export function buildVm(app) {
     loadQna, submitAnswer, submitQuestion,
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
+    retryUploadJob, discardUploadJob,
   } = app
 
   const toggleMenu = (which) => setState((s2) => ({ menuOpen: s2.menuOpen === which ? null : which }))
@@ -294,6 +295,27 @@ export function buildVm(app) {
   })
   const gFilter = st.galleryFilter || 'all'
   const galleryMedia = gFilter === 'all' ? media : media.filter((m) => m.by && m.by.name === gFilter)
+  // 뒤에서 올리는 중인 일상 — 지금 가족 것만 목록 맨 위 카드로
+  const uploadJobs = (st.uploadJobs || [])
+    .filter((j) => j.groupId === st.currentGroup?.id)
+    .map((j) => {
+      const first = j.assets[0] || {}
+      return {
+        id: j.id,
+        cover: first.uri || null,
+        isVideo: first.type === 'video',
+        failed: j.status === 'failed',
+        progress: j.total > 1 ? `${j.done}/${j.total}` : '',
+        error: j.error,
+        retry: () => retryUploadJob(j.id),
+        discard: () => askConfirm({
+          title: '올리지 못한 일상을 지울까요?',
+          message: '고른 사진과 글이 사라져요.',
+          yesText: '지우기',
+          onYes: () => discardUploadJob(j.id),
+        }),
+      }
+    })
   const galleryTabs = [{ label: '전체', key: 'all' }].concat(members.map((m) => ({ label: m.name, key: m.name }))).map((t) => {
     const sel = t.key === gFilter
     return { label: t.label, sel, bg: sel ? FOLDER_TAB_COLOR : '#fff', color: sel ? '#fff' : '#6A7E88', border: sel ? FOLDER_TAB_COLOR : '#FFE1EC', pick: () => setState({ galleryFilter: t.key }) }
@@ -479,7 +501,10 @@ export function buildVm(app) {
     actionLoading: !!st.actionLoading, actionError: st.actionError || null,
     showNav: ['home', 'record', 'dict', 'gallery', 'members', 'qna'].indexOf(scr) !== -1,
     members, words, media, days, events, dictGroups,
-    galleryMedia, galleryTabs, galleryEmpty: galleryMedia.length === 0,
+    galleryMedia, galleryTabs, galleryEmpty: galleryMedia.length === 0 && uploadJobs.length === 0,
+    uploadJobs,
+    // 모든 가족을 통틀어 올리는 중인 작업 수 (웹에서 탭 닫기 확인용)
+    uploadingCount: (st.uploadJobs || []).filter((j) => j.status === 'uploading').length,
     todayQ, pastQs, joinList,
     qnaHistory, qnaHistoryTotal,
     qnaLoading: !!st.qnaLoading,
