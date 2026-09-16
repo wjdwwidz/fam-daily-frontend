@@ -387,6 +387,9 @@ export function buildVm(app) {
   return {
     isCards: v === 'cards', isGrid: v === 'grid',
     screen: scr, // 화면 전환 모션용 키
+    // 뒤로 갈 곳이 있는지 (스와이프 뒤로가기·안드로이드 뒤로가기 버튼용).
+    // 히스토리가 없으면 탭 화면이라 뒤로가기가 의미 없다.
+    canGoBack: !st.booting && scr !== 'login' && (st._hist || []).length > 0,
     isLogin: scr === 'login', isHome: scr === 'home', isDict: scr === 'dict', isWord: scr === 'word',
     isGallery: scr === 'gallery', isMedia: scr === 'media', isUpload: scr === 'upload',
     isMembers: scr === 'members',

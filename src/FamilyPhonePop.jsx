@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
-import { View, ScrollView, Platform } from 'react-native'
+import { View, ScrollView, Platform, BackHandler } from 'react-native'
 import { s } from './lib/style.js'
 import { Flower6 } from './components/Flower.jsx'
 import Nav from './components/Nav.jsx'
+import SwipeBack from './components/SwipeBack.jsx'
 import ScreenTransition from './components/ScreenTransition.jsx'
 import { useVm } from './vm/useVm.js'
 import Login from './screens/Login.jsx'
@@ -51,6 +52,19 @@ export default function FamilyPhonePop() {
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [uploading])
 
+  // 안드로이드 기기 뒤로가기(제스처·버튼): 앱을 닫지 말고 이전 화면으로.
+  // 뒤로 갈 곳이 없으면 false 를 돌려줘 원래대로(앱 종료) 둔다.
+  const canGoBack = vm.canGoBack
+  useEffect(() => {
+    if (Platform.OS === 'web') return
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (!canGoBack) return false
+      vm.back()
+      return true
+    })
+    return () => sub.remove()
+  }, [canGoBack])
+
   const Screen =
     vm.isLogin ? Login : vm.isAuth ? Auth : vm.isSpaceSelect ? SpaceSelect : vm.isSignup ? Signup : vm.isSpace ? Space : vm.isCreateSpace ? CreateSpace :
     vm.isJoinSpace ? JoinSpace : vm.isHome ? Home : vm.isRecord ? Record : vm.isWord ? Word :
@@ -66,12 +80,15 @@ export default function FamilyPhonePop() {
         <View style={[s('position:absolute;bottom:52px;right:-22px;opacity:0.09'), { transform: [{ rotate: '20deg' }] }]}><Flower6 size={122} petal="#FFB38A" center="#FFD36E" /></View>
       </View>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        {/* 저장된 로그인을 확인하는 동안에는 시작 화면 — 로그인 화면이 번쩍이지 않게 */}
-        <ScreenTransition screenKey={vm.booting ? 'splash' : vm.screen}>
-          {vm.booting ? <Splash /> : <Screen />}
-        </ScreenTransition>
-      </ScrollView>
+      {/* 왼쪽 가장자리에서 밀면 뒤로가기 (뒤로 갈 곳이 있을 때만) */}
+      <SwipeBack enabled={canGoBack} onBack={vm.back}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          {/* 저장된 로그인을 확인하는 동안에는 시작 화면 — 로그인 화면이 번쩍이지 않게 */}
+          <ScreenTransition screenKey={vm.booting ? 'splash' : vm.screen}>
+            {vm.booting ? <Splash /> : <Screen />}
+          </ScreenTransition>
+        </ScrollView>
+      </SwipeBack>
 
       {vm.linkSheetOpen && <LinkSheet />}
       {vm.answerOpen && <AnswerSheet />}
