@@ -6,6 +6,7 @@ import Nav from './components/Nav.jsx'
 import ScreenTransition from './components/ScreenTransition.jsx'
 import { useVm } from './vm/useVm.js'
 import Login from './screens/Login.jsx'
+import Splash from './screens/Splash.jsx'
 import Auth from './screens/Auth.jsx'
 import SpaceSelect from './screens/SpaceSelect.jsx'
 import Signup from './screens/Signup.jsx'
@@ -66,8 +67,9 @@ export default function FamilyPhonePop() {
       </View>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <ScreenTransition screenKey={vm.screen}>
-          <Screen />
+        {/* 저장된 로그인을 확인하는 동안에는 시작 화면 — 로그인 화면이 번쩍이지 않게 */}
+        <ScreenTransition screenKey={vm.booting ? 'splash' : vm.screen}>
+          {vm.booting ? <Splash /> : <Screen />}
         </ScreenTransition>
       </ScrollView>
 

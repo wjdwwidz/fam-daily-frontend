@@ -10,7 +10,8 @@ import { createMediaActions } from './mediaActions.js'
 const Ctx = createContext(null)
 
 export function AppProvider({ initialScreen = 'login', variant = 'grid', children }) {
-  const [st, setRaw] = useState({ screen: undefined, uploadType: 'photo', recordTab: 'dict' })
+  // booting: 저장된 로그인을 확인하는 동안 true. 그동안은 로그인 화면 대신 시작 화면을 보여준다.
+  const [st, setRaw] = useState({ screen: undefined, booting: true, uploadType: 'photo', recordTab: 'dict' })
   const ref = useRef(st)
   ref.current = st
   const setState = (patch) =>

@@ -466,6 +466,8 @@ export function buildVm(app) {
     isAuth: scr === 'auth',
     authMode: st.authMode || 'login',
     authError: st.authError || null, authLoading: !!st.authLoading,
+    // 앱을 켤 때 저장된 로그인을 확인하는 중 (이때는 시작 화면)
+    booting: !!st.booting,
     authNotice: st.authNotice || null,
     kakaoLogin,
     setAuthMode: (m) => setState({ authMode: m, authError: null }),
