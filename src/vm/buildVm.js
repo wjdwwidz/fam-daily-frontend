@@ -577,6 +577,26 @@ export function buildVm(app) {
     recentActivity,
     activityLoading: !!st.activityLoading,
     loadActivity: () => loadActivity(st.currentGroup?.id),
+    // 아래로 당겨서 새로고침 — 화면마다 새로 받는 것이 다르다.
+    // 목록이 있는 화면에서만 켠다 (입력 화면에서 당기면 쓰던 내용이 날아간 것처럼 느껴진다).
+    canRefresh: ['home', 'gallery', 'record', 'members', 'media', 'word', 'qnahistory', 'spaceSelect'].includes(scr),
+    refreshing: !!st.refreshing,
+    refresh: async () => {
+      const gid = st.currentGroup?.id
+      setState({ refreshing: true })
+      try {
+        if (scr === 'home') await Promise.all([loadMembers(gid), loadActivity(gid)])
+        else if (scr === 'gallery') await loadMedia(gid)
+        else if (scr === 'record') await (st.recordTab === 'qna' ? loadQna(gid) : loadWords(gid))
+        else if (scr === 'members') await loadMembers(gid)
+        else if (scr === 'media') await Promise.all([loadMedia(gid), loadComments(st.media?.id)])
+        else if (scr === 'word') await loadWords(gid)
+        else if (scr === 'qnahistory') await loadQna(gid)
+        else if (scr === 'spaceSelect') await refreshGroups()
+      } finally {
+        setState({ refreshing: false })
+      }
+    },
     // 홈 날짜 (오늘, 기기 시간 기준)
     todayLabel: (() => {
       const d = new Date()
