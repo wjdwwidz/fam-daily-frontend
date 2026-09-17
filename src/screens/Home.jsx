@@ -39,9 +39,9 @@ export default function Home() {
         </View>
         {vm.ringMembers.map((m, i) => (
           <Fragment key={i}>
-            <View style={s(m.wrapStyle)}>
+            <Pressable onPress={m.press} style={s(m.wrapStyle)}>
               <Avatar photoUrl={m.photoUrl} ini={m.ini} size={vm.ringAvatarSize} />
-            </View>
+            </Pressable>
             <Pressable onPress={m.badgeClick} style={s(m.badgeStyle)}>
               <Svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
                 <Path d="M4 20 L4 16 L15 5 L19 9 L8 20 Z" />

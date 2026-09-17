@@ -148,15 +148,23 @@ export function buildVm(app) {
     go('profile')
   }
 
-  const N = members.length, BOX = 296, C = BOX / 2, R = 114, AV = 60
-  const active = (((st.activeMood ?? 0) % N) + N) % N
+  const N = members.length, BOX = 296, C = BOX / 2, R = 114, AV = 60, RING = 3
+  // 프로필을 누르면 그 사람의 한마디가 고정된다. 한 번 더 누르면 풀려 다시 자동으로 돈다.
+  const pinned = st.moodPin != null && N ? ((st.moodPin % N) + N) % N : null
+  const active = pinned ?? (((st.activeMood ?? 0) % N) + N) % N
   const ringMembers = members.map((m, i) => {
     const ang = -Math.PI / 2 + (i * 2 * Math.PI) / N
     const cx = C + R * Math.cos(ang), cy = C + R * Math.sin(ang)
     const isA = i === active
     return {
       ...m,
-      wrapStyle: `position:absolute;left:${cx - AV / 2}px;top:${cy - AV / 2}px;width:${AV}px;height:${AV}px;border-radius:50%;box-shadow:0 6px 15px rgba(255,94,138,0.22);transform:scale(${isA ? 1.18 : 0.97});z-index:${isA ? 6 : 2}`,
+      // 지금 한마디를 보여주는 사람은 조금 커지고, 강조색 테두리를 두른다.
+      // 테두리 두께만큼 상자를 키워(테두리는 안쪽으로 그려진다) 아바타 크기는 그대로 둔다.
+      wrapStyle: (() => {
+        const box = isA ? AV + RING * 2 : AV
+        return `position:absolute;left:${cx - box / 2}px;top:${cy - box / 2}px;width:${box}px;height:${box}px;border-radius:50%;align-items:center;justify-content:center;${isA ? `border:${RING}px solid #FF5E8A;` : ''}box-shadow:0 6px 15px rgba(255,94,138,0.22);transform:scale(${isA ? 1.18 : 0.97});z-index:${isA ? 6 : 2}`
+      })(),
+      press: () => setState({ moodPin: pinned === i ? null : i }),
       badgeStyle: m.me
         ? `position:absolute;left:${cx + AV / 2 - 21}px;top:${cy + AV / 2 - 21}px;width:22px;height:22px;border-radius:50%;background:#FF5E8A;border:2px solid #fff;align-items:center;justify-content:center;z-index:${isA ? 7 : 3};box-shadow:0 2px 6px rgba(255,94,138,0.4)`
         : `display:none`,
@@ -418,6 +426,7 @@ export function buildVm(app) {
         setState({
           currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [],
           word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, groupActivity: [],
+          moodPin: null,
           screen: 'home', _hist: [], spaceSheetOpen: false,
         })
         loadMembers(g.id); loadWords(g.id); loadQna(g.id); loadMedia(g.id)

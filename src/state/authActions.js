@@ -27,7 +27,7 @@ export function createAuthActions({ ref, setState, go }) {
   const logout = async () => {
     await clearToken()
     // 지금 가족도 비운다. 남아 있으면 다시 로그인했을 때 가족 선택 화면이 '앱 안에서 연 것'으로 보인다.
-    setState({ me: null, groups: [], currentGroup: null })
+    setState({ me: null, groups: [], currentGroup: null, moodPin: null })
     go('login')
   }
 
