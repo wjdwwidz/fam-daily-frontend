@@ -44,7 +44,7 @@ export function createAuthActions({ ref, setState, go }) {
     await logout()
   }
 
-  // 카카오 로그인 (실제 OAuth) — 인앱 브라우저 → 백엔드 → 딥링크로 토큰 수신
+  // 카카오 로그인 — 앱은 카카오 SDK, 웹은 페이지 이동 방식. 취소면 token 이 null 로 온다.
   const kakaoLogin = async () => {
     setState({ authLoading: true, authError: null })
     try {
