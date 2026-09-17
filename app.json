@@ -13,6 +13,7 @@
     "android": {
       "package": "com.famdaily",
       "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO"
       ],
       "adaptiveIcon": {
@@ -20,7 +21,11 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -58,6 +63,12 @@
         "projectId": "5764520b-e55a-40be-a26d-4d7bf63e1222"
       }
     },
-    "owner": "hye14"
+    "owner": "hye14",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5764520b-e55a-40be-a26d-4d7bf63e1222"
+    }
   }
 }
