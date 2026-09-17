@@ -27,7 +27,7 @@ export function createAuthActions({ ref, setState, go }) {
   const logout = async () => {
     await clearToken()
     // 지금 가족도 비운다. 남아 있으면 다시 로그인했을 때 가족 선택 화면이 '앱 안에서 연 것'으로 보인다.
-    setState({ me: null, groups: [], currentGroup: null })
+    setState({ me: null, groups: [], currentGroup: null, moodPin: null })
     go('login')
   }
 
@@ -44,7 +44,7 @@ export function createAuthActions({ ref, setState, go }) {
     await logout()
   }
 
-  // 카카오 로그인 (실제 OAuth) — 인앱 브라우저 → 백엔드 → 딥링크로 토큰 수신
+  // 카카오 로그인 — 앱은 카카오 SDK, 웹은 페이지 이동 방식. 취소면 token 이 null 로 온다.
   const kakaoLogin = async () => {
     setState({ authLoading: true, authError: null })
     try {
@@ -64,22 +64,29 @@ export function createAuthActions({ ref, setState, go }) {
   // 앱을 켤 때 저장된 토큰으로 로그인 상태를 되살린다.
   // 이게 없으면 폰이 앱을 완전히 종료할 때마다 카카오 로그인을 다시 해야 한다.
   // 토큰이 만료·무효(401)일 때만 지운다. 네트워크 오류에도 지우면 잠깐 끊겼다는 이유로 로그아웃된다.
+  // 앱을 켤 때 한 번. 끝날 때까지(booting) 로그인 화면 대신 시작 화면이 보인다 —
+  // 이미 로그인한 사람에게 로그인 화면이 번쩍이지 않게.
   const restoreSession = async () => {
-    // 웹: 초대 링크로 들어왔으면 코드를 보관해 두고, 카카오 로그인에서 돌아왔으면 토큰부터 저장한다
-    api.consumeWebJoinLink()
-    await api.consumeWebAuthCallback()
-    const token = await getToken()
-    if (!token) return
-    setState({ authLoading: true, authError: null })
     try {
-      const me = await api.me()
-      // 초대 링크로 들어온 사람은 로그인 뒤 코드가 채워진 참여 화면으로 보낸다
-      const joinCode = api.takePendingJoinCode()
-      setState({ authLoading: false, me, groupsLoading: true, ...(joinCode ? { joinCode, authNext: 'joinSpace' } : {}) })
-      await afterAuth()
-    } catch (e) {
-      if (e.status === 401) await clearToken()
-      setState({ authLoading: false, authError: e.status === 401 ? null : e.message })
+      // 웹: 초대 링크로 들어왔으면 코드를 보관해 두고, 카카오 로그인에서 돌아왔으면 토큰부터 저장한다
+      api.consumeWebJoinLink()
+      await api.consumeWebAuthCallback()
+      const token = await getToken()
+      if (!token) return
+      setState({ authLoading: true, authError: null })
+      try {
+        const me = await api.me()
+        // 초대 링크로 들어온 사람은 로그인 뒤 코드가 채워진 참여 화면으로 보낸다
+        const joinCode = api.takePendingJoinCode()
+        setState({ authLoading: false, me, groupsLoading: true, ...(joinCode ? { joinCode, authNext: 'joinSpace' } : {}) })
+        await afterAuth()
+      } catch (e) {
+        if (e.status === 401) await clearToken()
+        setState({ authLoading: false, authError: e.status === 401 ? null : e.message })
+      }
+    } finally {
+      // 토큰이 없든, 실패했든, 성공했든 확인은 끝났다
+      setState({ booting: false })
     }
   }
 

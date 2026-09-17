@@ -148,15 +148,23 @@ export function buildVm(app) {
     go('profile')
   }
 
-  const N = members.length, BOX = 296, C = BOX / 2, R = 114, AV = 60
-  const active = (((st.activeMood ?? 0) % N) + N) % N
+  const N = members.length, BOX = 296, C = BOX / 2, R = 114, AV = 60, RING = 3
+  // 프로필을 누르면 그 사람의 한마디가 고정된다. 한 번 더 누르면 풀려 다시 자동으로 돈다.
+  const pinned = st.moodPin != null && N ? ((st.moodPin % N) + N) % N : null
+  const active = pinned ?? (((st.activeMood ?? 0) % N) + N) % N
   const ringMembers = members.map((m, i) => {
     const ang = -Math.PI / 2 + (i * 2 * Math.PI) / N
     const cx = C + R * Math.cos(ang), cy = C + R * Math.sin(ang)
     const isA = i === active
     return {
       ...m,
-      wrapStyle: `position:absolute;left:${cx - AV / 2}px;top:${cy - AV / 2}px;width:${AV}px;height:${AV}px;border-radius:50%;box-shadow:0 6px 15px rgba(255,94,138,0.22);transform:scale(${isA ? 1.18 : 0.97});z-index:${isA ? 6 : 2}`,
+      // 지금 한마디를 보여주는 사람은 조금 커지고, 강조색 테두리를 두른다.
+      // 테두리 두께만큼 상자를 키워(테두리는 안쪽으로 그려진다) 아바타 크기는 그대로 둔다.
+      wrapStyle: (() => {
+        const box = isA ? AV + RING * 2 : AV
+        return `position:absolute;left:${cx - box / 2}px;top:${cy - box / 2}px;width:${box}px;height:${box}px;border-radius:50%;align-items:center;justify-content:center;${isA ? `border:${RING}px solid #FF5E8A;` : ''}box-shadow:0 6px 15px rgba(255,94,138,0.22);transform:scale(${isA ? 1.18 : 0.97});z-index:${isA ? 6 : 2}`
+      })(),
+      press: () => setState({ moodPin: pinned === i ? null : i }),
       badgeStyle: m.me
         ? `position:absolute;left:${cx + AV / 2 - 21}px;top:${cy + AV / 2 - 21}px;width:22px;height:22px;border-radius:50%;background:#FF5E8A;border:2px solid #fff;align-items:center;justify-content:center;z-index:${isA ? 7 : 3};box-shadow:0 2px 6px rgba(255,94,138,0.4)`
         : `display:none`,
@@ -387,6 +395,9 @@ export function buildVm(app) {
   return {
     isCards: v === 'cards', isGrid: v === 'grid',
     screen: scr, // 화면 전환 모션용 키
+    // 뒤로 갈 곳이 있는지 (스와이프 뒤로가기·안드로이드 뒤로가기 버튼용).
+    // 히스토리가 없으면 탭 화면이라 뒤로가기가 의미 없다.
+    canGoBack: !st.booting && scr !== 'login' && (st._hist || []).length > 0,
     isLogin: scr === 'login', isHome: scr === 'home', isDict: scr === 'dict', isWord: scr === 'word',
     isGallery: scr === 'gallery', isMedia: scr === 'media', isUpload: scr === 'upload',
     isMembers: scr === 'members',
@@ -415,6 +426,7 @@ export function buildVm(app) {
         setState({
           currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [],
           word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, groupActivity: [],
+          moodPin: null,
           screen: 'home', _hist: [], spaceSheetOpen: false,
         })
         loadMembers(g.id); loadWords(g.id); loadQna(g.id); loadMedia(g.id)
@@ -466,6 +478,8 @@ export function buildVm(app) {
     isAuth: scr === 'auth',
     authMode: st.authMode || 'login',
     authError: st.authError || null, authLoading: !!st.authLoading,
+    // 앱을 켤 때 저장된 로그인을 확인하는 중 (이때는 시작 화면)
+    booting: !!st.booting,
     authNotice: st.authNotice || null,
     kakaoLogin,
     setAuthMode: (m) => setState({ authMode: m, authError: null }),
@@ -572,6 +586,26 @@ export function buildVm(app) {
     recentActivity,
     activityLoading: !!st.activityLoading,
     loadActivity: () => loadActivity(st.currentGroup?.id),
+    // 아래로 당겨서 새로고침 — 화면마다 새로 받는 것이 다르다.
+    // 목록이 있는 화면에서만 켠다 (입력 화면에서 당기면 쓰던 내용이 날아간 것처럼 느껴진다).
+    canRefresh: ['home', 'gallery', 'record', 'members', 'media', 'word', 'qnahistory', 'spaceSelect'].includes(scr),
+    refreshing: !!st.refreshing,
+    refresh: async () => {
+      const gid = st.currentGroup?.id
+      setState({ refreshing: true })
+      try {
+        if (scr === 'home') await Promise.all([loadMembers(gid), loadActivity(gid)])
+        else if (scr === 'gallery') await loadMedia(gid)
+        else if (scr === 'record') await (st.recordTab === 'qna' ? loadQna(gid) : loadWords(gid))
+        else if (scr === 'members') await loadMembers(gid)
+        else if (scr === 'media') await Promise.all([loadMedia(gid), loadComments(st.media?.id)])
+        else if (scr === 'word') await loadWords(gid)
+        else if (scr === 'qnahistory') await loadQna(gid)
+        else if (scr === 'spaceSelect') await refreshGroups()
+      } finally {
+        setState({ refreshing: false })
+      }
+    },
     // 홈 날짜 (오늘, 기기 시간 기준)
     todayLabel: (() => {
       const d = new Date()

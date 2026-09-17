@@ -99,6 +99,7 @@ export function createGroupActions({ ref, setState }, afterAuth) {
       setState((p) => ({
         groupDeleting: false,
         currentGroup: null, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [],
+        moodPin: null,
         word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, spaceSheetOpen: false, groupActivity: [],
         groups: (p.groups || []).filter((g) => g.id !== gid),
         screen: 'spaceSelect', _hist: [],

@@ -13,6 +13,7 @@
     "android": {
       "package": "com.famdaily",
       "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO"
       ],
       "adaptiveIcon": {
@@ -20,7 +21,11 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -34,7 +39,23 @@
           "photosPermission": "가족과 나눌 사진을 고르기 위해 사진첩에 접근합니다."
         }
       ],
-      "expo-video"
+      "expo-video",
+      [
+        "@react-native-seoul/kakao-login",
+        {
+          "kakaoAppKey": "836feab1951207e94729544a7c02ecf9"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraMavenRepos": [
+              "https://devrepo.kakao.com/nexus/content/groups/public/"
+            ]
+          }
+        }
+      ]
     ],
     "scheme": "famdaily",
     "extra": {
@@ -42,6 +63,12 @@
         "projectId": "5764520b-e55a-40be-a26d-4d7bf63e1222"
       }
     },
-    "owner": "hye14"
+    "owner": "hye14",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5764520b-e55a-40be-a26d-4d7bf63e1222"
+    }
   }
 }

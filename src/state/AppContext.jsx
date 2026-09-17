@@ -10,7 +10,8 @@ import { createMediaActions } from './mediaActions.js'
 const Ctx = createContext(null)
 
 export function AppProvider({ initialScreen = 'login', variant = 'grid', children }) {
-  const [st, setRaw] = useState({ screen: undefined, uploadType: 'photo', recordTab: 'dict' })
+  // booting: 저장된 로그인을 확인하는 동안 true. 그동안은 로그인 화면 대신 시작 화면을 보여준다.
+  const [st, setRaw] = useState({ screen: undefined, booting: true, uploadType: 'photo', recordTab: 'dict' })
   const ref = useRef(st)
   ref.current = st
   const setState = (patch) =>
@@ -35,11 +36,13 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
       return { screen: map[cur0(p)] || 'home', ...leaveWord }
     })
 
-  // 무드 링 자동 순환
+  // 무드 링 자동 순환 — 홈에서 프로필을 눌러 고정해두면(moodPin) 멈춘다.
+  // 고정 중에는 타이머 자체를 걸지 않아, 풀면 그 자리에서 다시 돈다.
   useEffect(() => {
+    if (st.moodPin != null) return
     const t = setInterval(() => setState((s2) => ({ activeMood: (s2.activeMood ?? 0) + 1 })), 2600)
     return () => clearInterval(t)
-  }, [])
+  }, [st.moodPin])
 
   // 하단 알림 — 잠시 뒤 자동으로 사라진다. 그 사이 다른 알림이 떴으면 건드리지 않는다.
   const showToast = (text, ms = 2200) => {
