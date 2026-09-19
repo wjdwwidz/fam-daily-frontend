@@ -117,6 +117,9 @@ export function buildVm(app) {
     const label = st.currentGroup?.myNickname || st.me?.name || '나'
     members.push({ name: label, role: st.me?.name || '', ini: String(label).slice(0, 1), photoUrl: st.currentGroup?.myPhotoUrl || null, admin: true, me: true, mood: myMood, emoji: '', slotId: 'prof-0' })
   }
+  // 가족 목록(/groups)이 주는 members 에는 mood 가 없다. 상세(groupMembers)를 받기 전까지는
+  // "한마디가 없는 것"과 "아직 못 받아온 것"을 구분할 수 없으므로, 빈 상태 문구를 미룬다.
+  const moodLoading = !!st.currentGroup && !Array.isArray(st.groupMembers)
   const memberCount = st.groupMembers ? st.groupMembers.length : (st.currentGroup?.memberCount ?? members.length)
   const myInitial = String(st.currentGroup?.myNickname || st.me?.name || '나').slice(0, 1)
   // 이 가족에서 쓰는 내 사진 (구성원 목록이 더 최신이면 그걸 쓴다). 없으면 이니셜.
@@ -524,7 +527,7 @@ export function buildVm(app) {
     qnaLoading: !!st.qnaLoading,
     isQnaHistory: scr === 'qnahistory',
     openQnaHistory: () => go('qnahistory'),
-    ringMembers, activeMember,
+    ringMembers, activeMember, moodLoading,
     ringAvatarSize: AV,
     membersFromLink: !!st.membersFromLink,
     answerOpen: !!st.answerOpen,
@@ -586,6 +589,7 @@ export function buildVm(app) {
     recentActivity,
     activityLoading: !!st.activityLoading,
     loadActivity: () => loadActivity(st.currentGroup?.id),
+    loadMembers: () => loadMembers(st.currentGroup?.id),
     // 아래로 당겨서 새로고침 — 화면마다 새로 받는 것이 다르다.
     // 목록이 있는 화면에서만 켠다 (입력 화면에서 당기면 쓰던 내용이 날아간 것처럼 느껴진다).
     canRefresh: ['home', 'gallery', 'record', 'members', 'media', 'word', 'qnahistory', 'spaceSelect'].includes(scr),

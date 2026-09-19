@@ -9,10 +9,11 @@ import { useVm } from '../vm/useVm.js'
 
 export default function Home() {
   const vm = useVm()
-  // 홈에 들어올 때마다(그리고 가족을 바꾸면) 최근 활동을 새로 받는다 —
-  // 다른 화면에서 글을 쓰고 돌아와도 바로 보이게
+  // 홈에 들어올 때마다(그리고 가족을 바꾸면) 최근 활동과 구성원을 새로 받는다 —
+  // 다른 화면에서 글을 쓰거나 한마디를 남기고 돌아와도 바로 보이게.
+  // 구성원 상세에만 mood 가 들어 있다 (가족 목록 API 에는 없다).
   const groupId = vm.currentGroup?.id
-  useEffect(() => { vm.loadActivity() }, [groupId])
+  useEffect(() => { vm.loadActivity(); vm.loadMembers() }, [groupId])
   return (
     <View style={s('padding:screenTop screenX screenBottom')}>
       <View style={s('display:flex;align-items:flex-start;justify-content:space-between;margin:sm 0 lg')}>
@@ -34,9 +35,11 @@ export default function Home() {
       </View>
 
       <View style={s('position:relative;width:296px;height:296px;margin:hair auto 4xl')}>
-        <View style={s('position:absolute;left:148px;top:148px;transform:translate(-50%,-50%);width:150px;text-align:center;background:#fff;border:1px solid #FFE1EC;border-radius:18px;padding:xl 2xl;box-shadow:0 10px 24px rgba(255,94,138,0.16);z-index:5')}>
-          <Text style={s('font-size:12.5px;color:#4A5A64;line-height:1.4')}>{vm.activeMember.mood ? `${vm.activeMember.mood} ${vm.activeMember.emoji}`.trim() : '아직 오늘의 한마디가 없어요'}</Text>
-        </View>
+        {!vm.moodLoading && (
+          <View style={s('position:absolute;left:148px;top:148px;transform:translate(-50%,-50%);width:150px;text-align:center;background:#fff;border:1px solid #FFE1EC;border-radius:18px;padding:xl 2xl;box-shadow:0 10px 24px rgba(255,94,138,0.16);z-index:5')}>
+            <Text style={s('font-size:12.5px;color:#4A5A64;line-height:1.4')}>{vm.activeMember.mood ? `${vm.activeMember.mood} ${vm.activeMember.emoji}`.trim() : '아직 오늘의 한마디가 없어요'}</Text>
+          </View>
+        )}
         {vm.ringMembers.map((m, i) => (
           <Fragment key={i}>
             <Pressable onPress={m.press} style={s(m.wrapStyle)}>
