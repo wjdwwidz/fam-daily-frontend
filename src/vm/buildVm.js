@@ -48,7 +48,7 @@ export function buildVm(app) {
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
-    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
+    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
     retryUploadJob, discardUploadJob,
   } = app
@@ -78,13 +78,19 @@ export function buildVm(app) {
   // 수정 중인데 사진을 아직 다시 안 골랐으면 기존 사진을 미리보기로 보여준다.
   const editingMedia = !!st.editMediaId
   const pickedAssets = st.uploadAssets || []
+  // 각 사진은 자기 자리(i)를 알고 있어야 X 로 뺄 수 있다
   const uploadPreview = pickedAssets.length
-    ? pickedAssets.map((a) => ({
+    ? pickedAssets.map((a, i) => ({
         uri: a.uri,
         isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
+        remove: () => removeUploadItem(i),
       }))
     : editingMedia
-      ? (st.editMediaItems || []).map((it) => ({ uri: it.url, isVideo: it.type === 'video' }))
+      ? (st.editMediaItems || []).map((it, i) => ({
+          uri: it.url,
+          isVideo: it.type === 'video',
+          remove: () => removeUploadItem(i),
+        }))
       : []
   const cancelEdit = () => setState({ editPost: null })
 

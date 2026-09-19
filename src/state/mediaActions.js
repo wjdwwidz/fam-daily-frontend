@@ -41,6 +41,29 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
 
   const onUploadCaption = (v) => setState({ uploadCaption: v })
 
+  // 첨부된 사진 한 장 빼기.
+  // 새로 고른 사진이면 목록에서 빼고, 수정 중인 기존 사진이면 '남길 목록'에서 뺀다
+  // (editItemsTrimmed 가 켜져야 저장할 때 keepUrls 를 보낸다).
+  const removeUploadItem = (index) => {
+    const cur = ref.current
+    if ((cur.uploadAssets || []).length) {
+      const next = cur.uploadAssets.filter((_, i) => i !== index)
+      setState({ uploadAssets: next.length ? next : undefined, uploadError: null })
+      return
+    }
+    const items = cur.editMediaItems || []
+    if (!items.length) return
+    if (items.length === 1) {
+      setState({ uploadError: '사진은 최소 한 장 남겨야 해요.' })
+      return
+    }
+    setState({
+      editMediaItems: items.filter((_, i) => i !== index),
+      editItemsTrimmed: true,
+      uploadError: null,
+    })
+  }
+
   // ── 뒤에서 올리기 ─────────────────────────────────────────────────
   //
   // 새 일상 글은 '올리기'를 누르면 바로 목록으로 돌아가고, 업로드는 뒤에서 한다.
@@ -142,10 +165,15 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
         uploadIds = slots.map((s) => s.uploadId)
       }
       // uploadIds 가 있으면 서버가 파일까지 교체하고 옛 파일을 지운다.
-      const updated = await api.updateMedia(editId, uploadIds, caption)
+      // 사진을 빼기만 했으면 남길 것들을 keepUrls 로 알린다.
+      const keepUrls =
+        !uploadIds && cur.editItemsTrimmed
+          ? (ref.current.editMediaItems || []).map((it) => it.url)
+          : undefined
+      const updated = await api.updateMedia(editId, uploadIds, caption, keepUrls)
       await loadMedia(groupId)
       setState({
-        uploadSaving: false, editMediaId: null, editMediaItems: undefined,
+        uploadSaving: false, editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false,
         uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
         uploadDone: 0, uploadTotal: 0,
         media: updated, // 되돌아갈 상세 화면이 바뀐 내용을 보도록
@@ -160,7 +188,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
   // 올리기 화면 진입 — 이전에 고르다 만 초안은 버린다.
   const openUpload = () => {
     setState({
-      editMediaId: null, editMediaItems: undefined,
+      editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false,
       uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
     })
     go('upload')
@@ -173,7 +201,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     const m = ref.current.media
     if (!m) return
     setState({
-      editMediaId: m.id, editMediaItems: m.items || [],
+      editMediaId: m.id, editMediaItems: m.items || [], editItemsTrimmed: false,
       uploadAssets: undefined, uploadCaption: m.caption || '', uploadError: null,
     })
     go('upload')
@@ -255,6 +283,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
 
   return {
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
+    removeUploadItem,
     retryUploadJob, discardUploadJob,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
   }

@@ -18,11 +18,17 @@ export const mediaApi = {
   commitUpload: (groupId, uploadIds, caption) =>
     request(`/groups/${groupId}/media/commit`, { method: 'POST', body: { uploadIds, caption } }),
 
-  // uploadIds 를 주면 사진이 통째로 교체되고, 생략하면 글(caption)만 바뀐다
-  updateMedia: (mediaId, uploadIds, caption) =>
+  // uploadIds 를 주면 사진이 통째로 교체된다.
+  // keepUrls 를 주면 거기 없는 기존 사진이 지워진다(한 장씩 빼기).
+  // 둘 다 없으면 글(caption)만 바뀐다.
+  updateMedia: (mediaId, uploadIds, caption, keepUrls) =>
     request(`/media/${mediaId}`, {
       method: 'PATCH',
-      body: uploadIds?.length ? { uploadIds, caption } : { caption },
+      body: {
+        caption,
+        ...(uploadIds?.length ? { uploadIds } : {}),
+        ...(keepUrls ? { keepUrls } : {}),
+      },
     }),
 
   // 댓글 — 쓰기 요청은 모두 갱신된 목록 { count, comments } 을 돌려준다
