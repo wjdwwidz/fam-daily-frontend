@@ -18,6 +18,9 @@ export default function BucketItem() {
           <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#17303B"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
         </Pressable>
         <Text style={s('font-size:20px;font-weight:800;color:#17303B;letter-spacing:-0.4px')}>{vm.bucketNo}번</Text>
+        {!!vm.bucketByName && (
+          <Text style={s('font-size:11.3px;color:#9DB2BD')}>{vm.bucketByName}님이 적음</Text>
+        )}
       </View>
 
       {/* 내용 */}
@@ -81,6 +84,26 @@ export default function BucketItem() {
             <Text style={s('font-size:11.5px;color:#9DB2BD')}>닫기</Text>
           </Pressable>
         </View>
+      )}
+
+      {/* 우선순위 조정 — 고른 번호로 옮기고 사이 칸들은 한 칸씩 밀린다 */}
+      {!!vm.bucketByName && (
+        <>
+          <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:3xl hair sm')}>순서 바꾸기</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s('gap:sm')}>
+            {vm.bucketMoveOptions.map((o) => (
+              <Pressable
+                key={o.no}
+                onPress={o.pick}
+                disabled={o.current || vm.bucketSaving}
+                style={s(`min-width:38px;height:38px;padding:0 md;border-radius:12px;align-items:center;justify-content:center;background:${o.current ? '#FF5E8A' : '#fff'};border:1px solid ${o.current ? '#FF5E8A' : '#FFE1EC'}`)}
+              >
+                <Text style={s(`font-size:12.5px;font-weight:700;font-variant:tabular-nums;color:${o.current ? '#fff' : '#6A7E88'}`)}>{o.no}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+          <Text style={s('font-size:10.5px;color:#9DB2BD;margin:sm hair 0')}>번호를 누르면 그 자리로 옮겨가고, 사이 칸들은 한 칸씩 밀려요</Text>
+        </>
       )}
 
       {vm.bucketError && <Text style={s('font-size:12px;color:#E5484D;margin-top:2xl;text-align:center')}>{vm.bucketError}</Text>}

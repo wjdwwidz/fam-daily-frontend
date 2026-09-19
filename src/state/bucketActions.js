@@ -61,6 +61,21 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
     }
   }
 
+  // 우선순위 조정 — 고른 번호로 옮기고 목록을 새로 받는다
+  const moveBucketTo = async (to) => {
+    const cur = ref.current
+    if (!to || to === cur.bucketNo) return
+    setState({ bucketSaving: true, bucketError: null })
+    try {
+      await api.moveBucket(gid(), cur.bucketNo, to)
+      await loadBucket()
+      setState({ bucketSaving: false, bucketNo: to })
+      showToast(`${to}번으로 옮겼어요`)
+    } catch (e) {
+      setState({ bucketSaving: false, bucketError: e.message })
+    }
+  }
+
   const clearBucket = async () => {
     const id = gid()
     setState({ bucketSaving: true, bucketError: null })
@@ -78,6 +93,6 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
   return {
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia,
-    saveBucket, clearBucket,
+    saveBucket, clearBucket, moveBucketTo,
   }
 }

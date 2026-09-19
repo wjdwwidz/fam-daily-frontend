@@ -61,6 +61,11 @@ export default function Bucket() {
                 {r.filled ? r.text : '비어 있어요'}
               </Text>
 
+              {/* 누가 적었는지 */}
+              {!!r.byName && (
+                <Text style={s('font-size:10.5px;color:#C4CFD6;flex:0 0 auto')}>{r.byName}</Text>
+              )}
+
               {/* 이어붙인 일상 글 */}
               {r.coverUrl && (
                 <Image source={{ uri: r.coverUrl }} style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: '#F3DCE6' }} resizeMode="cover" />
