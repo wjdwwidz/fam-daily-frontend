@@ -36,7 +36,7 @@ export default function Home() {
 
       <View style={s('position:relative;width:296px;height:296px;margin:hair auto 4xl')}>
         {!vm.moodLoading && (
-          <View style={s('position:absolute;left:148px;top:148px;transform:translate(-50%,-50%);width:150px;text-align:center;background:#fff;border:1px solid #FFE1EC;border-radius:18px;padding:xl 2xl;box-shadow:0 10px 24px rgba(255,94,138,0.16);z-index:5')}>
+          <View style={s('position:absolute;left:148px;top:148px;transform:translate(-50%,-50%);width:136px;text-align:center;background:#fff;border:1px solid #FFE1EC;border-radius:18px;padding:xl lg;box-shadow:0 10px 24px rgba(255,94,138,0.16);z-index:5')}>
             <Text style={s('font-size:12.5px;color:#4A5A64;line-height:1.4')}>{vm.activeMember.mood ? `${vm.activeMember.mood} ${vm.activeMember.emoji}`.trim() : '아직 오늘의 한마디가 없어요'}</Text>
           </View>
         )}

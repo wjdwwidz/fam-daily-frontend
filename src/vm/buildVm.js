@@ -167,7 +167,9 @@ export function buildVm(app) {
     go('profile')
   }
 
-  const N = members.length, BOX = 296, C = BOX / 2, R = 114, AV = 60, RING = 3
+  // R 은 프로필이 놓이는 반지름. 가운데 말풍선과 좌우 프로필 사이가 3px 남짓이라
+  // 한마디가 길어지면 겹쳐 보였다. 반지름을 키워 간격을 벌린다.
+  const N = members.length, BOX = 296, C = BOX / 2, R = 124, AV = 60, RING = 3
   // 프로필을 누르면 그 사람의 한마디가 고정된다. 한 번 더 누르면 풀려 다시 자동으로 돈다.
   const pinned = st.moodPin != null && N ? ((st.moodPin % N) + N) % N : null
   const active = pinned ?? (((st.activeMood ?? 0) % N) + N) % N
