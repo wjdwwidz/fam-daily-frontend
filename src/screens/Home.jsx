@@ -7,8 +7,13 @@ import mascot from '../../assets/img/mascot.png'
 
 import { useVm } from '../vm/useVm.js'
 
+// 한마디는 링 가운데 말풍선에 들어간다. 너무 길면 세로로 늘어나 프로필을 침범해서
+// 입력 단계에서 막는다. 서버는 100자를 받으므로 예전에 길게 남긴 한마디는 그대로 보인다.
+const MOOD_MAX = 60
+
 export default function Home() {
   const vm = useVm()
+  const moodLeft = MOOD_MAX - (vm.myMood || '').length
   // 홈에 들어올 때마다(그리고 가족을 바꾸면) 최근 활동과 구성원을 새로 받는다 —
   // 다른 화면에서 글을 쓰거나 한마디를 남기고 돌아와도 바로 보이게.
   // 구성원 상세에만 mood 가 들어 있다 (가족 목록 API 에는 없다).
@@ -37,7 +42,9 @@ export default function Home() {
       <View style={s('position:relative;width:296px;height:296px;margin:hair auto 4xl')}>
         {!vm.moodLoading && (
           <View style={s('position:absolute;left:148px;top:148px;transform:translate(-50%,-50%);width:136px;text-align:center;background:#fff;border:1px solid #FFE1EC;border-radius:18px;padding:xl lg;box-shadow:0 10px 24px rgba(255,94,138,0.16);z-index:5')}>
-            <Text style={s('font-size:12.5px;color:#4A5A64;line-height:1.4')}>{vm.activeMember.mood ? `${vm.activeMember.mood} ${vm.activeMember.emoji}`.trim() : '아직 오늘의 한마디가 없어요'}</Text>
+            {/* 말풍선이 세로로 길어지면 위아래 프로필을 침범한다. 5줄에서 끊고,
+              전문은 '한마디 기록'에서 볼 수 있다. */}
+          <Text numberOfLines={5} style={s('font-size:12.5px;color:#4A5A64;line-height:1.4')}>{vm.activeMember.mood ? `${vm.activeMember.mood} ${vm.activeMember.emoji}`.trim() : '아직 오늘의 한마디가 없어요'}</Text>
           </View>
         )}
         {vm.ringMembers.map((m, i) => (
@@ -66,7 +73,11 @@ export default function Home() {
       </View>
       <View style={s('display:flex;align-items:center;gap:lg;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:md md md xl;margin-bottom:5xl')}>
         <Avatar photoUrl={vm.myPhoto} ini={vm.myInitial} size={36} />
-        <TextInput value={vm.myMood} onChangeText={vm.onMoodInput} onSubmitEditing={vm.onMoodKey} placeholder="가족에게 한마디 남겨보세요" placeholderTextColor="#9DB2BD" style={s('flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:13px;color:#17303B;font-family:inherit')} />
+        <TextInput value={vm.myMood} onChangeText={vm.onMoodInput} onSubmitEditing={vm.onMoodKey} maxLength={MOOD_MAX} placeholder="가족에게 한마디 남겨보세요" placeholderTextColor="#9DB2BD" style={s('flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:13px;color:#17303B;font-family:inherit')} />
+        {/* 끝이 가까울 때만 알려준다 — 평소엔 조용하게 */}
+        {moodLeft <= 20 && (
+          <Text style={s(`font-size:10.5px;flex:0 0 auto;color:${moodLeft <= 5 ? '#FF5E8A' : '#9DB2BD'}`)}>{moodLeft}</Text>
+        )}
         <Pressable onPress={vm.sendMood} style={s(`width:38px;height:38px;border-radius:50%;background:${vm.sendBg};display:flex;align-items:center;justify-content:center;flex:0 0 auto;cursor:pointer;transition:background .2s`)}>
           <Svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
             <Path d="M12 19 V5" />
