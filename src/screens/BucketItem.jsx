@@ -45,7 +45,7 @@ export default function BucketItem() {
           )}
         </View>
         <View style={s('flex:1;min-width:0')}>
-          <Text style={s('font-size:12.5px;font-weight:700;color:#17303B')}>우리 가족 달성!</Text>
+          <Text style={s('font-size:12.5px;font-weight:700;color:#17303B')}>달성 완료했어요!</Text>
           <Text style={s('font-size:10.5px;color:#9DB2BD;margin-top:hair')}>
             {vm.bucketDoneWhen ? `${vm.bucketDoneWhen} 달성` : '함께 이룬 일로 기록돼요'}
           </Text>
