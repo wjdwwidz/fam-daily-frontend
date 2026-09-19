@@ -7,8 +7,13 @@ import mascot from '../../assets/img/mascot.png'
 
 import { useVm } from '../vm/useVm.js'
 
+// 한마디는 링 가운데 말풍선에 들어간다. 너무 길면 세로로 늘어나 프로필을 침범해서
+// 입력 단계에서 막는다. 서버는 100자를 받으므로 예전에 길게 남긴 한마디는 그대로 보인다.
+const MOOD_MAX = 60
+
 export default function Home() {
   const vm = useVm()
+  const moodLeft = MOOD_MAX - (vm.myMood || '').length
   // 홈에 들어올 때마다(그리고 가족을 바꾸면) 최근 활동과 구성원을 새로 받는다 —
   // 다른 화면에서 글을 쓰거나 한마디를 남기고 돌아와도 바로 보이게.
   // 구성원 상세에만 mood 가 들어 있다 (가족 목록 API 에는 없다).
@@ -36,8 +41,10 @@ export default function Home() {
 
       <View style={s('position:relative;width:296px;height:296px;margin:hair auto 4xl')}>
         {!vm.moodLoading && (
-          <View style={s('position:absolute;left:148px;top:148px;transform:translate(-50%,-50%);width:150px;text-align:center;background:#fff;border:1px solid #FFE1EC;border-radius:18px;padding:xl 2xl;box-shadow:0 10px 24px rgba(255,94,138,0.16);z-index:5')}>
-            <Text style={s('font-size:12.5px;color:#4A5A64;line-height:1.4')}>{vm.activeMember.mood ? `${vm.activeMember.mood} ${vm.activeMember.emoji}`.trim() : '아직 오늘의 한마디가 없어요'}</Text>
+          <View style={s('position:absolute;left:148px;top:148px;transform:translate(-50%,-50%);width:136px;text-align:center;background:#fff;border:1px solid #FFE1EC;border-radius:18px;padding:xl lg;box-shadow:0 10px 24px rgba(255,94,138,0.16);z-index:5')}>
+            {/* 말풍선이 세로로 길어지면 위아래 프로필을 침범한다. 5줄에서 끊고,
+              전문은 '한마디 기록'에서 볼 수 있다. */}
+          <Text numberOfLines={5} style={s('font-size:12.5px;color:#4A5A64;line-height:1.4')}>{vm.activeMember.mood ? `${vm.activeMember.mood} ${vm.activeMember.emoji}`.trim() : '아직 오늘의 한마디가 없어요'}</Text>
           </View>
         )}
         {vm.ringMembers.map((m, i) => (
@@ -66,7 +73,11 @@ export default function Home() {
       </View>
       <View style={s('display:flex;align-items:center;gap:lg;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:md md md xl;margin-bottom:5xl')}>
         <Avatar photoUrl={vm.myPhoto} ini={vm.myInitial} size={36} />
-        <TextInput value={vm.myMood} onChangeText={vm.onMoodInput} onSubmitEditing={vm.onMoodKey} placeholder="가족에게 한마디 남겨보세요" placeholderTextColor="#9DB2BD" style={s('flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:13px;color:#17303B;font-family:inherit')} />
+        <TextInput value={vm.myMood} onChangeText={vm.onMoodInput} onSubmitEditing={vm.onMoodKey} maxLength={MOOD_MAX} placeholder="가족에게 한마디 남겨보세요" placeholderTextColor="#9DB2BD" style={s('flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:13px;color:#17303B;font-family:inherit')} />
+        {/* 끝이 가까울 때만 알려준다 — 평소엔 조용하게 */}
+        {moodLeft <= 20 && (
+          <Text style={s(`font-size:10.5px;flex:0 0 auto;color:${moodLeft <= 5 ? '#FF5E8A' : '#9DB2BD'}`)}>{moodLeft}</Text>
+        )}
         <Pressable onPress={vm.sendMood} style={s(`width:38px;height:38px;border-radius:50%;background:${vm.sendBg};display:flex;align-items:center;justify-content:center;flex:0 0 auto;cursor:pointer;transition:background .2s`)}>
           <Svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
             <Path d="M12 19 V5" />
@@ -89,8 +100,15 @@ export default function Home() {
         )}
         {vm.recentActivity.map((a) => (
           <Pressable key={a.key} onPress={a.open} style={s('display:flex;align-items:center;gap:xl;padding:lg 0;border-bottom:1px solid rgba(239,244,247,0.7);cursor:pointer')}>
-            <Avatar photoUrl={a.by.photoUrl} ini={a.by.ini} size={30} />
-            <Text numberOfLines={1} style={s('flex:1;font-size:11.5px;color:#57646E')}><Text style={s('color:#17303B;font-weight:700')}>{a.by.name}</Text>님이 {a.prefix}<Text style={s('color:#FF5E8A;font-weight:700')}>{a.highlight}</Text>{a.suffix}</Text>
+            {/* 버킷리스트 달성처럼 '가족이 함께 이룬 일'은 사람 대신 체크 배지를 둔다 */}
+            {a.by ? (
+              <Avatar photoUrl={a.by.photoUrl} ini={a.by.ini} size={30} />
+            ) : (
+              <View style={s('width:30px;height:30px;border-radius:50%;background:#FF5E8A;align-items:center;justify-content:center;flex:0 0 auto')}>
+                <Svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="#fff" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 13 L10 18 L19 7" /></Svg>
+              </View>
+            )}
+            <Text numberOfLines={1} style={s('flex:1;font-size:11.5px;color:#57646E')}>{a.by && <><Text style={s('color:#17303B;font-weight:700')}>{a.by.name}</Text>님이 </>}{a.prefix}<Text style={s('color:#FF5E8A;font-weight:700')}>{a.highlight}</Text>{a.suffix}</Text>
             <Text style={s('font-size:10px;color:#B4C1CA')}>{a.date}</Text>
           </Pressable>
         ))}

@@ -21,8 +21,17 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
 
   // 사진 선택 — 기기 안의 파일로 미리보기만. 실제 업로드는 '올리기' 누를 때.
   // (고르기만 하고 나가면 서버엔 아무것도 안 남는다)
+  // 사진 고르기 — 이미 고른 것에 덧붙인다 (예전엔 통째로 바꿨다).
+  // 수정 중에 처음 고르는 경우엔 기존 사진을 교체하는 뜻이므로 덧붙이지 않는다.
   const pickUploadPhoto = async () => {
     try {
+      const cur = ref.current
+      const picked = cur.uploadAssets || []
+      const room = MAX_PICK - picked.length
+      if (room <= 0) {
+        setState({ uploadError: `사진은 최대 ${MAX_PICK}장까지 올릴 수 있어요.` })
+        return
+      }
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (perm.status !== 'granted') return
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -30,12 +39,13 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
         // 사진과 영상 둘 다
         mediaTypes: ['images', 'videos'],
         allowsMultipleSelection: true,
-        selectionLimit: MAX_PICK,
+        selectionLimit: room,
         // 압축은 올릴 때 prepareImage 가 한 번만 한다 (여기서도 하면 두 번 압축돼 화질이 떨어진다)
         quality: 1,
       })
       if (result.canceled || !result.assets || !result.assets.length) return
-      setState({ uploadAssets: result.assets, uploadError: null })
+      const next = [...picked, ...result.assets].slice(0, MAX_PICK)
+      setState({ uploadAssets: next, uploadError: null })
     } catch {}
   }
 

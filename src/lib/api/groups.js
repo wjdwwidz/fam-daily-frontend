@@ -24,5 +24,8 @@ export const groupsApi = {
     request(`/groups/${id}/bucket/${no}`, { method: 'PUT', body }),
   clearBucket: (id, no) =>
     request(`/groups/${id}/bucket/${no}`, { method: 'DELETE' }),
+  // 칸을 다른 번호로 (우선순위 조정) — 사이 칸들은 한 칸씩 밀린다
+  moveBucket: (id, no, to) =>
+    request(`/groups/${id}/bucket/${no}/move`, { method: 'PUT', body: { to } }),
   createInvite: (id) => request(`/groups/${id}/invites`, { method: 'POST', body: {} }),
 }

@@ -54,7 +54,7 @@ export function buildVm(app) {
     logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto,
     doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName,
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
-    openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
+    openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, moveBucketTo, cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
@@ -167,7 +167,9 @@ export function buildVm(app) {
     go('profile')
   }
 
-  const N = members.length, BOX = 296, C = BOX / 2, R = 114, AV = 60, RING = 3
+  // R 은 프로필이 놓이는 반지름. 가운데 말풍선과 좌우 프로필 사이가 3px 남짓이라
+  // 한마디가 길어지면 겹쳐 보였다. 반지름을 키워 간격을 벌린다.
+  const N = members.length, BOX = 296, C = BOX / 2, R = 124, AV = 60, RING = 3
   // 프로필을 누르면 그 사람의 한마디가 고정된다. 한 번 더 누르면 풀려 다시 자동으로 돈다.
   const pinned = st.moodPin != null && N ? ((st.moodPin % N) + N) % N : null
   const active = pinned ?? (((st.activeMood ?? 0) % N) + N) % N
@@ -316,6 +318,16 @@ export function buildVm(app) {
         ...base, highlight: `"${clip(a.text)}"`, suffix: ' 댓글',
         open: () => { const m = (st.groupMedia || []).find((x) => x.id === a.targetId); if (m) openMediaDetail(m); else go('gallery') },
       }
+    }
+    // 버킷리스트 — targetId 는 칸 번호. 누르면 그 칸으로 간다.
+    if (a.type === 'bucket' || a.type === 'bucketDone') {
+      const no = Number(a.targetId)
+      const toItem = () => { setState({ recordTab: 'bucket' }); openBucket(no) }
+      // 달성은 가족이 함께 이룬 일이라 누가 눌렀는지 보여주지 않는다
+      if (a.type === 'bucketDone') {
+        return { ...base, by: null, highlight: `버킷리스트 ${no}번`, suffix: '을 달성했어요!', open: toItem }
+      }
+      return { ...base, prefix: '버킷리스트에 ', highlight: `"${clip(a.text)}"`, suffix: ' 추가', open: toItem }
     }
     // 질문 하나만 여는 화면은 없어서 문답 탭(오늘의 질문 + 지난 질문)으로
     if (a.type === 'question') return { ...base, prefix: '질문 ', highlight: `"${clip(a.text)}"`, suffix: ' 등록', open: toQna }
@@ -591,6 +603,7 @@ export function buildVm(app) {
           filled: !!it,
           done: !!it?.done,
           coverUrl: it?.mediaCoverUrl || null,
+          byName: it?.createdBy?.nickname || it?.createdBy?.name || '',
           open: () => openBucket(no),
         }
       })
@@ -614,6 +627,20 @@ export function buildVm(app) {
     }),
     onBucketDraft, toggleBucketDone, openBucketPicker, closeBucketPicker,
     unlinkBucketMedia, saveBucket, clearBucket,
+    // 우선순위 조정 — 지금 열린 장 안에서 옮길 번호를 고른다
+    bucketMoveOptions: (() => {
+      const size = st.bucket?.size || 10
+      const page = Math.min(st.bucketPage || 1, st.bucket?.pages || 1)
+      const start = (page - 1) * size
+      return Array.from({ length: size }, (_, k) => {
+        const no = start + k + 1
+        return { no, current: no === st.bucketNo, pick: () => moveBucketTo(no) }
+      })
+    })(),
+    bucketByName: (() => {
+      const it = (st.bucket?.items || []).find((i) => i.no === st.bucketNo)
+      return it?.createdBy?.nickname || it?.createdBy?.name || ''
+    })(),
 
     // 가족 기록 — 한마디와 프로필 사진 변경이 시간순으로 섞인다.
     // 사진을 바꾼 줄은 눌러서 크게 볼 수 있다.

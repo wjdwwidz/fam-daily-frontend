@@ -1,6 +1,4 @@
 import { View, Text, Pressable, TextInput, Image, ScrollView } from 'react-native'
-import Photo from '../components/Photo.jsx'
-import VideoItem from '../components/VideoItem.jsx'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
@@ -47,17 +45,14 @@ export default function Upload() {
             </View>
           </Pressable>
         )}
-        {vm.uploadCount === 1 && (
-          <View style={s('margin-top:3xl;position:relative')}>
-            {vm.uploadItems[0].isVideo
-              ? <VideoItem uri={vm.uploadItems[0].uri} radius={28} />
-              : <Photo uri={vm.uploadItems[0].uri} radius={28} />}
-            <RemoveButton onPress={vm.uploadItems[0].remove} top={12} right={12} size={30} />
-          </View>
-        )}
-        {vm.uploadCount > 1 && (
+        {vm.uploadCount > 0 && (
           <View style={s('margin-top:3xl')}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s('gap:md')}>
+              {/* 맨 왼쪽 '+ 사진' — 고른 것에 덧붙인다 */}
+              <Pressable onPress={vm.pickUploadPhoto} style={s('width:140px;height:140px;border-radius:18px;background:rgba(23,48,59,0.06);align-items:center;justify-content:center;cursor:pointer')}>
+                <Text style={s('font-size:24px;color:#9DB2BD;line-height:1')}>＋</Text>
+                <Text style={s('font-size:11.5px;color:#9DB2BD;margin-top:sm;font-weight:700')}>사진</Text>
+              </Pressable>
               {vm.uploadItems.map((it, i) => (
                 <View key={i} style={{ width: 140, height: 140 }}>
                   <View style={{ width: '100%', height: '100%', borderRadius: 18, overflow: 'hidden', backgroundColor: '#FCEEF4' }}>
@@ -72,13 +67,8 @@ export default function Upload() {
                 </View>
               ))}
             </ScrollView>
-            <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md')}>{vm.uploadCount}개 선택됨</Text>
+            <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md')}>{vm.uploadCount}개 선택됨 · 최대 10개</Text>
           </View>
-        )}
-        {vm.uploadCount > 0 && (
-          <Pressable onPress={vm.pickUploadPhoto} style={s('align-self:center;margin-top:lg')}>
-            <Text style={s('font-size:11.5px;color:#FF5E8A;font-weight:700')}>다시 고르기</Text>
-          </Pressable>
         )}
         <Text style={s('margin-top:4xl;font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>설명</Text>
         <TextInput value={vm.uploadCaption} onChangeText={vm.onUploadCaption} multiline textAlignVertical="top" placeholder="이 순간을 한 줄로 남겨보세요" placeholderTextColor="#9DB2BD" style={s('width:100%;min-height:64px;border:none;outline:none;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:16px;padding:2xl 3xl;font-size:12.2px;font-family:inherit;color:#17303B;resize:none')} />
