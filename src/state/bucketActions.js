@@ -1,5 +1,12 @@
 import { api } from '../lib/api.js'
 
+// 오늘을 'YYYY-MM-DD' 로. 현지 기준이어야 자정 무렵에 하루가 어긋나지 않는다.
+const todayYmd = () => {
+  const d = new Date()
+  const p2 = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`
+}
+
 // 가족 버킷리스트 — 1~100 칸을 골라 채우고, 달성하면 일상 글과 이어붙인다.
 export function createBucketActions({ st, setState, ref, go, back, showToast }) {
   const gid = () => ref.current.currentGroup?.id
@@ -23,6 +30,9 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
       bucketNo: no,
       bucketDraft: found?.text ?? '',
       bucketDone: !!found?.done,
+      // 이룬 날 — 없으면 오늘로 채워둔다 (체크하는 순간 바로 쓸 수 있게)
+      bucketDoneAt: found?.doneAt ? String(found.doneAt).slice(0, 10) : todayYmd(),
+      bucketDatePicking: false,
       bucketMediaId: found?.mediaId ?? null,
       bucketError: null,
       bucketPicking: false,
@@ -46,6 +56,18 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
   const cancelBucketLink = () => setState({ bucketLinkNo: null })
 
   const onBucketDraft = (v) => setState({ bucketDraft: v, bucketError: null })
+  const openBucketDate = () => setState({ bucketDatePicking: true })
+  const closeBucketDate = () => setState({ bucketDatePicking: false })
+  // 년·월·일을 따로 고른다. 말일이 넘어가면(2월 31일 등) 그 달 마지막 날로 당긴다.
+  const setBucketDatePart = (part, value) => {
+    const cur = ref.current
+    const [y, m, d] = (cur.bucketDoneAt || todayYmd()).split('-').map(Number)
+    const next = { y, m, d, [part]: value }
+    const last = new Date(next.y, next.m, 0).getDate()
+    if (next.d > last) next.d = last
+    const p2 = (n) => String(n).padStart(2, '0')
+    setState({ bucketDoneAt: `${next.y}-${p2(next.m)}-${p2(next.d)}` })
+  }
   const toggleBucketDone = () => setState((p) => ({ bucketDone: !p.bucketDone }))
   const openBucketPicker = () => setState({ bucketPicking: true })
   const closeBucketPicker = () => setState({ bucketPicking: false })
@@ -66,6 +88,7 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
       await api.saveBucket(id, cur.bucketNo, {
         text,
         done: !!cur.bucketDone,
+        ...(cur.bucketDone && cur.bucketDoneAt ? { doneAt: cur.bucketDoneAt } : {}),
         mediaId: cur.bucketMediaId ?? null,
       })
       await loadBucket()
@@ -109,5 +132,6 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia,
     saveBucket, clearBucket, moveBucketTo, startBucketMedia, cancelBucketLink,
+    openBucketDate, closeBucketDate, setBucketDatePart,
   }
 }

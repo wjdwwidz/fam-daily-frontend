@@ -72,8 +72,8 @@ export default function Upload() {
         )}
         {/* 버킷리스트 칸에 붙이려고 쓰는 중이면 알려준다 */}
         {!!vm.bucketLinkNo && (
-          <View style={s('flex-direction:row;align-items:center;gap:md;margin-top:3xl;background:#F3FAFE;border:1px solid #C7E7F7;border-radius:14px;padding:xl 2xl')}>
-            <Text style={s('flex:1;min-width:0;font-size:11.5px;color:#3AA0D1;font-weight:700')}>
+          <View style={s('flex-direction:row;align-items:center;gap:md;margin-top:3xl;background:rgba(23,48,59,0.05);border-radius:14px;padding:xl 2xl')}>
+            <Text style={s('flex:1;min-width:0;font-size:11.5px;color:#6A7E88;font-weight:700')}>
               버킷리스트 {vm.bucketLinkNo}번에 연결됩니다
             </Text>
             <Pressable onPress={vm.cancelBucketLink}>

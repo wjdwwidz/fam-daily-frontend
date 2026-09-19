@@ -55,7 +55,8 @@ export function buildVm(app) {
     doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName,
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, moveBucketTo,
-    startBucketMedia, cancelBucketLink, cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
+    startBucketMedia, cancelBucketLink, openBucketDate, closeBucketDate, setBucketDatePart,
+    cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
@@ -641,6 +642,29 @@ export function buildVm(app) {
     startBucketMedia, cancelBucketLink,
     // 올리기 화면에서 '이 글은 버킷 n번에 붙는다' 를 알려주기 위해
     bucketLinkNo: st.bucketLinkNo || null,
+
+    // 이룬 날 — 체크한 순간이 아니라 실제로 이룬 날을 고른다
+    openBucketDate, closeBucketDate,
+    bucketDatePicking: !!st.bucketDatePicking,
+    bucketDoneAtLabel: (() => {
+      const m = String(st.bucketDoneAt || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      return m ? `${m[1]}년 ${Number(m[2])}월 ${Number(m[3])}일` : ''
+    })(),
+    bucketDateParts: (() => {
+      const m = String(st.bucketDoneAt || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      const thisYear = new Date().getFullYear()
+      const y = m ? Number(m[1]) : thisYear
+      const mo = m ? Number(m[2]) : 1
+      const d = m ? Number(m[3]) : 1
+      const mk = (part, list, sel) =>
+        list.map((n) => ({ n, sel: n === sel, pick: () => setBucketDatePart(part, n) }))
+      return {
+        years: mk('y', [thisYear - 2, thisYear - 1, thisYear], y),
+        months: mk('m', Array.from({ length: 12 }, (_, i) => i + 1), mo),
+        // 말일은 달마다 다르다
+        days: mk('d', Array.from({ length: new Date(y, mo, 0).getDate() }, (_, i) => i + 1), d),
+      }
+    })(),
     // 우선순위 조정 — 지금 열린 장 안에서 옮길 번호를 고른다
     bucketMoveOptions: (() => {
       const size = st.bucket?.size || 10
