@@ -167,7 +167,8 @@ export function buildVm(app) {
         const box = isA ? AV + RING * 2 : AV
         return `position:absolute;left:${cx - box / 2}px;top:${cy - box / 2}px;width:${box}px;height:${box}px;border-radius:50%;align-items:center;justify-content:center;${isA ? `border:${RING}px solid #FF5E8A;` : ''}box-shadow:0 6px 15px rgba(255,94,138,0.22);transform:scale(${isA ? 1.18 : 0.97});z-index:${isA ? 6 : 2}`
       })(),
-      press: () => setState({ moodPin: pinned === i ? null : i }),
+      press: () =>
+        setState(pinned === i ? { moodPin: null, activeMood: i } : { moodPin: i }),
       badgeStyle: m.me
         ? `position:absolute;left:${cx + AV / 2 - 21}px;top:${cy + AV / 2 - 21}px;width:22px;height:22px;border-radius:50%;background:#FF5E8A;border:2px solid #fff;align-items:center;justify-content:center;z-index:${isA ? 7 : 3};box-shadow:0 2px 6px rgba(255,94,138,0.4)`
         : `display:none`,

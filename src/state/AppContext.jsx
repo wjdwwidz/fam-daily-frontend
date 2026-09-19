@@ -9,6 +9,9 @@ import { createMediaActions } from './mediaActions.js'
 // 화면/오버레이는 useApp() 으로 필요한 것만 꺼내 쓴다.
 const Ctx = createContext(null)
 
+const MOOD_ROTATE_MS = 2600 // 한 사람의 한마디를 보여주는 시간
+const MOOD_PIN_MS = 8000 // 눌러서 고정한 뒤 자동으로 풀리기까지
+
 export function AppProvider({ initialScreen = 'login', variant = 'grid', children }) {
   // booting: 저장된 로그인을 확인하는 동안 true. 그동안은 로그인 화면 대신 시작 화면을 보여준다.
   const [st, setRaw] = useState({ screen: undefined, booting: true, uploadType: 'photo', recordTab: 'dict' })
@@ -40,8 +43,19 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
   // 고정 중에는 타이머 자체를 걸지 않아, 풀면 그 자리에서 다시 돈다.
   useEffect(() => {
     if (st.moodPin != null) return
-    const t = setInterval(() => setState((s2) => ({ activeMood: (s2.activeMood ?? 0) + 1 })), 2600)
+    const t = setInterval(() => setState((s2) => ({ activeMood: (s2.activeMood ?? 0) + 1 })), MOOD_ROTATE_MS)
     return () => clearInterval(t)
+  }, [st.moodPin])
+
+  // 고정은 잠깐 읽으라고 있는 것이다. 눌러놓고 잊어도 링이 멈춰 있지 않게 잠시 뒤 스스로 풀린다.
+  // 풀릴 때 순환 위치를 고정했던 사람으로 옮겨, 엉뚱한 사람으로 튀지 않고 그 다음으로 넘어간다.
+  useEffect(() => {
+    if (st.moodPin == null) return
+    const t = setTimeout(
+      () => setState((s2) => (s2.moodPin == null ? {} : { moodPin: null, activeMood: s2.moodPin })),
+      MOOD_PIN_MS,
+    )
+    return () => clearTimeout(t)
   }, [st.moodPin])
 
   // 하단 알림 — 잠시 뒤 자동으로 사라진다. 그 사이 다른 알림이 떴으면 건드리지 않는다.
