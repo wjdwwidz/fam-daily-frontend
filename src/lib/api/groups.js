@@ -17,5 +17,12 @@ export const groupsApi = {
   setMood: (id, text, emoji) => request(`/groups/${id}/mood`, { method: 'PUT', body: { text, emoji } }),
   // 가족 기록 — 한마디·프로필 사진 변경을 최신순으로
   history: (id) => request(`/groups/${id}/history`),
+
+  // 버킷리스트 — 채운 칸과 진행률. 빈 칸은 화면이 1~100 으로 그린다.
+  bucket: (id) => request(`/groups/${id}/bucket`),
+  saveBucket: (id, no, body) =>
+    request(`/groups/${id}/bucket/${no}`, { method: 'PUT', body }),
+  clearBucket: (id, no) =>
+    request(`/groups/${id}/bucket/${no}`, { method: 'DELETE' }),
   createInvite: (id) => request(`/groups/${id}/invites`, { method: 'POST', body: {} }),
 }

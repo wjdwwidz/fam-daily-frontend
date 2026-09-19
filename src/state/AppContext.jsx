@@ -4,6 +4,7 @@ import { createGroupActions } from './groupActions.js'
 import { createWordActions } from './wordActions.js'
 import { createQnaActions } from './qnaActions.js'
 import { createMediaActions } from './mediaActions.js'
+import { createBucketActions } from './bucketActions.js'
 
 // 앱 전역 상태 + 네비게이션 + 도메인 액션을 담는 컨텍스트.
 // 화면/오버레이는 useApp() 으로 필요한 것만 꺼내 쓴다.
@@ -35,7 +36,7 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
       if (h.length) return { screen: h[h.length - 1], _hist: h.slice(0, -1), ...leaveWord }
       // 히스토리가 없으면 화면별 기본 이전 화면으로 폴백
       // 사전/문답은 '기록' 탭으로 병합됨 — 옛 화면명('dict','qna')으로 보내면 라우팅에서 떨어진다
-      const map = { word: 'record', media: 'gallery', upload: 'home', members: 'home', qnahistory: 'record', moodhistory: 'home', spaceSelect: 'login', space: 'spaceSelect', createSpace: 'space', joinSpace: 'space', signup: 'login' }
+      const map = { word: 'record', media: 'gallery', upload: 'home', members: 'home', qnahistory: 'record', moodhistory: 'home', bucketitem: 'record', spaceSelect: 'login', space: 'spaceSelect', createSpace: 'space', joinSpace: 'space', signup: 'login' }
       return { screen: map[cur0(p)] || 'home', ...leaveWord }
     })
 
@@ -70,13 +71,14 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
   const words = createWordActions(core)
   const qna = createQnaActions(core)
   const media = createMediaActions(core)
+  const bucket = createBucketActions(core)
 
   // 앱을 켤 때 한 번: 저장된 로그인 되살리기 (로그인 화면은 확인하는 동안 로딩만 보여준다)
   useEffect(() => {
     auth.restoreSession()
   }, [])
 
-  const value = { ...core, back, initialScreen, variant, ...auth, ...groups, ...words, ...qna, ...media }
+  const value = { ...core, back, initialScreen, variant, ...auth, ...groups, ...words, ...qna, ...media, ...bucket }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

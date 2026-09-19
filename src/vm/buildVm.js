@@ -52,7 +52,9 @@ export function buildVm(app) {
     st, setState, go, navTo, back,
     variant = 'grid', initialScreen = 'login',
     logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto,
-    doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName, cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
+    doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName,
+    loadBucket, openBucket, onBucketDraft, toggleBucketDone,
+    openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
@@ -542,6 +544,76 @@ export function buildVm(app) {
     qnaLoading: !!st.qnaLoading,
     isQnaHistory: scr === 'qnahistory',
     openQnaHistory: () => go('qnahistory'),
+
+    // 버킷리스트 — 1~100 칸을 늘 다 그린다. 채운 칸만 서버에서 오고 나머지는 빈 칸.
+    isBucket: scr === 'record' && (st.recordTab || 'dict') === 'bucket',
+    isBucketItem: scr === 'bucketitem',
+    loadBucket,
+    bucketLoading: !!st.bucketLoading,
+    bucketTotal: st.bucket?.size || 100,
+    // 한 장(100칸)씩 넘겨 본다. 앞 장을 다 채우면 서버가 pages 를 늘려준다.
+    bucketPages: st.bucket?.pages || 1,
+    bucketPage: Math.min(st.bucketPage || 1, st.bucket?.pages || 1),
+    bucketPrev: () => setState((p) => ({ bucketPage: Math.max(1, (p.bucketPage || 1) - 1) })),
+    bucketNext: () =>
+      setState((p) => ({
+        bucketPage: Math.min(p.bucket?.pages || 1, (p.bucketPage || 1) + 1),
+      })),
+    // 진행률은 보고 있는 장 기준 — 목록이 그 장이므로
+    bucketDoneCount: (() => {
+      const size = st.bucket?.size || 100
+      const page = Math.min(st.bucketPage || 1, st.bucket?.pages || 1)
+      const start = (page - 1) * size
+      return (st.bucket?.items || []).filter(
+        (i) => i.done && i.no > start && i.no <= start + size,
+      ).length
+    })(),
+    bucketPercent: (() => {
+      const size = st.bucket?.size || 100
+      const page = Math.min(st.bucketPage || 1, st.bucket?.pages || 1)
+      const start = (page - 1) * size
+      const done = (st.bucket?.items || []).filter(
+        (i) => i.done && i.no > start && i.no <= start + size,
+      ).length
+      return Math.round((done / size) * 100)
+    })(),
+    bucketRows: (() => {
+      const size = st.bucket?.size || 100
+      const page = Math.min(st.bucketPage || 1, st.bucket?.pages || 1)
+      const start = (page - 1) * size
+      const byNo = new Map((st.bucket?.items || []).map((i) => [i.no, i]))
+      return Array.from({ length: size }, (_, k) => {
+        const no = start + k + 1
+        const it = byNo.get(no)
+        return {
+          no,
+          text: it?.text || '',
+          filled: !!it,
+          done: !!it?.done,
+          coverUrl: it?.mediaCoverUrl || null,
+          open: () => openBucket(no),
+        }
+      })
+    })(),
+
+    // 칸 편집 화면
+    bucketNo: st.bucketNo || 1,
+    bucketDraft: st.bucketDraft ?? '',
+    bucketDoneDraft: !!st.bucketDone,
+    bucketMediaId: st.bucketMediaId ?? null,
+    bucketMediaCover: (st.groupMedia || []).find((m) => m.id === st.bucketMediaId)
+      ? shapeMedia((st.groupMedia || []).find((m) => m.id === st.bucketMediaId)).coverUrl
+      : null,
+    bucketError: st.bucketError || null,
+    bucketSaving: !!st.bucketSaving,
+    bucketPicking: !!st.bucketPicking,
+    // 연결할 일상 글 고르기 — 가족이 올린 글의 대표 사진만 늘어놓는다
+    bucketPickable: (st.groupMedia || []).map((m) => {
+      const v = shapeMedia(m)
+      return { id: m.id, coverUrl: v.coverUrl || null, pick: () => pickBucketMedia(m.id) }
+    }),
+    onBucketDraft, toggleBucketDone, openBucketPicker, closeBucketPicker,
+    unlinkBucketMedia, saveBucket, clearBucket,
 
     // 가족 기록 — 한마디와 프로필 사진 변경이 시간순으로 섞인다.
     // 사진을 바꾼 줄은 눌러서 크게 볼 수 있다.
