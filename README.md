@@ -3,6 +3,8 @@
 가족만의 단어·추억·감정을 담는 모바일 앱. 웹 프로토타입(`fam-daily-frontend`)의
 `FamilyPhonePop` 컴포넌트를 **React Native + Expo**로 재작성한 네이티브 앱입니다.
 
+> 배포(웹·앱·백엔드)와 네이티브/OTA 구분은 [DEPLOY.md](./DEPLOY.md) 참고.
+
 ## 실행
 
 ```bash
