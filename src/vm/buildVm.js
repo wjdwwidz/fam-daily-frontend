@@ -12,8 +12,16 @@ import { MAX_WORD_PHOTOS } from '../state/wordActions.js'
 // 브랜드 핑크(#FF5E8A)와 같은 밝기에서 마젠타 쪽으로 살짝 밀어 또렷하게.
 const FOLDER_TAB_COLOR = '#FF5A97'
 const fmtDate = (iso) => {
-  const m = String(iso || '').match(/^\d{4}-(\d{2})-(\d{2})/)
-  return m ? `${Number(m[1])}월 ${Number(m[2])}일` : ''
+  const str = String(iso || '')
+  // 시각이 없는 날짜만 있는 값('2026-09-20')은 그대로 읽는다 — Date 로 넘기면 UTC 자정으로
+  // 해석돼 하루 밀린다. 시각이 붙은 값은 fmtTime 과 같은 현지 기준으로 맞춘다.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const m = str.match(/^\d{4}-(\d{2})-(\d{2})/)
+    return `${Number(m[1])}월 ${Number(m[2])}일`
+  }
+  const d = new Date(str)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`
 }
 const fmtTime = (iso) => {
   const d = new Date(iso)
@@ -44,7 +52,7 @@ export function buildVm(app) {
     st, setState, go, navTo, back,
     variant = 'grid', initialScreen = 'login',
     logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto,
-    doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
+    doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName, cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
@@ -534,6 +542,31 @@ export function buildVm(app) {
     qnaLoading: !!st.qnaLoading,
     isQnaHistory: scr === 'qnahistory',
     openQnaHistory: () => go('qnahistory'),
+
+    // 가족 기록 — 한마디와 프로필 사진 변경이 시간순으로 섞인다.
+    // 사진을 바꾼 줄은 눌러서 크게 볼 수 있다.
+    isMoodHistory: scr === 'moodhistory',
+    openMoodHistory: () => go('moodhistory'),
+    loadHistory: () => loadHistory(st.currentGroup?.id),
+    historyLoading: !!st.historyLoading,
+    historyItems: (st.historyItems || []).map((m) => {
+      const label = m.author?.nickname || m.author?.name || '알 수 없음'
+      const isPhoto = m.type === 'photo'
+      return {
+        id: m.id,
+        type: m.type,
+        text: isPhoto
+          ? (m.photoUrl ? '프로필 사진을 바꿨어요' : '프로필 사진을 지웠어요')
+          : `${m.text}${m.emoji ? ` ${m.emoji}` : ''}`,
+        // 바꾼 사진 (지운 줄은 없다) — 누르면 크게 보기
+        shotUrl: isPhoto ? m.photoUrl : null,
+        open: isPhoto && m.photoUrl ? () => openPhotoViewer([m.photoUrl], 0) : undefined,
+        name: label,
+        ini: String(label).slice(0, 1),
+        photoUrl: m.author?.photoUrl || null,
+        when: `${fmtDate(m.createdAt)} ${fmtTime(m.createdAt)}`.trim(),
+      }
+    }),
     ringMembers, activeMember, moodLoading,
     ringAvatarSize: AV,
     membersFromLink: !!st.membersFromLink,

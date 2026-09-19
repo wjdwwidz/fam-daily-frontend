@@ -60,6 +60,9 @@ export default function Home() {
         <View>
           <Text style={s('font-size:12.5px;font-weight:500;color:#FF5E8A;letter-spacing:0.3px')}>{vm.todayLabel}</Text>
         </View>
+        <Pressable onPress={vm.openMoodHistory}>
+          <Text style={s('font-size:12.5px;color:#8497A1;cursor:pointer')}>한마디 기록 ›</Text>
+        </Pressable>
       </View>
       <View style={s('display:flex;align-items:center;gap:lg;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:24px;padding:md md md xl;margin-bottom:5xl')}>
         <Avatar photoUrl={vm.myPhoto} ini={vm.myInitial} size={36} />
