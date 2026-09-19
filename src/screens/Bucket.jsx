@@ -37,17 +37,17 @@ export default function Bucket() {
             <Pressable
               key={r.no}
               onPress={r.open}
-              style={s(`flex-direction:row;align-items:center;gap:md;padding:md 0${i < vm.bucketRows.length - 1 ? ';border-bottom:1px solid #FBEDF3' : ''};cursor:pointer`)}
+              style={s(`flex-direction:row;align-items:center;gap:lg;padding:2xl 0${i < vm.bucketRows.length - 1 ? ';border-bottom:1px solid #FBEDF3' : ''};cursor:pointer`)}
             >
               {/* 번호 — 자릿수가 달라도 줄이 밀리지 않게 폭을 고정 */}
-              <Text style={s(`width:26px;text-align:right;font-size:11px;font-variant:tabular-nums;color:${r.done ? '#FF5E8A' : '#C4CFD6'};font-weight:${r.filled ? 700 : 500}`)}>
+              <Text style={s(`width:26px;text-align:right;font-size:12.5px;font-variant:tabular-nums;color:${r.done ? '#FF5E8A' : '#C4CFD6'};font-weight:${r.filled ? 700 : 500}`)}>
                 {r.no}
               </Text>
 
               {/* 체크 상자 */}
-              <View style={s(`width:16px;height:16px;border-radius:5px;align-items:center;justify-content:center;border:1.5px solid ${r.done ? '#FF5E8A' : '#E7D3DC'};background:${r.done ? '#FF5E8A' : 'transparent'}`)}>
+              <View style={s(`width:19px;height:19px;border-radius:6px;align-items:center;justify-content:center;border:1.5px solid ${r.done ? '#FF5E8A' : '#E7D3DC'};background:${r.done ? '#FF5E8A' : 'transparent'}`)}>
                 {r.done && (
-                  <Svg viewBox="0 0 24 24" width={10} height={10} fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
+                  <Svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
                     <Path d="M5 13 L10 18 L19 7" />
                   </Svg>
                 )}
@@ -56,14 +56,14 @@ export default function Bucket() {
               {/* 내용 — 30자 제한이라 한 줄에 떨어진다 */}
               <Text
                 numberOfLines={1}
-                style={s(`flex:1;min-width:0;font-size:12.5px;line-height:1.35;color:${r.filled ? (r.done ? '#8497A1' : '#17303B') : '#DCE5EA'};text-decoration:${r.done ? 'line-through' : 'none'}`)}
+                style={s(`flex:1;min-width:0;font-size:13.5px;line-height:1.35;color:${r.filled ? (r.done ? '#8497A1' : '#17303B') : '#DCE5EA'};text-decoration:${r.done ? 'line-through' : 'none'}`)}
               >
                 {r.filled ? r.text : '비어 있어요'}
               </Text>
 
               {/* 이어붙인 일상 글 */}
               {r.coverUrl && (
-                <Image source={{ uri: r.coverUrl }} style={{ width: 24, height: 24, borderRadius: 7, backgroundColor: '#F3DCE6' }} resizeMode="cover" />
+                <Image source={{ uri: r.coverUrl }} style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: '#F3DCE6' }} resizeMode="cover" />
               )}
             </Pressable>
           ))}
@@ -83,7 +83,7 @@ export default function Bucket() {
         </View>
         {vm.bucketPage >= vm.bucketPages && (
           <Text style={s('font-size:10.5px;color:#C4CFD6;text-align:center;margin-bottom:2xl')}>
-            이 장을 모두 채우면 다음 100개가 열려요
+            이 장을 모두 채우면 다음 {vm.bucketTotal}개가 열려요
           </Text>
         )}
       </ScrollView>
