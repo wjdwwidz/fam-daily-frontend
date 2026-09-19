@@ -30,6 +30,21 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
     go('bucketitem')
   }
 
+  // 이 칸에 붙일 일상을 새로 쓰러 간다. 올리기가 끝나면 이 칸으로 돌아온다.
+  const startBucketMedia = () => {
+    const cur = ref.current
+    setState({
+      bucketLinkNo: cur.bucketNo,
+      editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false,
+      uploadError: null,
+      // 앞서 올리다 실패해 남겨둔 사진이 있으면 그대로 이어서 쓴다
+      ...(cur.bucketLinkNo === cur.bucketNo ? {} : { uploadAssets: undefined, uploadCaption: undefined }),
+    })
+    go('upload')
+  }
+  // 올리기 화면에서 예약만 푼다 (평범한 일상 글로 올리고 싶을 때)
+  const cancelBucketLink = () => setState({ bucketLinkNo: null })
+
   const onBucketDraft = (v) => setState({ bucketDraft: v, bucketError: null })
   const toggleBucketDone = () => setState((p) => ({ bucketDone: !p.bucketDone }))
   const openBucketPicker = () => setState({ bucketPicking: true })
@@ -93,6 +108,6 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
   return {
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia,
-    saveBucket, clearBucket, moveBucketTo,
+    saveBucket, clearBucket, moveBucketTo, startBucketMedia, cancelBucketLink,
   }
 }

@@ -36,8 +36,8 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       if (perm.status !== 'granted') return
       const result = await ImagePicker.launchImageLibraryAsync({
         // 배열 형태가 현재 API. MediaTypeOptions 는 deprecated.
-        // 사진과 영상 둘 다
-        mediaTypes: ['images', 'videos'],
+        // 영상은 아직 받지 않는다 (저장 공간). 이미 올라간 영상은 그대로 재생된다.
+        mediaTypes: ['images'],
         allowsMultipleSelection: true,
         selectionLimit: room,
         // 압축은 올릴 때 prepareImage 가 한 번만 한다 (여기서도 하면 두 번 압축돼 화질이 떨어진다)
@@ -135,6 +135,58 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       return
     }
     const caption = (cur.uploadCaption || '').trim()
+
+    // 버킷리스트에 붙이려고 쓰는 글은 끝까지 기다린다 —
+    // 올라간 글을 그 칸에 이어붙이고 곧바로 그 칸으로 돌아가야 하기 때문.
+    const linkNo = cur.bucketLinkNo
+    if (!editId && linkNo) {
+      setState({ uploadSaving: true, uploadError: null, uploadDone: 0, uploadTotal: assets.length })
+      try {
+        const ready = []
+        for (const a of assets) ready.push(await prepareImage(a))
+        const files = ready.map((a) => ({
+          contentType: api.assetContentType(a),
+          size: a.fileSize,
+          fileName: a.fileName,
+        }))
+        const slots = await api.prepareUpload(groupId, files)
+        for (let i = 0; i < ready.length; i++) {
+          await api.putToSignedUrl(slots[i].signedUrl, ready[i], files[i].contentType)
+          setState({ uploadDone: i + 1 })
+        }
+        const created = await api.commitUpload(groupId, slots.map((s) => s.uploadId), caption)
+        await loadMedia(groupId)
+
+        // 칸에 내용이 이미 적혀 있으면 바로 이어붙여 저장한다.
+        // 비어 있으면 붙이기만 하고, 사용자가 내용을 적어 저장하게 둔다.
+        const draft = (cur.bucketDraft || '').trim()
+        if (draft) {
+          await api.saveBucket(groupId, linkNo, {
+            text: draft,
+            done: !!cur.bucketDone,
+            mediaId: created.id,
+          })
+          // 목록을 새로 받아 칸에 썸네일이 바로 보이게
+          const fresh = await api.bucket(groupId).catch(() => null)
+          if (fresh) setState({ bucket: fresh })
+          showToast(`버킷리스트 ${linkNo}번에 연결했어요`)
+        } else {
+          showToast('일상을 올렸어요')
+        }
+        setState({
+          uploadSaving: false, bucketLinkNo: null, bucketMediaId: created.id,
+          uploadAssets: undefined, uploadCaption: undefined,
+          uploadDone: 0, uploadTotal: 0,
+        })
+        back()
+      } catch (e) {
+        // 고른 사진은 남겨둔다 — 돌아가서 다시 누르면 이어서 올릴 수 있게
+        setState({ uploadSaving: false, uploadDone: 0, uploadTotal: 0 })
+        showToast('올리지 못했어요. 다시 시도해주세요')
+        back()
+      }
+      return
+    }
 
     // 새 글: 작업만 넣고 바로 목록으로. 업로드는 기다리지 않는다.
     if (!editId) {
