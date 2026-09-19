@@ -551,13 +551,39 @@ export function buildVm(app) {
     loadBucket,
     bucketLoading: !!st.bucketLoading,
     bucketTotal: st.bucket?.size || 100,
-    bucketDoneCount: st.bucket?.doneCount || 0,
-    bucketPercent: Math.round(((st.bucket?.doneCount || 0) / (st.bucket?.size || 100)) * 100),
+    // 한 장(100칸)씩 넘겨 본다. 앞 장을 다 채우면 서버가 pages 를 늘려준다.
+    bucketPages: st.bucket?.pages || 1,
+    bucketPage: Math.min(st.bucketPage || 1, st.bucket?.pages || 1),
+    bucketPrev: () => setState((p) => ({ bucketPage: Math.max(1, (p.bucketPage || 1) - 1) })),
+    bucketNext: () =>
+      setState((p) => ({
+        bucketPage: Math.min(p.bucket?.pages || 1, (p.bucketPage || 1) + 1),
+      })),
+    // 진행률은 보고 있는 장 기준 — 목록이 그 장이므로
+    bucketDoneCount: (() => {
+      const size = st.bucket?.size || 100
+      const page = Math.min(st.bucketPage || 1, st.bucket?.pages || 1)
+      const start = (page - 1) * size
+      return (st.bucket?.items || []).filter(
+        (i) => i.done && i.no > start && i.no <= start + size,
+      ).length
+    })(),
+    bucketPercent: (() => {
+      const size = st.bucket?.size || 100
+      const page = Math.min(st.bucketPage || 1, st.bucket?.pages || 1)
+      const start = (page - 1) * size
+      const done = (st.bucket?.items || []).filter(
+        (i) => i.done && i.no > start && i.no <= start + size,
+      ).length
+      return Math.round((done / size) * 100)
+    })(),
     bucketRows: (() => {
       const size = st.bucket?.size || 100
+      const page = Math.min(st.bucketPage || 1, st.bucket?.pages || 1)
+      const start = (page - 1) * size
       const byNo = new Map((st.bucket?.items || []).map((i) => [i.no, i]))
       return Array.from({ length: size }, (_, k) => {
-        const no = k + 1
+        const no = start + k + 1
         const it = byNo.get(no)
         return {
           no,

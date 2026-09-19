@@ -18,7 +18,9 @@ export default function Bucket() {
       {/* 진행률 */}
       <View style={s('margin:0 hair lg')}>
         <View style={s('flex-direction:row;align-items:baseline;justify-content:space-between;margin-bottom:sm')}>
-          <Text style={s('font-size:11.3px;color:#9DB2BD')}>같이 하고 싶은 일들</Text>
+          <Text style={s('font-size:11.3px;color:#9DB2BD')}>
+            같이 하고 싶은 일들{vm.bucketPages > 1 ? ` · ${vm.bucketPage}장` : ''}
+          </Text>
           <Text style={s('font-size:12.5px;font-weight:800;color:#FF5E8A')}>
             {vm.bucketDoneCount} / {vm.bucketTotal}
           </Text>
@@ -66,6 +68,24 @@ export default function Bucket() {
             </Pressable>
           ))}
         </View>
+
+        {/* 페이지 넘기기 — 한 장(100칸)을 다 채우면 다음 장이 열린다 */}
+        <View style={s('flex-direction:row;align-items:center;justify-content:center;gap:2xl;padding:3xl 0 lg')}>
+          <Pressable onPress={vm.bucketPrev} disabled={vm.bucketPage <= 1} style={s(`width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;background:#fff;border:1px solid #FFE1EC;opacity:${vm.bucketPage <= 1 ? 0.35 : 1}`)}>
+            <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#FF5E8A" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
+          </Pressable>
+          <Text style={s('font-size:12.5px;font-weight:700;color:#17303B;font-variant:tabular-nums')}>
+            {vm.bucketPage} / {vm.bucketPages}
+          </Text>
+          <Pressable onPress={vm.bucketNext} disabled={vm.bucketPage >= vm.bucketPages} style={s(`width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;background:#fff;border:1px solid #FFE1EC;opacity:${vm.bucketPage >= vm.bucketPages ? 0.35 : 1}`)}>
+            <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#FF5E8A" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M9.5 5 L16.5 12 L9.5 19" /></Svg>
+          </Pressable>
+        </View>
+        {vm.bucketPage >= vm.bucketPages && (
+          <Text style={s('font-size:10.5px;color:#C4CFD6;text-align:center;margin-bottom:2xl')}>
+            이 장을 모두 채우면 다음 100개가 열려요
+          </Text>
+        )}
       </ScrollView>
     </View>
   )
