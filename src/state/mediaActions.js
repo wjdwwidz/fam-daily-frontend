@@ -27,7 +27,9 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     try {
       const cur = ref.current
       const picked = cur.uploadAssets || []
-      const room = MAX_PICK - picked.length
+      // 수정 중이면 남아 있는 기존 사진도 자리를 차지한다
+      const existing = cur.editMediaId ? (cur.editMediaItems || []).length : 0
+      const room = MAX_PICK - picked.length - existing
       if (room <= 0) {
         setState({ uploadError: `사진은 최대 ${MAX_PICK}장까지 올릴 수 있어요.` })
         return
@@ -36,8 +38,8 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       if (perm.status !== 'granted') return
       const result = await ImagePicker.launchImageLibraryAsync({
         // 배열 형태가 현재 API. MediaTypeOptions 는 deprecated.
-        // 사진과 영상 둘 다
-        mediaTypes: ['images', 'videos'],
+        // 영상은 아직 받지 않는다 (저장 공간). 이미 올라간 영상은 그대로 재생된다.
+        mediaTypes: ['images'],
         allowsMultipleSelection: true,
         selectionLimit: room,
         // 압축은 올릴 때 prepareImage 가 한 번만 한다 (여기서도 하면 두 번 압축돼 화질이 떨어진다)
@@ -54,21 +56,22 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
   // 첨부된 사진 한 장 빼기.
   // 새로 고른 사진이면 목록에서 빼고, 수정 중인 기존 사진이면 '남길 목록'에서 뺀다
   // (editItemsTrimmed 가 켜져야 저장할 때 keepUrls 를 보낸다).
-  const removeUploadItem = (index) => {
+  const removeUploadItem = ({ kind, index }) => {
     const cur = ref.current
-    if ((cur.uploadAssets || []).length) {
-      const next = cur.uploadAssets.filter((_, i) => i !== index)
-      setState({ uploadAssets: next.length ? next : undefined, uploadError: null })
-      return
-    }
-    const items = cur.editMediaItems || []
-    if (!items.length) return
-    if (items.length === 1) {
+    const existing = cur.editMediaId ? cur.editMediaItems || [] : []
+    const picked = cur.uploadAssets || []
+    // 마지막 한 장은 뺄 수 없다 — 사진 없는 글은 만들 수 없으므로
+    if (existing.length + picked.length <= 1) {
       setState({ uploadError: '사진은 최소 한 장 남겨야 해요.' })
       return
     }
+    if (kind === 'new') {
+      const next = picked.filter((_, i) => i !== index)
+      setState({ uploadAssets: next.length ? next : undefined, uploadError: null })
+      return
+    }
     setState({
-      editMediaItems: items.filter((_, i) => i !== index),
+      editMediaItems: existing.filter((_, i) => i !== index),
       editItemsTrimmed: true,
       uploadError: null,
     })
@@ -136,6 +139,58 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     }
     const caption = (cur.uploadCaption || '').trim()
 
+    // 버킷리스트에 붙이려고 쓰는 글은 끝까지 기다린다 —
+    // 올라간 글을 그 칸에 이어붙이고 곧바로 그 칸으로 돌아가야 하기 때문.
+    const linkNo = cur.bucketLinkNo
+    if (!editId && linkNo) {
+      setState({ uploadSaving: true, uploadError: null, uploadDone: 0, uploadTotal: assets.length })
+      try {
+        const ready = []
+        for (const a of assets) ready.push(await prepareImage(a))
+        const files = ready.map((a) => ({
+          contentType: api.assetContentType(a),
+          size: a.fileSize,
+          fileName: a.fileName,
+        }))
+        const slots = await api.prepareUpload(groupId, files)
+        for (let i = 0; i < ready.length; i++) {
+          await api.putToSignedUrl(slots[i].signedUrl, ready[i], files[i].contentType)
+          setState({ uploadDone: i + 1 })
+        }
+        const created = await api.commitUpload(groupId, slots.map((s) => s.uploadId), caption)
+        await loadMedia(groupId)
+
+        // 칸에 내용이 이미 적혀 있으면 바로 이어붙여 저장한다.
+        // 비어 있으면 붙이기만 하고, 사용자가 내용을 적어 저장하게 둔다.
+        const draft = (cur.bucketDraft || '').trim()
+        if (draft) {
+          await api.saveBucket(groupId, linkNo, {
+            text: draft,
+            done: !!cur.bucketDone,
+            mediaId: created.id,
+          })
+          // 목록을 새로 받아 칸에 썸네일이 바로 보이게
+          const fresh = await api.bucket(groupId).catch(() => null)
+          if (fresh) setState({ bucket: fresh })
+          showToast(`버킷리스트 ${linkNo}번에 연결했어요`)
+        } else {
+          showToast('일상을 올렸어요')
+        }
+        setState({
+          uploadSaving: false, bucketLinkNo: null, bucketMediaId: created.id,
+          uploadAssets: undefined, uploadCaption: undefined,
+          uploadDone: 0, uploadTotal: 0,
+        })
+        back()
+      } catch (e) {
+        // 고른 사진은 남겨둔다 — 돌아가서 다시 누르면 이어서 올릴 수 있게
+        setState({ uploadSaving: false, uploadDone: 0, uploadTotal: 0 })
+        showToast('올리지 못했어요. 다시 시도해주세요')
+        back()
+      }
+      return
+    }
+
     // 새 글: 작업만 넣고 바로 목록으로. 업로드는 기다리지 않는다.
     if (!editId) {
       const job = {
@@ -174,12 +229,9 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
         }
         uploadIds = slots.map((s) => s.uploadId)
       }
-      // uploadIds 가 있으면 서버가 파일까지 교체하고 옛 파일을 지운다.
-      // 사진을 빼기만 했으면 남길 것들을 keepUrls 로 알린다.
-      const keepUrls =
-        !uploadIds && cur.editItemsTrimmed
-          ? (ref.current.editMediaItems || []).map((it) => it.url)
-          : undefined
+      // 수정은 늘 '남길 기존 사진' 을 함께 보낸다 — 그래야 새로 고른 사진이
+      // 기존 것을 밀어내지 않고 뒤에 붙는다. (예전엔 uploadIds 만 보내 통째로 교체됐다)
+      const keepUrls = (ref.current.editMediaItems || []).map((it) => it.url)
       const updated = await api.updateMedia(editId, uploadIds, caption, keepUrls)
       await loadMedia(groupId)
       setState({

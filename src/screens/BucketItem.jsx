@@ -46,7 +46,9 @@ export default function BucketItem() {
         </View>
         <View style={s('flex:1;min-width:0')}>
           <Text style={s('font-size:12.5px;font-weight:700;color:#17303B')}>우리 가족 달성!</Text>
-          <Text style={s('font-size:10.5px;color:#9DB2BD;margin-top:hair')}>함께 이룬 일로 기록돼요</Text>
+          <Text style={s('font-size:10.5px;color:#9DB2BD;margin-top:hair')}>
+            {vm.bucketDoneWhen ? `${vm.bucketDoneWhen} 달성` : '함께 이룬 일로 기록돼요'}
+          </Text>
         </View>
       </Pressable>
 
@@ -61,9 +63,14 @@ export default function BucketItem() {
           </Pressable>
         </View>
       ) : (
-        <Pressable onPress={vm.openBucketPicker} style={s('border:1.5px dashed #FFC4D8;border-radius:16px;padding:3xl;align-items:center;background:#FFF6FA;cursor:pointer')}>
-          <Text style={s('font-size:11.5px;color:#FF5E8A;font-weight:700')}>＋ 일상 글 고르기</Text>
-        </Pressable>
+        <View style={s('flex-direction:row;gap:md')}>
+          <Pressable onPress={vm.openBucketPicker} style={s('flex:1;border:1.5px dashed #FFC4D8;border-radius:16px;padding:3xl md;align-items:center;background:#FFF6FA;cursor:pointer')}>
+            <Text style={s('font-size:11.5px;color:#FF5E8A;font-weight:700')}>기존 글에서 고르기</Text>
+          </Pressable>
+          <Pressable onPress={vm.startBucketMedia} style={s('flex:1;border:1.5px dashed #C7E7F7;border-radius:16px;padding:3xl md;align-items:center;background:#F3FAFE;cursor:pointer')}>
+            <Text style={s('font-size:11.5px;color:#3AA0D1;font-weight:700')}>＋ 새 일상 쓰기</Text>
+          </Pressable>
+        </View>
       )}
 
       {/* 고르기 — 가족이 올린 글의 대표 사진 */}

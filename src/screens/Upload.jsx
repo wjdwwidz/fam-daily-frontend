@@ -41,7 +41,7 @@ export default function Upload() {
             </View>
             <View style={s('text-align:center')}>
               <Text style={s('font-size:12.6px;font-weight:700;color:#17303B')}>{vm.uploadHint}</Text>
-              <Text style={s('font-size:11px;color:#9DB2BD;margin-top:xs')}>사진·영상을 여러 개 고를 수 있어요 (최대 10개)</Text>
+              <Text style={s('font-size:11px;color:#9DB2BD;margin-top:xs')}>사진을 여러 개 고를 수 있어요 (최대 10개)</Text>
             </View>
           </Pressable>
         )}
@@ -68,6 +68,17 @@ export default function Upload() {
               ))}
             </ScrollView>
             <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md')}>{vm.uploadCount}개 선택됨 · 최대 10개</Text>
+          </View>
+        )}
+        {/* 버킷리스트 칸에 붙이려고 쓰는 중이면 알려준다 */}
+        {!!vm.bucketLinkNo && (
+          <View style={s('flex-direction:row;align-items:center;gap:md;margin-top:3xl;background:#F3FAFE;border:1px solid #C7E7F7;border-radius:14px;padding:xl 2xl')}>
+            <Text style={s('flex:1;min-width:0;font-size:11.5px;color:#3AA0D1;font-weight:700')}>
+              버킷리스트 {vm.bucketLinkNo}번에 연결됩니다
+            </Text>
+            <Pressable onPress={vm.cancelBucketLink}>
+              <Text style={s('font-size:11.5px;color:#9DB2BD')}>취소</Text>
+            </Pressable>
           </View>
         )}
         <Text style={s('margin-top:4xl;font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>설명</Text>

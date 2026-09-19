@@ -54,7 +54,8 @@ export function buildVm(app) {
     logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto,
     doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName,
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
-    openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, moveBucketTo, cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
+    openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, moveBucketTo,
+    startBucketMedia, cancelBucketLink, cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
@@ -88,20 +89,21 @@ export function buildVm(app) {
   // 수정 중인데 사진을 아직 다시 안 골랐으면 기존 사진을 미리보기로 보여준다.
   const editingMedia = !!st.editMediaId
   const pickedAssets = st.uploadAssets || []
-  // 각 사진은 자기 자리(i)를 알고 있어야 X 로 뺄 수 있다
-  const uploadPreview = pickedAssets.length
-    ? pickedAssets.map((a, i) => ({
-        uri: a.uri,
-        isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
-        remove: () => removeUploadItem(i),
-      }))
-    : editingMedia
-      ? (st.editMediaItems || []).map((it, i) => ({
-          uri: it.url,
-          isVideo: it.type === 'video',
-          remove: () => removeUploadItem(i),
-        }))
-      : []
+  // 수정 중이면 '기존 사진 + 새로 고른 사진' 을 함께 보여준다.
+  // 예전엔 새로 고르는 순간 기존 사진이 가려져, ＋ 로 더하려 해도 교체가 됐다.
+  const existingItems = editingMedia ? st.editMediaItems || [] : []
+  const uploadPreview = [
+    ...existingItems.map((it, i) => ({
+      uri: it.url,
+      isVideo: it.type === 'video',
+      remove: () => removeUploadItem({ kind: 'existing', index: i }),
+    })),
+    ...pickedAssets.map((a, i) => ({
+      uri: a.uri,
+      isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
+      remove: () => removeUploadItem({ kind: 'new', index: i }),
+    })),
+  ]
   const cancelEdit = () => setState({ editPost: null })
 
   const v = variant === 'grid' ? 'grid' : 'cards'
@@ -167,9 +169,17 @@ export function buildVm(app) {
     go('profile')
   }
 
-  // R 은 프로필이 놓이는 반지름. 가운데 말풍선과 좌우 프로필 사이가 3px 남짓이라
-  // 한마디가 길어지면 겹쳐 보였다. 반지름을 키워 간격을 벌린다.
-  const N = members.length, BOX = 296, C = BOX / 2, R = 124, AV = 60, RING = 3
+  const N = members.length, BOX = 296, C = BOX / 2, AV = 60, RING = 3
+  // 반지름은 사람 수에 따라 정한다. 각도가 달라져 가로로 얼마나 벌어지는지가 바뀌는데,
+  // 고정값을 쓰면 3·6명일 때 말풍선과 프로필이 4px 까지 붙었다.
+  // 프로필이 상자(BOX) 밖으로 나가지 않는 선에서 최대한 밀어낸다.
+  const R = (() => {
+    if (!N) return 124
+    const angs = Array.from({ length: N }, (_, i) => -Math.PI / 2 + (i * 2 * Math.PI) / N)
+    // 가로로 가장 멀리 나가는 프로필 기준 — 이게 상자 폭을 정한다
+    const maxCos = Math.max(0.35, ...angs.map((a) => Math.abs(Math.cos(a))))
+    return Math.min(140, Math.floor((C - AV / 2) / maxCos))
+  })()
   // 프로필을 누르면 그 사람의 한마디가 고정된다. 한 번 더 누르면 풀려 다시 자동으로 돈다.
   const pinned = st.moodPin != null && N ? ((st.moodPin % N) + N) % N : null
   const active = pinned ?? (((st.activeMood ?? 0) % N) + N) % N
@@ -604,6 +614,7 @@ export function buildVm(app) {
           done: !!it?.done,
           coverUrl: it?.mediaCoverUrl || null,
           byName: it?.createdBy?.nickname || it?.createdBy?.name || '',
+          doneDate: it?.doneAt ? fmtDate(it.doneAt) : '',
           open: () => openBucket(no),
         }
       })
@@ -627,6 +638,9 @@ export function buildVm(app) {
     }),
     onBucketDraft, toggleBucketDone, openBucketPicker, closeBucketPicker,
     unlinkBucketMedia, saveBucket, clearBucket,
+    startBucketMedia, cancelBucketLink,
+    // 올리기 화면에서 '이 글은 버킷 n번에 붙는다' 를 알려주기 위해
+    bucketLinkNo: st.bucketLinkNo || null,
     // 우선순위 조정 — 지금 열린 장 안에서 옮길 번호를 고른다
     bucketMoveOptions: (() => {
       const size = st.bucket?.size || 10
@@ -640,6 +654,11 @@ export function buildVm(app) {
     bucketByName: (() => {
       const it = (st.bucket?.items || []).find((i) => i.no === st.bucketNo)
       return it?.createdBy?.nickname || it?.createdBy?.name || ''
+    })(),
+    // 언제 이뤘는지 — 달성한 칸에만
+    bucketDoneWhen: (() => {
+      const it = (st.bucket?.items || []).find((i) => i.no === st.bucketNo)
+      return it?.doneAt ? `${fmtDate(it.doneAt)} ${fmtTime(it.doneAt)}` : ''
     })(),
 
     // 가족 기록 — 한마디와 프로필 사진 변경이 시간순으로 섞인다.

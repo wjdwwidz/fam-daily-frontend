@@ -61,10 +61,10 @@ export default function Bucket() {
                 {r.filled ? r.text : '비어 있어요'}
               </Text>
 
-              {/* 누가 적었는지 */}
-              {!!r.byName && (
-                <Text style={s('font-size:10.5px;color:#C4CFD6;flex:0 0 auto')}>{r.byName}</Text>
-              )}
+              {/* 달성한 칸은 언제 이뤘는지, 아직이면 누가 적었는지 */}
+              <Text style={s('font-size:10.5px;color:#C4CFD6;flex:0 0 auto')}>
+                {r.done ? r.doneDate : r.byName}
+              </Text>
 
               {/* 이어붙인 일상 글 */}
               {r.coverUrl && (
