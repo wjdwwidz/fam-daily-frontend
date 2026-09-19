@@ -52,6 +52,36 @@ export default function BucketItem() {
         </View>
       </Pressable>
 
+      {/* 이룬 날 — 체크한 순간이 아니라 실제로 이룬 날을 고른다 */}
+      {vm.bucketDoneDraft && (
+        <View style={s('margin-top:md;background:#fff;border:1px solid #FFE1EC;border-radius:16px;padding:xl 2xl')}>
+          <Pressable onPress={vm.bucketDatePicking ? vm.closeBucketDate : vm.openBucketDate} style={s('flex-direction:row;align-items:center;justify-content:space-between;cursor:pointer')}>
+            <Text style={s('font-size:11.3px;color:#9DB2BD')}>이룬 날</Text>
+            <Text style={s('font-size:12.5px;font-weight:700;color:#FF5E8A')}>{vm.bucketDoneAtLabel} ▾</Text>
+          </Pressable>
+          {vm.bucketDatePicking && (
+            <View style={s('margin-top:xl;gap:sm')}>
+              {[
+                { label: '년', list: vm.bucketDateParts.years },
+                { label: '월', list: vm.bucketDateParts.months },
+                { label: '일', list: vm.bucketDateParts.days },
+              ].map((row) => (
+                <View key={row.label} style={s('flex-direction:row;align-items:center;gap:md')}>
+                  <Text style={s('width:16px;font-size:10.5px;color:#C4CFD6')}>{row.label}</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s('gap:sm')}>
+                    {row.list.map((o) => (
+                      <Pressable key={o.n} onPress={o.pick} style={s(`min-width:34px;height:32px;padding:0 md;border-radius:10px;align-items:center;justify-content:center;background:${o.sel ? '#FF5E8A' : '#FCEEF4'}`)}>
+                        <Text style={s(`font-size:12px;font-weight:700;font-variant:tabular-nums;color:${o.sel ? '#fff' : '#6A7E88'}`)}>{o.n}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
+
       {/* 일상 글 연결 */}
       <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:3xl hair sm')}>일상 글 연결</Text>
       {vm.bucketMediaCover ? (
