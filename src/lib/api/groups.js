@@ -15,5 +15,7 @@ export const groupsApi = {
   updateMyGroupPhoto: (id, asset) => postFile(`/groups/${id}/me/photo`, asset, '프로필 사진 저장에 실패했어요.'),
   deleteMyGroupPhoto: (id) => request(`/groups/${id}/me/photo`, { method: 'DELETE' }),
   setMood: (id, text, emoji) => request(`/groups/${id}/mood`, { method: 'PUT', body: { text, emoji } }),
+  // 가족 기록 — 한마디·프로필 사진 변경을 최신순으로
+  history: (id) => request(`/groups/${id}/history`),
   createInvite: (id) => request(`/groups/${id}/invites`, { method: 'POST', body: {} }),
 }

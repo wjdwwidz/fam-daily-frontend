@@ -21,6 +21,7 @@ import Word from './screens/Word.jsx'
 import Gallery from './screens/Gallery.jsx'
 import Media from './screens/Media.jsx'
 import QnaHistory from './screens/QnaHistory.jsx'
+import MoodHistory from './screens/MoodHistory.jsx'
 import Upload from './screens/Upload.jsx'
 import Members from './screens/Members.jsx'
 import Profile from './screens/Profile.jsx'
@@ -74,7 +75,7 @@ export default function FamilyPhonePop() {
     vm.isLogin ? Login : vm.isAuth ? Auth : vm.isSpaceSelect ? SpaceSelect : vm.isSignup ? Signup : vm.isSpace ? Space : vm.isCreateSpace ? CreateSpace :
     vm.isJoinSpace ? JoinSpace : vm.isHome ? Home : vm.isRecord ? Record : vm.isWord ? Word :
     vm.isGallery ? Gallery : vm.isMedia ? Media :
-    vm.isQnaHistory ? QnaHistory : vm.isUpload ? Upload :
+    vm.isQnaHistory ? QnaHistory : vm.isMoodHistory ? MoodHistory : vm.isUpload ? Upload :
     vm.isMembers ? Members : vm.isProfile ? Profile : Login
 
   return (

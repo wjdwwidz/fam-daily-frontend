@@ -50,6 +50,18 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     }
   }
 
+  // 가족 기록 — 기록 화면에서만 쓴다. 홈 링은 membership 의 현재 한마디를 그대로 쓴다.
+  const loadHistory = async (groupId) => {
+    if (!groupId) return
+    setState({ historyLoading: true })
+    try {
+      const rows = await api.history(groupId)
+      setState({ historyItems: rows || [], historyLoading: false })
+    } catch {
+      setState({ historyItems: [], historyLoading: false })
+    }
+  }
+
   // 그룹(가족) 이름 저장 — 편집 중인 draft 를 서버에 반영 + 로컬 상태 갱신
   const saveGroupName = async () => {
     const cur = ref.current
@@ -139,5 +151,5 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     }
   }
 
-  return { doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, deleteGroup, loadActivity, sendMood, openInvite }
+  return { doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName, cancelEditGroupName, deleteGroup, loadActivity, sendMood, openInvite }
 }

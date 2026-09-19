@@ -12,8 +12,16 @@ import { MAX_WORD_PHOTOS } from '../state/wordActions.js'
 // 브랜드 핑크(#FF5E8A)와 같은 밝기에서 마젠타 쪽으로 살짝 밀어 또렷하게.
 const FOLDER_TAB_COLOR = '#FF5A97'
 const fmtDate = (iso) => {
-  const m = String(iso || '').match(/^\d{4}-(\d{2})-(\d{2})/)
-  return m ? `${Number(m[1])}월 ${Number(m[2])}일` : ''
+  const str = String(iso || '')
+  // 시각이 없는 날짜만 있는 값('2026-09-20')은 그대로 읽는다 — Date 로 넘기면 UTC 자정으로
+  // 해석돼 하루 밀린다. 시각이 붙은 값은 fmtTime 과 같은 현지 기준으로 맞춘다.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const m = str.match(/^\d{4}-(\d{2})-(\d{2})/)
+    return `${Number(m[1])}월 ${Number(m[2])}일`
+  }
+  const d = new Date(str)
+  if (isNaN(d.getTime())) return ''
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`
 }
 const fmtTime = (iso) => {
   const d = new Date(iso)
@@ -44,11 +52,11 @@ export function buildVm(app) {
     st, setState, go, navTo, back,
     variant = 'grid', initialScreen = 'login',
     logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto,
-    doCreateGroup, doJoinGroup, loadMembers, saveGroupName, cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
+    doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName, cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
-    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
+    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
     retryUploadJob, discardUploadJob,
   } = app
@@ -78,13 +86,19 @@ export function buildVm(app) {
   // 수정 중인데 사진을 아직 다시 안 골랐으면 기존 사진을 미리보기로 보여준다.
   const editingMedia = !!st.editMediaId
   const pickedAssets = st.uploadAssets || []
+  // 각 사진은 자기 자리(i)를 알고 있어야 X 로 뺄 수 있다
   const uploadPreview = pickedAssets.length
-    ? pickedAssets.map((a) => ({
+    ? pickedAssets.map((a, i) => ({
         uri: a.uri,
         isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
+        remove: () => removeUploadItem(i),
       }))
     : editingMedia
-      ? (st.editMediaItems || []).map((it) => ({ uri: it.url, isVideo: it.type === 'video' }))
+      ? (st.editMediaItems || []).map((it, i) => ({
+          uri: it.url,
+          isVideo: it.type === 'video',
+          remove: () => removeUploadItem(i),
+        }))
       : []
   const cancelEdit = () => setState({ editPost: null })
 
@@ -117,6 +131,9 @@ export function buildVm(app) {
     const label = st.currentGroup?.myNickname || st.me?.name || '나'
     members.push({ name: label, role: st.me?.name || '', ini: String(label).slice(0, 1), photoUrl: st.currentGroup?.myPhotoUrl || null, admin: true, me: true, mood: myMood, emoji: '', slotId: 'prof-0' })
   }
+  // 가족 목록(/groups)이 주는 members 에는 mood 가 없다. 상세(groupMembers)를 받기 전까지는
+  // "한마디가 없는 것"과 "아직 못 받아온 것"을 구분할 수 없으므로, 빈 상태 문구를 미룬다.
+  const moodLoading = !!st.currentGroup && !Array.isArray(st.groupMembers)
   const memberCount = st.groupMembers ? st.groupMembers.length : (st.currentGroup?.memberCount ?? members.length)
   const myInitial = String(st.currentGroup?.myNickname || st.me?.name || '나').slice(0, 1)
   // 이 가족에서 쓰는 내 사진 (구성원 목록이 더 최신이면 그걸 쓴다). 없으면 이니셜.
@@ -164,7 +181,8 @@ export function buildVm(app) {
         const box = isA ? AV + RING * 2 : AV
         return `position:absolute;left:${cx - box / 2}px;top:${cy - box / 2}px;width:${box}px;height:${box}px;border-radius:50%;align-items:center;justify-content:center;${isA ? `border:${RING}px solid #FF5E8A;` : ''}box-shadow:0 6px 15px rgba(255,94,138,0.22);transform:scale(${isA ? 1.18 : 0.97});z-index:${isA ? 6 : 2}`
       })(),
-      press: () => setState({ moodPin: pinned === i ? null : i }),
+      press: () =>
+        setState(pinned === i ? { moodPin: null, activeMood: i } : { moodPin: i }),
       badgeStyle: m.me
         ? `position:absolute;left:${cx + AV / 2 - 21}px;top:${cy + AV / 2 - 21}px;width:22px;height:22px;border-radius:50%;background:#FF5E8A;border:2px solid #fff;align-items:center;justify-content:center;z-index:${isA ? 7 : 3};box-shadow:0 2px 6px rgba(255,94,138,0.4)`
         : `display:none`,
@@ -524,7 +542,32 @@ export function buildVm(app) {
     qnaLoading: !!st.qnaLoading,
     isQnaHistory: scr === 'qnahistory',
     openQnaHistory: () => go('qnahistory'),
-    ringMembers, activeMember,
+
+    // 가족 기록 — 한마디와 프로필 사진 변경이 시간순으로 섞인다.
+    // 사진을 바꾼 줄은 눌러서 크게 볼 수 있다.
+    isMoodHistory: scr === 'moodhistory',
+    openMoodHistory: () => go('moodhistory'),
+    loadHistory: () => loadHistory(st.currentGroup?.id),
+    historyLoading: !!st.historyLoading,
+    historyItems: (st.historyItems || []).map((m) => {
+      const label = m.author?.nickname || m.author?.name || '알 수 없음'
+      const isPhoto = m.type === 'photo'
+      return {
+        id: m.id,
+        type: m.type,
+        text: isPhoto
+          ? (m.photoUrl ? '프로필 사진을 바꿨어요' : '프로필 사진을 지웠어요')
+          : `${m.text}${m.emoji ? ` ${m.emoji}` : ''}`,
+        // 바꾼 사진 (지운 줄은 없다) — 누르면 크게 보기
+        shotUrl: isPhoto ? m.photoUrl : null,
+        open: isPhoto && m.photoUrl ? () => openPhotoViewer([m.photoUrl], 0) : undefined,
+        name: label,
+        ini: String(label).slice(0, 1),
+        photoUrl: m.author?.photoUrl || null,
+        when: `${fmtDate(m.createdAt)} ${fmtTime(m.createdAt)}`.trim(),
+      }
+    }),
+    ringMembers, activeMember, moodLoading,
     ringAvatarSize: AV,
     membersFromLink: !!st.membersFromLink,
     answerOpen: !!st.answerOpen,
@@ -586,6 +629,7 @@ export function buildVm(app) {
     recentActivity,
     activityLoading: !!st.activityLoading,
     loadActivity: () => loadActivity(st.currentGroup?.id),
+    loadMembers: () => loadMembers(st.currentGroup?.id),
     // 아래로 당겨서 새로고침 — 화면마다 새로 받는 것이 다르다.
     // 목록이 있는 화면에서만 켠다 (입력 화면에서 당기면 쓰던 내용이 날아간 것처럼 느껴진다).
     canRefresh: ['home', 'gallery', 'record', 'members', 'media', 'word', 'qnahistory', 'spaceSelect'].includes(scr),

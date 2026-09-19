@@ -6,6 +6,24 @@ import { s } from '../lib/style.js'
 
 import { useVm } from '../vm/useVm.js'
 
+// 첨부한 사진을 빼는 버튼. 사진 위에 얹히므로 어두운 반투명 바탕에 흰 X 를 그린다.
+// hitSlop 으로 실제 누를 수 있는 범위를 넓혀 작은 썸네일에서도 잘 눌린다.
+function RemoveButton({ onPress, top, right, size }) {
+  if (!onPress) return null
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityLabel="사진 빼기"
+      hitSlop={10}
+      style={s(`position:absolute;top:${top}px;right:${right}px;width:${size}px;height:${size}px;border-radius:50%;background:rgba(23,48,59,0.6);align-items:center;justify-content:center;z-index:2`)}
+    >
+      <Svg viewBox="0 0 24 24" width={size * 0.45} height={size * 0.45} fill="none" stroke="#fff" strokeWidth={3} strokeLinecap="round">
+        <Path d="M6 6 L18 18 M18 6 L6 18" />
+      </Svg>
+    </Pressable>
+  )
+}
+
 export default function Upload() {
   const vm = useVm()
   return (
@@ -30,23 +48,27 @@ export default function Upload() {
           </Pressable>
         )}
         {vm.uploadCount === 1 && (
-          <View style={s('margin-top:3xl')}>
+          <View style={s('margin-top:3xl;position:relative')}>
             {vm.uploadItems[0].isVideo
               ? <VideoItem uri={vm.uploadItems[0].uri} radius={28} />
               : <Photo uri={vm.uploadItems[0].uri} radius={28} />}
+            <RemoveButton onPress={vm.uploadItems[0].remove} top={12} right={12} size={30} />
           </View>
         )}
         {vm.uploadCount > 1 && (
           <View style={s('margin-top:3xl')}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s('gap:md')}>
               {vm.uploadItems.map((it, i) => (
-                <View key={i} style={{ width: 140, height: 140, borderRadius: 18, overflow: 'hidden', backgroundColor: '#FCEEF4' }}>
-                  <Image source={{ uri: it.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                  {it.isVideo && (
-                    <View style={s('position:absolute;right:6px;bottom:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center')}>
-                      <Svg viewBox="0 0 24 24" width={11} height={11} fill="#fff" stroke="none" style={{ marginLeft: 1 }}><Path d="M8 5 L19 12 L8 19 Z" /></Svg>
-                    </View>
-                  )}
+                <View key={i} style={{ width: 140, height: 140 }}>
+                  <View style={{ width: '100%', height: '100%', borderRadius: 18, overflow: 'hidden', backgroundColor: '#FCEEF4' }}>
+                    <Image source={{ uri: it.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    {it.isVideo && (
+                      <View style={s('position:absolute;right:6px;bottom:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center')}>
+                        <Svg viewBox="0 0 24 24" width={11} height={11} fill="#fff" stroke="none" style={{ marginLeft: 1 }}><Path d="M8 5 L19 12 L8 19 Z" /></Svg>
+                      </View>
+                    )}
+                  </View>
+                  <RemoveButton onPress={it.remove} top={6} right={6} size={24} />
                 </View>
               ))}
             </ScrollView>
