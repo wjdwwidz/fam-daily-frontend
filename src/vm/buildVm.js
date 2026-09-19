@@ -89,20 +89,21 @@ export function buildVm(app) {
   // 수정 중인데 사진을 아직 다시 안 골랐으면 기존 사진을 미리보기로 보여준다.
   const editingMedia = !!st.editMediaId
   const pickedAssets = st.uploadAssets || []
-  // 각 사진은 자기 자리(i)를 알고 있어야 X 로 뺄 수 있다
-  const uploadPreview = pickedAssets.length
-    ? pickedAssets.map((a, i) => ({
-        uri: a.uri,
-        isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
-        remove: () => removeUploadItem(i),
-      }))
-    : editingMedia
-      ? (st.editMediaItems || []).map((it, i) => ({
-          uri: it.url,
-          isVideo: it.type === 'video',
-          remove: () => removeUploadItem(i),
-        }))
-      : []
+  // 수정 중이면 '기존 사진 + 새로 고른 사진' 을 함께 보여준다.
+  // 예전엔 새로 고르는 순간 기존 사진이 가려져, ＋ 로 더하려 해도 교체가 됐다.
+  const existingItems = editingMedia ? st.editMediaItems || [] : []
+  const uploadPreview = [
+    ...existingItems.map((it, i) => ({
+      uri: it.url,
+      isVideo: it.type === 'video',
+      remove: () => removeUploadItem({ kind: 'existing', index: i }),
+    })),
+    ...pickedAssets.map((a, i) => ({
+      uri: a.uri,
+      isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
+      remove: () => removeUploadItem({ kind: 'new', index: i }),
+    })),
+  ]
   const cancelEdit = () => setState({ editPost: null })
 
   const v = variant === 'grid' ? 'grid' : 'cards'
