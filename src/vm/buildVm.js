@@ -515,6 +515,8 @@ export function buildVm(app) {
     cancelEditGroupName,
     // 프로필 편집 (이름 + 가족 내 호칭)
     profileName: st.profileName ?? (st.me?.name ?? ''),
+    // 카카오에서 받은 닉네임 — 이름 칸 아래 '기본 이름'으로. 아직 못 받았으면(예전 가입자) 숨긴다
+    profileKakaoName: st.me?.kakaoName || '',
     profileNickname: st.profileNickname ?? (st.currentGroup?.myNickname ?? ''),
     profileMood: st.profileMood ?? (members.find((m) => m.me)?.mood ?? ''),
     onProfileName: (t) => setState({ profileName: t, profileError: null }),
