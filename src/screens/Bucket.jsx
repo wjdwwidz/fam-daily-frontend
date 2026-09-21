@@ -44,14 +44,19 @@ export default function Bucket() {
                 {r.no}
               </Text>
 
-              {/* 체크 상자 */}
-              <View style={s(`width:19px;height:19px;border-radius:6px;align-items:center;justify-content:center;border:1.5px solid ${r.done ? '#FF5E8A' : '#E7D3DC'};background:${r.done ? '#FF5E8A' : 'transparent'}`)}>
+              {/* 체크 상자 — 여기만 누르면 세부 페이지에 들어가지 않고 바로 달성 처리 */}
+              <Pressable
+                onPress={r.check}
+                disabled={!r.check}
+                hitSlop={10}
+                style={s(`width:19px;height:19px;border-radius:6px;align-items:center;justify-content:center;border:1.5px solid ${r.done ? '#FF5E8A' : '#E7D3DC'};background:${r.done ? '#FF5E8A' : 'transparent'}${r.check ? ';cursor:pointer' : ''}`)}
+              >
                 {r.done && (
                   <Svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
                     <Path d="M5 13 L10 18 L19 7" />
                   </Svg>
                 )}
-              </View>
+              </Pressable>
 
               {/* 내용 — 30자 제한이라 한 줄에 떨어진다 */}
               <Text

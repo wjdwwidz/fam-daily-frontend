@@ -55,7 +55,7 @@ export function buildVm(app) {
     doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName,
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, moveBucketTo,
-    startBucketMedia, cancelBucketLink, openBucketDate, closeBucketDate, setBucketDatePart,
+    startBucketMedia, cancelBucketLink, openBucketDate, closeBucketDate, setBucketDatePart, toggleBucketRow,
     cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
@@ -635,6 +635,8 @@ export function buildVm(app) {
           byName: it?.createdBy?.nickname || it?.createdBy?.name || '',
           doneDate: it?.doneAt ? fmtDate(it.doneAt) : '',
           open: () => openBucket(no),
+          // 빈 칸은 적을 내용이 없어 체크할 수 없다
+          check: it ? () => toggleBucketRow(no) : undefined,
         }
       })
     })(),
