@@ -269,6 +269,8 @@ export function buildVm(app) {
     count: (m.items || []).length,
     title: m.caption || '',
     date: fmtDate(m.createdAt),
+    // 몇 시에 올렸는지 (예: 오후 3:07)
+    time: fmtTime(m.createdAt),
     // 대표(첫 장)가 영상이면 목록에 재생 배지를 띄운다
     isVideo: (m.items || [])[0]?.type === 'video',
     mine: !!myId && m.author?.userId === myId,
