@@ -55,6 +55,32 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
   // 올리기 화면에서 예약만 푼다 (평범한 일상 글로 올리고 싶을 때)
   const cancelBucketLink = () => setState({ bucketLinkNo: null })
 
+  // 목록에서 바로 달성 체크. 세부 페이지에 들어가지 않아도 되게.
+  // 화면을 먼저 바꾸고 서버에 보낸다 — 누르자마자 반응해야 답답하지 않다.
+  const toggleBucketRow = async (no) => {
+    const id = gid()
+    const cur = ref.current
+    const item = (cur.bucket?.items || []).find((i) => i.no === no)
+    if (!id || !item) return // 빈 칸은 내용이 없어 체크할 수 없다
+    const next = !item.done
+    setState((p) => ({
+      bucket: {
+        ...p.bucket,
+        doneCount: (p.bucket?.doneCount || 0) + (next ? 1 : -1),
+        items: (p.bucket?.items || []).map((i) =>
+          i.no === no ? { ...i, done: next, doneAt: next ? new Date().toISOString() : null } : i,
+        ),
+      },
+    }))
+    try {
+      await api.saveBucket(id, no, { text: item.text, done: next })
+      await loadBucket()
+    } catch (e) {
+      await loadBucket() // 실패하면 서버 상태로 되돌린다
+      showToast('바꾸지 못했어요. 다시 시도해주세요')
+    }
+  }
+
   const onBucketDraft = (v) => setState({ bucketDraft: v, bucketError: null })
   const openBucketDate = () => setState({ bucketDatePicking: true })
   const closeBucketDate = () => setState({ bucketDatePicking: false })
@@ -132,6 +158,6 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia,
     saveBucket, clearBucket, moveBucketTo, startBucketMedia, cancelBucketLink,
-    openBucketDate, closeBucketDate, setBucketDatePart,
+    openBucketDate, closeBucketDate, setBucketDatePart, toggleBucketRow,
   }
 }

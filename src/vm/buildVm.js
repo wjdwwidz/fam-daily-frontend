@@ -55,12 +55,12 @@ export function buildVm(app) {
     doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName,
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, moveBucketTo,
-    startBucketMedia, cancelBucketLink, openBucketDate, closeBucketDate, setBucketDatePart,
+    startBucketMedia, cancelBucketLink, openBucketDate, closeBucketDate, setBucketDatePart, toggleBucketRow,
     cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
-    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem,
+    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem, reorderUploadAsset,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
     retryUploadJob, discardUploadJob,
   } = app
@@ -93,18 +93,21 @@ export function buildVm(app) {
   // 수정 중이면 '기존 사진 + 새로 고른 사진' 을 함께 보여준다.
   // 예전엔 새로 고르는 순간 기존 사진이 가려져, ＋ 로 더하려 해도 교체가 됐다.
   const existingItems = editingMedia ? st.editMediaItems || [] : []
-  const uploadPreview = [
-    ...existingItems.map((it, i) => ({
-      uri: it.url,
-      isVideo: it.type === 'video',
-      remove: () => removeUploadItem({ kind: 'existing', index: i }),
-    })),
-    ...pickedAssets.map((a, i) => ({
-      uri: a.uri,
-      isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
-      remove: () => removeUploadItem({ kind: 'new', index: i }),
-    })),
-  ]
+  const uploadExisting = existingItems.map((it, i) => ({
+    key: `e-${it.url}`,
+    uri: it.url,
+    isVideo: it.type === 'video',
+    remove: () => removeUploadItem({ kind: 'existing', index: i }),
+  }))
+  // 새로 고른 것만 끌어서 순서를 바꾼다. 이미 올라간 사진은 자리를 지킨다 —
+  // 서버가 '남긴 기존 사진 + 새 사진' 순서로 붙이기 때문.
+  const uploadPicked = pickedAssets.map((a, i) => ({
+    key: `n-${a.uri}`,
+    uri: a.uri,
+    isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
+    remove: () => removeUploadItem({ kind: 'new', index: i }),
+  }))
+  const uploadPreview = [...uploadExisting, ...uploadPicked]
   const cancelEdit = () => setState({ editPost: null })
 
   const v = variant === 'grid' ? 'grid' : 'cards'
@@ -171,21 +174,31 @@ export function buildVm(app) {
   }
 
   const N = members.length, BOX = 296, C = BOX / 2, AV = 60, RING = 3
-  // 반지름은 사람 수에 따라 정한다. 각도가 달라져 가로로 얼마나 벌어지는지가 바뀌는데,
-  // 고정값을 쓰면 3·6명일 때 말풍선과 프로필이 4px 까지 붙었다.
-  // 프로필이 상자(BOX) 밖으로 나가지 않는 선에서 최대한 밀어낸다.
-  const R = (() => {
-    if (!N) return 124
-    const angs = Array.from({ length: N }, (_, i) => -Math.PI / 2 + (i * 2 * Math.PI) / N)
-    // 가로로 가장 멀리 나가는 프로필 기준 — 이게 상자 폭을 정한다
-    const maxCos = Math.max(0.35, ...angs.map((a) => Math.abs(Math.cos(a))))
-    return Math.min(140, Math.floor((C - AV / 2) / maxCos))
-  })()
+  // 반지름은 사람 수에 따라 정한다. 프로필(+이름)이 상자(BOX) 밖으로 나가지 않는 선에서
+  // 최대한 밀어낸다. 예전엔 가로만 봐서 짝수 명이면 맨 아래 사람의 이름이 상자 밖
+  // 날짜 줄까지 내려갔다 (2명이면 48px).
+  // 위·옆은 커진 프로필(1.18배), 아래는 프로필 밑에 붙는 이름까지 들어가야 한다.
+  const EXT_TOP = (AV / 2) * 1.18, EXT_SIDE = EXT_TOP, EXT_BOTTOM = AV / 2 + 12 + 14
+  const fitRing = (offset) => {
+    const angs = Array.from({ length: N }, (_, i) => -Math.PI / 2 + offset + (i * 2 * Math.PI) / N)
+    let r = 140
+    for (const a of angs) {
+      const cos = Math.abs(Math.cos(a)), sin = Math.sin(a)
+      if (cos > 1e-6) r = Math.min(r, (C - EXT_SIDE) / cos)
+      if (sin < -1e-6) r = Math.min(r, (C - EXT_TOP) / -sin)
+      if (sin > 1e-6) r = Math.min(r, (C - EXT_BOTTOM) / sin)
+    }
+    return Math.floor(r)
+  }
+  // 맨 위에서 시작하는 배치와 반 칸 돌린 배치 중 더 넓게 펼 수 있는 쪽을 쓴다.
+  // 2명이면 위아래 대신 좌우, 4명이면 +자 대신 ×자가 된다 (말풍선을 위아래로 누르지 않는다).
+  const ringOffset = N && fitRing(Math.PI / N) > fitRing(0) ? Math.PI / N : 0
+  const R = N ? fitRing(ringOffset) : 124
   // 프로필을 누르면 그 사람의 한마디가 고정된다. 한 번 더 누르면 풀려 다시 자동으로 돈다.
   const pinned = st.moodPin != null && N ? ((st.moodPin % N) + N) % N : null
   const active = pinned ?? (((st.activeMood ?? 0) % N) + N) % N
   const ringMembers = members.map((m, i) => {
-    const ang = -Math.PI / 2 + (i * 2 * Math.PI) / N
+    const ang = -Math.PI / 2 + ringOffset + (i * 2 * Math.PI) / N
     const cx = C + R * Math.cos(ang), cy = C + R * Math.sin(ang)
     const isA = i === active
     return {
@@ -295,7 +308,7 @@ export function buildVm(app) {
     return obj
   }
 
-  // 홈 '최근 활동' — 사전 추가·일상 올림·질문·답변 (서버가 최신순으로 섞어 준다).
+  // 홈 '최근 활동' — 사전 추가·일상 올림·질문·답변·댓글·버킷·한마디 (서버가 최신순으로 섞어 준다).
   // 문구: "{이름}님이 {prefix}{highlight}{suffix}"
   const clip = (t, n = 14) => {
     const str = String(t || '').trim()
@@ -339,6 +352,11 @@ export function buildVm(app) {
         return { ...base, by: null, highlight: `버킷리스트 ${no}번`, suffix: '을 달성했어요!', open: toItem }
       }
       return { ...base, prefix: '버킷리스트에 ', highlight: `"${clip(a.text)}"`, suffix: ' 추가', open: toItem }
+    }
+    // 오늘의 한마디 — 이모지가 있으면 앞에 붙인다. 누르면 가족 기록(한마디 모음)으로
+    if (a.type === 'mood') {
+      const emoji = a.emoji ? `${a.emoji} ` : ''
+      return { ...base, prefix: '한마디 ', highlight: `"${emoji}${clip(a.text)}"`, suffix: ' 남김', open: () => go('moodhistory') }
     }
     // 질문 하나만 여는 화면은 없어서 문답 탭(오늘의 질문 + 지난 질문)으로
     if (a.type === 'question') return { ...base, prefix: '질문 ', highlight: `"${clip(a.text)}"`, suffix: ' 등록', open: toQna }
@@ -617,6 +635,8 @@ export function buildVm(app) {
           byName: it?.createdBy?.nickname || it?.createdBy?.name || '',
           doneDate: it?.doneAt ? fmtDate(it.doneAt) : '',
           open: () => openBucket(no),
+          // 빈 칸은 적을 내용이 없어 체크할 수 없다
+          check: it ? () => toggleBucketRow(no) : undefined,
         }
       })
     })(),
@@ -876,6 +896,10 @@ export function buildVm(app) {
     // 새 일상 올리기 (사진·영상 여러 개가 글 하나)
     uploadItems: uploadPreview,
     uploadCount: uploadPreview.length,
+    // 순서 바꾸기는 새로 고른 사진에만 — 기존 사진은 그대로 앞에 남는다
+    uploadFixedItems: uploadExisting,
+    uploadDraggableItems: uploadPicked,
+    reorderUpload: (from, to) => reorderUploadAsset(from, to),
     isEditUpload: editingMedia,
     uploadTitle: editingMedia ? '일상 수정하기' : '새 일상 올리기',
     // 여러 개를 한 개씩 올리므로 진행 상황을 버튼에 같이 보여준다
