@@ -60,7 +60,7 @@ export function buildVm(app) {
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
-    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem,
+    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem, reorderUploadAsset,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
     retryUploadJob, discardUploadJob,
   } = app
@@ -93,18 +93,21 @@ export function buildVm(app) {
   // 수정 중이면 '기존 사진 + 새로 고른 사진' 을 함께 보여준다.
   // 예전엔 새로 고르는 순간 기존 사진이 가려져, ＋ 로 더하려 해도 교체가 됐다.
   const existingItems = editingMedia ? st.editMediaItems || [] : []
-  const uploadPreview = [
-    ...existingItems.map((it, i) => ({
-      uri: it.url,
-      isVideo: it.type === 'video',
-      remove: () => removeUploadItem({ kind: 'existing', index: i }),
-    })),
-    ...pickedAssets.map((a, i) => ({
-      uri: a.uri,
-      isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
-      remove: () => removeUploadItem({ kind: 'new', index: i }),
-    })),
-  ]
+  const uploadExisting = existingItems.map((it, i) => ({
+    key: `e-${it.url}`,
+    uri: it.url,
+    isVideo: it.type === 'video',
+    remove: () => removeUploadItem({ kind: 'existing', index: i }),
+  }))
+  // 새로 고른 것만 끌어서 순서를 바꾼다. 이미 올라간 사진은 자리를 지킨다 —
+  // 서버가 '남긴 기존 사진 + 새 사진' 순서로 붙이기 때문.
+  const uploadPicked = pickedAssets.map((a, i) => ({
+    key: `n-${a.uri}`,
+    uri: a.uri,
+    isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
+    remove: () => removeUploadItem({ kind: 'new', index: i }),
+  }))
+  const uploadPreview = [...uploadExisting, ...uploadPicked]
   const cancelEdit = () => setState({ editPost: null })
 
   const v = variant === 'grid' ? 'grid' : 'cards'
@@ -881,6 +884,10 @@ export function buildVm(app) {
     // 새 일상 올리기 (사진·영상 여러 개가 글 하나)
     uploadItems: uploadPreview,
     uploadCount: uploadPreview.length,
+    // 순서 바꾸기는 새로 고른 사진에만 — 기존 사진은 그대로 앞에 남는다
+    uploadFixedItems: uploadExisting,
+    uploadDraggableItems: uploadPicked,
+    reorderUpload: (from, to) => reorderUploadAsset(from, to),
     isEditUpload: editingMedia,
     uploadTitle: editingMedia ? '일상 수정하기' : '새 일상 올리기',
     // 여러 개를 한 개씩 올리므로 진행 상황을 버튼에 같이 보여준다

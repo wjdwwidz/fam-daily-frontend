@@ -2,6 +2,8 @@ import { View, Text, Pressable, TextInput, Image, ScrollView } from 'react-nativ
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
+import DragReorder from '../components/DragReorder.jsx'
+
 import { useVm } from '../vm/useVm.js'
 
 // 첨부한 사진을 빼는 버튼. 사진 위에 얹히므로 어두운 반투명 바탕에 흰 X 를 그린다.
@@ -19,6 +21,25 @@ function RemoveButton({ onPress, top, right, size }) {
         <Path d="M6 6 L18 18 M18 6 L6 18" />
       </Svg>
     </Pressable>
+  )
+}
+
+const THUMB = 140
+
+// 썸네일 한 칸 — 고정된 사진과 끌 수 있는 사진이 같은 모양이어야 해서 함수로 뺀다
+function Thumb({ it, dragging }) {
+  return (
+    <>
+      <View style={{ width: '100%', height: '100%', borderRadius: 18, overflow: 'hidden', backgroundColor: '#FCEEF4', ...(dragging ? { borderWidth: 2, borderColor: '#FF5E8A' } : null) }}>
+        <Image source={{ uri: it.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        {it.isVideo && (
+          <View style={s('position:absolute;left:6px;top:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center')}>
+            <Svg viewBox="0 0 24 24" width={11} height={11} fill="#fff" stroke="none" style={{ marginLeft: 1 }}><Path d="M8 5 L19 12 L8 19 Z" /></Svg>
+          </View>
+        )}
+      </View>
+      <RemoveButton onPress={it.remove} top={6} right={6} size={24} />
+    </>
   )
 }
 
@@ -53,21 +74,26 @@ export default function Upload() {
                 <Text style={s('font-size:24px;color:#9DB2BD;line-height:1')}>＋</Text>
                 <Text style={s('font-size:11.5px;color:#9DB2BD;margin-top:sm;font-weight:700')}>사진</Text>
               </Pressable>
-              {vm.uploadItems.map((it, i) => (
-                <View key={i} style={{ width: 140, height: 140 }}>
-                  <View style={{ width: '100%', height: '100%', borderRadius: 18, overflow: 'hidden', backgroundColor: '#FCEEF4' }}>
-                    <Image source={{ uri: it.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                    {it.isVideo && (
-                      <View style={s('position:absolute;right:6px;bottom:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center')}>
-                        <Svg viewBox="0 0 24 24" width={11} height={11} fill="#fff" stroke="none" style={{ marginLeft: 1 }}><Path d="M8 5 L19 12 L8 19 Z" /></Svg>
-                      </View>
-                    )}
-                  </View>
-                  <RemoveButton onPress={it.remove} top={6} right={6} size={24} />
+              {/* 이미 올라간 사진 — 자리를 지킨다 (서버가 이 뒤에 새 사진을 붙인다) */}
+              {vm.uploadFixedItems.map((it) => (
+                <View key={it.key} style={{ width: THUMB, height: THUMB }}>
+                  <Thumb it={it} />
                 </View>
               ))}
+              {/* 새로 고른 사진 — 끌어서 순서를 바꾼다 */}
+              <DragReorder
+                items={vm.uploadDraggableItems}
+                itemWidth={THUMB}
+                gap={10}
+                onReorder={vm.reorderUpload}
+                renderItem={(it, i, dragging) => (
+                  <View style={{ height: THUMB }}>
+                    <Thumb it={it} dragging={dragging} />
+                  </View>
+                )}
+              />
             </ScrollView>
-            <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md')}>{vm.uploadCount}개 선택됨 · 최대 10개</Text>
+            <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md')}>{vm.uploadCount}개 선택됨 · 최대 10개{vm.uploadDraggableItems.length > 1 ? ' · 끌어서 순서 변경' : ''}</Text>
           </View>
         )}
         {/* 버킷리스트 칸에 붙이려고 쓰는 중이면 알려준다 */}
