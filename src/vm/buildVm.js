@@ -295,7 +295,7 @@ export function buildVm(app) {
     return obj
   }
 
-  // 홈 '최근 활동' — 사전 추가·일상 올림·질문·답변 (서버가 최신순으로 섞어 준다).
+  // 홈 '최근 활동' — 사전 추가·일상 올림·질문·답변·댓글·버킷·한마디 (서버가 최신순으로 섞어 준다).
   // 문구: "{이름}님이 {prefix}{highlight}{suffix}"
   const clip = (t, n = 14) => {
     const str = String(t || '').trim()
@@ -339,6 +339,11 @@ export function buildVm(app) {
         return { ...base, by: null, highlight: `버킷리스트 ${no}번`, suffix: '을 달성했어요!', open: toItem }
       }
       return { ...base, prefix: '버킷리스트에 ', highlight: `"${clip(a.text)}"`, suffix: ' 추가', open: toItem }
+    }
+    // 오늘의 한마디 — 이모지가 있으면 앞에 붙인다. 누르면 가족 기록(한마디 모음)으로
+    if (a.type === 'mood') {
+      const emoji = a.emoji ? `${a.emoji} ` : ''
+      return { ...base, prefix: '한마디 ', highlight: `"${emoji}${clip(a.text)}"`, suffix: ' 남김', open: () => go('moodhistory') }
     }
     // 질문 하나만 여는 화면은 없어서 문답 탭(오늘의 질문 + 지난 질문)으로
     if (a.type === 'question') return { ...base, prefix: '질문 ', highlight: `"${clip(a.text)}"`, suffix: ' 등록', open: toQna }
