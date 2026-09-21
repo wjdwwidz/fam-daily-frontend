@@ -123,7 +123,9 @@ export function createGroupActions({ ref, setState }, afterAuth) {
   }
 
   // 오늘의 한마디(무드) 저장 → 멤버 목록 갱신
-  const sendMood = async () => {
+  // runOnce 로 막지 않으면 입력창 Enter 와 전송 버튼이 둘 다 들어와
+  // 같은 한마디가 두 번 저장되고 기록에도 두 줄이 남는다.
+  const sendMood = () => runOnce('sendMood', async () => {
     const cur = ref.current
     const gid = cur.currentGroup?.id
     const text = (cur.myMood ?? '').trim()
@@ -138,7 +140,7 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     } catch (e) {
       setState({ moodSending: false, moodError: e.message })
     }
-  }
+  })
 
   // 초대 시트 열기 = 초대 코드 생성 (백엔드)
   const openInvite = async () => {
