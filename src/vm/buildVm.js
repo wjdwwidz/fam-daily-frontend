@@ -11,6 +11,8 @@ import { MAX_WORD_PHOTOS } from '../state/wordActions.js'
 // 일상(갤러리) 폴더 탭 색. 멤버 아바타 색을 쓰면 탭마다 색이 튀어 무지개가 된다.
 // 브랜드 핑크(#FF5E8A)와 같은 밝기에서 마젠타 쪽으로 살짝 밀어 또렷하게.
 const FOLDER_TAB_COLOR = '#FF5A97'
+// 버킷리스트 '이룬 날' 로 고를 수 있는 가장 이른 해
+const BUCKET_FIRST_YEAR = 1950
 const fmtDate = (iso) => {
   const str = String(iso || '')
   // 시각이 없는 날짜만 있는 값('2026-09-20')은 그대로 읽는다 — Date 로 넘기면 UTC 자정으로
@@ -55,7 +57,7 @@ export function buildVm(app) {
     doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName,
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, moveBucketTo,
-    startBucketMedia, cancelBucketLink, openBucketDate, closeBucketDate, setBucketDatePart, toggleBucketRow,
+    startBucketMedia, cancelBucketLink, setBucketDatePart, toggleBucketRow,
     cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
@@ -664,25 +666,27 @@ export function buildVm(app) {
     bucketLinkNo: st.bucketLinkNo || null,
 
     // 이룬 날 — 체크한 순간이 아니라 실제로 이룬 날을 고른다
-    openBucketDate, closeBucketDate,
-    bucketDatePicking: !!st.bucketDatePicking,
-    bucketDoneAtLabel: (() => {
-      const m = String(st.bucketDoneAt || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
-      return m ? `${m[1]}년 ${Number(m[2])}월 ${Number(m[3])}일` : ''
-    })(),
+    // 년·월·일 휠. 굴려서 멈춘 값이 들어간다
+    setBucketDatePart,
     bucketDateParts: (() => {
       const m = String(st.bucketDoneAt || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
-      const thisYear = new Date().getFullYear()
+      const now = new Date()
+      const thisYear = now.getFullYear()
       const y = m ? Number(m[1]) : thisYear
       const mo = m ? Number(m[2]) : 1
       const d = m ? Number(m[3]) : 1
-      const mk = (part, list, sel) =>
-        list.map((n) => ({ n, sel: n === sel, pick: () => setBucketDatePart(part, n) }))
+      // 앞으로 올 날은 이룬 날이 될 수 없어 올해·이번 달은 오늘까지만
+      const lastMonth = y === thisYear ? now.getMonth() + 1 : 12
+      const lastDay = y === thisYear && mo === now.getMonth() + 1
+        ? now.getDate()
+        : new Date(y, mo, 0).getDate() // 말일은 달마다 다르다
+      const range = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => from + i)
       return {
-        years: mk('y', [thisYear - 2, thisYear - 1, thisYear], y),
-        months: mk('m', Array.from({ length: 12 }, (_, i) => i + 1), mo),
-        // 말일은 달마다 다르다
-        days: mk('d', Array.from({ length: new Date(y, mo, 0).getDate() }, (_, i) => i + 1), d),
+        y, m: mo, d,
+        // 오래전에 이룬 일도 적을 수 있게 넉넉히 1950년부터
+        years: range(BUCKET_FIRST_YEAR, thisYear),
+        months: range(1, lastMonth),
+        days: range(1, lastDay),
       }
     })(),
     // 우선순위 조정 — 지금 열린 장 안에서 옮길 번호를 고른다

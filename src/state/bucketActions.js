@@ -32,7 +32,6 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
       bucketDone: !!found?.done,
       // 이룬 날 — 없으면 오늘로 채워둔다 (체크하는 순간 바로 쓸 수 있게)
       bucketDoneAt: found?.doneAt ? String(found.doneAt).slice(0, 10) : todayYmd(),
-      bucketDatePicking: false,
       bucketMediaId: found?.mediaId ?? null,
       bucketError: null,
       bucketPicking: false,
@@ -82,9 +81,8 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
   }
 
   const onBucketDraft = (v) => setState({ bucketDraft: v, bucketError: null })
-  const openBucketDate = () => setState({ bucketDatePicking: true })
-  const closeBucketDate = () => setState({ bucketDatePicking: false })
-  // 년·월·일을 따로 고른다. 말일이 넘어가면(2월 31일 등) 그 달 마지막 날로 당긴다.
+  // 년·월·일을 따로 고른다. 말일이 넘어가면(2월 31일 등) 그 달 마지막 날로 당기고,
+  // 오늘보다 뒤로 가면(올해로 바꿨더니 아직 안 온 달 등) 오늘로 당긴다.
   const setBucketDatePart = (part, value) => {
     const cur = ref.current
     const [y, m, d] = (cur.bucketDoneAt || todayYmd()).split('-').map(Number)
@@ -92,7 +90,9 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
     const last = new Date(next.y, next.m, 0).getDate()
     if (next.d > last) next.d = last
     const p2 = (n) => String(n).padStart(2, '0')
-    setState({ bucketDoneAt: `${next.y}-${p2(next.m)}-${p2(next.d)}` })
+    const ymd = `${next.y}-${p2(next.m)}-${p2(next.d)}`
+    const today = todayYmd()
+    setState({ bucketDoneAt: ymd > today ? today : ymd })
   }
   const toggleBucketDone = () => setState((p) => ({ bucketDone: !p.bucketDone }))
   const openBucketPicker = () => setState({ bucketPicking: true })
@@ -158,6 +158,6 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia,
     saveBucket, clearBucket, moveBucketTo, startBucketMedia, cancelBucketLink,
-    openBucketDate, closeBucketDate, setBucketDatePart, toggleBucketRow,
+    setBucketDatePart, toggleBucketRow,
   }
 }
