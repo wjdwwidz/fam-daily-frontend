@@ -174,21 +174,31 @@ export function buildVm(app) {
   }
 
   const N = members.length, BOX = 296, C = BOX / 2, AV = 60, RING = 3
-  // 반지름은 사람 수에 따라 정한다. 각도가 달라져 가로로 얼마나 벌어지는지가 바뀌는데,
-  // 고정값을 쓰면 3·6명일 때 말풍선과 프로필이 4px 까지 붙었다.
-  // 프로필이 상자(BOX) 밖으로 나가지 않는 선에서 최대한 밀어낸다.
-  const R = (() => {
-    if (!N) return 124
-    const angs = Array.from({ length: N }, (_, i) => -Math.PI / 2 + (i * 2 * Math.PI) / N)
-    // 가로로 가장 멀리 나가는 프로필 기준 — 이게 상자 폭을 정한다
-    const maxCos = Math.max(0.35, ...angs.map((a) => Math.abs(Math.cos(a))))
-    return Math.min(140, Math.floor((C - AV / 2) / maxCos))
-  })()
+  // 반지름은 사람 수에 따라 정한다. 프로필(+이름)이 상자(BOX) 밖으로 나가지 않는 선에서
+  // 최대한 밀어낸다. 예전엔 가로만 봐서 짝수 명이면 맨 아래 사람의 이름이 상자 밖
+  // 날짜 줄까지 내려갔다 (2명이면 48px).
+  // 위·옆은 커진 프로필(1.18배), 아래는 프로필 밑에 붙는 이름까지 들어가야 한다.
+  const EXT_TOP = (AV / 2) * 1.18, EXT_SIDE = EXT_TOP, EXT_BOTTOM = AV / 2 + 12 + 14
+  const fitRing = (offset) => {
+    const angs = Array.from({ length: N }, (_, i) => -Math.PI / 2 + offset + (i * 2 * Math.PI) / N)
+    let r = 140
+    for (const a of angs) {
+      const cos = Math.abs(Math.cos(a)), sin = Math.sin(a)
+      if (cos > 1e-6) r = Math.min(r, (C - EXT_SIDE) / cos)
+      if (sin < -1e-6) r = Math.min(r, (C - EXT_TOP) / -sin)
+      if (sin > 1e-6) r = Math.min(r, (C - EXT_BOTTOM) / sin)
+    }
+    return Math.floor(r)
+  }
+  // 맨 위에서 시작하는 배치와 반 칸 돌린 배치 중 더 넓게 펼 수 있는 쪽을 쓴다.
+  // 2명이면 위아래 대신 좌우, 4명이면 +자 대신 ×자가 된다 (말풍선을 위아래로 누르지 않는다).
+  const ringOffset = N && fitRing(Math.PI / N) > fitRing(0) ? Math.PI / N : 0
+  const R = N ? fitRing(ringOffset) : 124
   // 프로필을 누르면 그 사람의 한마디가 고정된다. 한 번 더 누르면 풀려 다시 자동으로 돈다.
   const pinned = st.moodPin != null && N ? ((st.moodPin % N) + N) % N : null
   const active = pinned ?? (((st.activeMood ?? 0) % N) + N) % N
   const ringMembers = members.map((m, i) => {
-    const ang = -Math.PI / 2 + (i * 2 * Math.PI) / N
+    const ang = -Math.PI / 2 + ringOffset + (i * 2 * Math.PI) / N
     const cx = C + R * Math.cos(ang), cy = C + R * Math.sin(ang)
     const isA = i === active
     return {
