@@ -56,7 +56,7 @@ export function buildVm(app) {
     logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto,
     doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName,
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
-    openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, moveBucketTo,
+    openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, reorderBucket,
     startBucketMedia, cancelBucketLink, setBucketDatePart, toggleBucketRow,
     cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
@@ -624,6 +624,12 @@ export function buildVm(app) {
       ).length
       return Math.round((done / size) * 100)
     })(),
+    // 목록에서 끌어다 놓기 — 이 장 안의 몇 번째 줄에서 몇 번째 줄로 (index → 칸 번호)
+    reorderBucketRows: (fromIdx, toIdx) => {
+      const size = st.bucket?.size || 100
+      const start = (Math.min(st.bucketPage || 1, st.bucket?.pages || 1) - 1) * size
+      reorderBucket(start + fromIdx + 1, start + toIdx + 1)
+    },
     bucketRows: (() => {
       const size = st.bucket?.size || 100
       const page = Math.min(st.bucketPage || 1, st.bucket?.pages || 1)
@@ -640,6 +646,7 @@ export function buildVm(app) {
           coverUrl: it?.mediaCoverUrl || null,
           byName: it?.createdBy?.nickname || it?.createdBy?.name || '',
           doneDate: it?.doneAt ? fmtDate(it.doneAt) : '',
+          key: no,
           open: () => openBucket(no),
           // 빈 칸은 적을 내용이 없어 체크할 수 없다
           check: it ? () => toggleBucketRow(no) : undefined,
@@ -692,16 +699,6 @@ export function buildVm(app) {
         months: range(1, lastMonth),
         days: range(1, lastDay),
       }
-    })(),
-    // 우선순위 조정 — 지금 열린 장 안에서 옮길 번호를 고른다
-    bucketMoveOptions: (() => {
-      const size = st.bucket?.size || 10
-      const page = Math.min(st.bucketPage || 1, st.bucket?.pages || 1)
-      const start = (page - 1) * size
-      return Array.from({ length: size }, (_, k) => {
-        const no = start + k + 1
-        return { no, current: no === st.bucketNo, pick: () => moveBucketTo(no) }
-      })
     })(),
     bucketByName: (() => {
       const it = (st.bucket?.items || []).find((i) => i.no === st.bucketNo)

@@ -125,19 +125,26 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
     }
   }
 
-  // 우선순위 조정 — 고른 번호로 옮기고 목록을 새로 받는다
-  const moveBucketTo = async (to) => {
-    const cur = ref.current
-    if (!to || to === cur.bucketNo) return
-    setState({ bucketSaving: true, bucketError: null })
-    try {
-      await api.moveBucket(gid(), cur.bucketNo, to)
-      await loadBucket()
-      setState({ bucketSaving: false, bucketNo: to })
-      showToast(`${to}번으로 옮겼어요`)
-    } catch (e) {
-      setState({ bucketSaving: false, bucketError: e.message })
+  // 우선순위 조정 — 목록에서 끌어다 놓은 번호로 옮긴다. 사이 칸들은 한 칸씩 밀린다.
+  // 서버와 같은 규칙으로 화면을 먼저 바꿔두고(놓자마자 제자리에 있게), 끝나면 새로 받는다.
+  const reorderBucket = async (from, to) => {
+    const id = gid()
+    if (!id || !from || !to || from === to) return
+    const shift = (no) => {
+      if (no === from) return to
+      if (from < to && no > from && no <= to) return no - 1
+      if (from > to && no >= to && no < from) return no + 1
+      return no
     }
+    setState((p) => ({
+      bucket: { ...p.bucket, items: (p.bucket?.items || []).map((i) => ({ ...i, no: shift(i.no) })) },
+    }))
+    try {
+      await api.moveBucket(id, from, to)
+    } catch {
+      showToast('옮기지 못했어요. 다시 시도해주세요')
+    }
+    await loadBucket() // 성공이면 확인, 실패면 서버 상태로 되돌린다
   }
 
   const clearBucket = async () => {
@@ -157,7 +164,7 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
   return {
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia,
-    saveBucket, clearBucket, moveBucketTo, startBucketMedia, cancelBucketLink,
+    saveBucket, clearBucket, reorderBucket, startBucketMedia, cancelBucketLink,
     setBucketDatePart, toggleBucketRow,
   }
 }

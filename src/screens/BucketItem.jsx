@@ -105,26 +105,6 @@ export default function BucketItem() {
         </View>
       )}
 
-      {/* 우선순위 조정 — 고른 번호로 옮기고 사이 칸들은 한 칸씩 밀린다 */}
-      {!!vm.bucketByName && (
-        <>
-          <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:3xl hair sm')}>순서 바꾸기</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s('gap:sm')}>
-            {vm.bucketMoveOptions.map((o) => (
-              <Pressable
-                key={o.no}
-                onPress={o.pick}
-                disabled={o.current || vm.bucketSaving}
-                style={s(`min-width:38px;height:38px;padding:0 md;border-radius:12px;align-items:center;justify-content:center;background:${o.current ? '#FF5E8A' : '#fff'};border:1px solid ${o.current ? '#FF5E8A' : '#FFE1EC'}`)}
-              >
-                <Text style={s(`font-size:12.5px;font-weight:700;font-variant:tabular-nums;color:${o.current ? '#fff' : '#6A7E88'}`)}>{o.no}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-          <Text style={s('font-size:10.5px;color:#9DB2BD;margin:sm hair 0')}>번호를 누르면 그 자리로 옮겨가고, 사이 칸들은 한 칸씩 밀려요</Text>
-        </>
-      )}
-
       {vm.bucketError && <Text style={s('font-size:12px;color:#E5484D;margin-top:2xl;text-align:center')}>{vm.bucketError}</Text>}
 
       <Pressable onPress={vm.saveBucket} disabled={vm.bucketSaving} style={s(`margin:ctaTop 0 md;height:54px;border-radius:17px;background:#FF5E8A;align-items:center;justify-content:center;opacity:${vm.bucketSaving ? 0.7 : 1}`)}>

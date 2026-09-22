@@ -3,6 +3,7 @@ import { View, Text, Pressable, Image, ScrollView } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
+import DragList from '../components/DragList.jsx'
 import { useVm } from '../vm/useVm.js'
 
 // 가족 버킷리스트 — 1~100 칸을 한 장에 늘어놓는다 (종이에 적어둔 느낌).
@@ -33,11 +34,15 @@ export default function Bucket() {
       {/* 100칸 */}
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={s('background:#fff;border:1px solid #FFE1EC;border-radius:20px;padding:sm 3xl md')}>
-          {vm.bucketRows.map((r, i) => (
+          {/* 오른쪽 손잡이(≡)를 잡고 위아래로 끌어 순서를 바꾼다. 빈 칸은 옮길 게 없어 손잡이가 없다 */}
+          <DragList
+            items={vm.bucketRows}
+            canDrag={(r) => r.filled}
+            onReorder={vm.reorderBucketRows}
+            renderItem={(r, i, { dragging, handle }) => (
             <Pressable
-              key={r.no}
               onPress={r.open}
-              style={s(`flex-direction:row;align-items:center;gap:lg;padding:2xl 0${i < vm.bucketRows.length - 1 ? ';border-bottom:1px solid #FBEDF3' : ''};cursor:pointer`)}
+              style={s(`flex-direction:row;align-items:center;gap:lg;padding:2xl 0${i < vm.bucketRows.length - 1 ? ';border-bottom:1px solid #FBEDF3' : ''};cursor:pointer${dragging ? ';background:#FFF6FA;border-radius:12px;box-shadow:0 6px 16px rgba(255,94,138,0.18)' : ''}`)}
             >
               {/* 번호 — 자릿수가 달라도 줄이 밀리지 않게 폭을 고정 */}
               <Text style={s(`width:26px;text-align:right;font-size:12.5px;font-variant:tabular-nums;color:${r.done ? '#FF5E8A' : '#C4CFD6'};font-weight:${r.filled ? 700 : 500}`)}>
@@ -75,8 +80,20 @@ export default function Bucket() {
               {r.coverUrl && (
                 <Image source={{ uri: r.coverUrl }} style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: '#F3DCE6' }} resizeMode="cover" />
               )}
+
+              {/* 손잡이 — 빈 칸도 같은 자리를 비워둬 줄 끝이 맞는다 */}
+              <View {...(handle || {})} hitSlop={8} style={[s('width:20px;height:24px;align-items:center;justify-content:center'), handle?.style]}>
+                {handle && (
+                  <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#C4CFD6" strokeWidth={2.2} strokeLinecap="round">
+                    <Path d="M5 8 H19" />
+                    <Path d="M5 12 H19" />
+                    <Path d="M5 16 H19" />
+                  </Svg>
+                )}
+              </View>
             </Pressable>
-          ))}
+            )}
+          />
         </View>
 
         {/* 페이지 넘기기 — 한 장(100칸)을 다 채우면 다음 장이 열린다 */}
