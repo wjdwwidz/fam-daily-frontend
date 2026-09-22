@@ -73,7 +73,12 @@ export async function request(path, { method = 'GET', body, auth = true } = {}) 
       body: body ? JSON.stringify(body) : undefined,
     })
   } catch (e) {
-    throw new Error(`서버에 연결할 수 없어요 (${API_BASE}). 백엔드가 켜져 있고 같은 와이파이인지 확인하세요.`)
+    // 개발 중엔 어디에 붙으려 했는지가 도움이 되지만, 가족에게는 무슨 말인지 모를 안내다
+    throw new Error(
+      __DEV__
+        ? `서버에 연결할 수 없어요 (${API_BASE}). 백엔드가 켜져 있고 같은 와이파이인지 확인하세요.`
+        : '인터넷 연결을 확인해주세요.',
+    )
   }
   const text = await res.text()
   let data = null
@@ -83,8 +88,12 @@ export async function request(path, { method = 'GET', body, auth = true } = {}) 
     data = text
   }
   if (!res.ok) {
-    const m = (data && (data.message || data.error)) || `요청 실패 (${res.status})`
-    const err = new Error(Array.isArray(m) ? m.join(', ') : m)
+    let m = (data && (data.message || data.error)) || `요청 실패 (${res.status})`
+    if (Array.isArray(m)) m = m.join(', ')
+    // 서버가 우리말로 준 문구는 그대로 보여준다. 프레임워크가 기본으로 붙이는 영어 문구만 바꾼다.
+    if (res.status === 401 && /^unauthorized$/i.test(m)) m = '로그인이 만료됐어요. 다시 로그인해주세요.'
+    else if (res.status >= 500 && /^internal server error$/i.test(m)) m = '잠시 문제가 생겼어요. 다시 시도해주세요.'
+    const err = new Error(m)
     // 호출하는 쪽이 "로그인 만료(401)"와 "일시적인 오류"를 구분할 수 있게 상태 코드를 붙인다
     err.status = res.status
     throw err
