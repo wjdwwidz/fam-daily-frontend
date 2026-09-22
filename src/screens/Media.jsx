@@ -92,7 +92,7 @@ export default function Media() {
         <Avatar photoUrl={m.by.photoUrl} ini={m.by.ini} size={38} />
         <View style={s('flex:1')}>
           <Text style={s('font-size:11.7px;font-weight:700;color:#17303B')}>{m.by.name}님이 올림</Text>
-          <Text style={s('font-size:11px;color:#9DB2BD')}>{m.date}</Text>
+          <Text style={s('font-size:11px;color:#9DB2BD')}>{`${m.date} ${m.time}`.trim()}</Text>
         </View>
       </View>
 

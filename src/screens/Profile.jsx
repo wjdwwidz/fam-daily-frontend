@@ -47,6 +47,9 @@ export default function Profile() {
       <View style={s('padding:2xl screenX 0')}>
         <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>이름</Text>
         <TextInput value={vm.profileName} onChangeText={vm.onProfileName} placeholder="이름" placeholderTextColor="#9DB2BD" style={s('width:100%;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-weight:600;font-family:inherit;color:#17303B')} />
+        {!!vm.profileKakaoName && (
+          <Text style={s('font-size:10.5px;color:#9DB2BD;margin:sm hair 0')}>기본 이름 : {vm.profileKakaoName}</Text>
+        )}
 
         <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:fieldGap 0 labelGap')}>가족 내 호칭</Text>
         <TextInput value={vm.profileNickname} onChangeText={vm.onProfileNickname} placeholder="예: 엄마, 아빠" placeholderTextColor="#9DB2BD" style={s('width:100%;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-weight:600;font-family:inherit;color:#17303B')} />

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { Animated, PanResponder, View } from 'react-native'
+import { Animated, PanResponder } from 'react-native'
 
 // 가로로 늘어선 항목을 끌어서 순서를 바꾼다.
 //
