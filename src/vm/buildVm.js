@@ -6,12 +6,11 @@ import * as Clipboard from 'expo-clipboard'
 import { Platform, Share } from 'react-native'
 import { MAX_WORD_PHOTOS } from '../state/wordActions.js'
 import { clipText } from '../lib/text.js'
+import { dateWheel, fmtYmdRange } from '../lib/date.js'
 
 // 일상(갤러리) 폴더 탭 색. 멤버 아바타 색을 쓰면 탭마다 색이 튀어 무지개가 된다.
 // 브랜드 핑크(#FF5E8A)와 같은 밝기에서 마젠타 쪽으로 살짝 밀어 또렷하게.
 const FOLDER_TAB_COLOR = '#FF5A97'
-// 버킷리스트 '이룬 날' 로 고를 수 있는 가장 이른 해
-const BUCKET_FIRST_YEAR = 1950
 const fmtDate = (iso) => {
   const str = String(iso || '')
   // 시각이 없는 날짜만 있는 값('2026-09-20')은 그대로 읽는다 — Date 로 넘기면 UTC 자정으로
@@ -62,6 +61,7 @@ export function buildVm(app) {
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem, reorderUploadAsset,
+    addMediaDate, removeMediaDate, toggleMediaRange, setMediaDatePart,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
     retryUploadJob, discardUploadJob,
   } = app
@@ -268,6 +268,8 @@ export function buildVm(app) {
     coverUrl: m.coverUrl || null,
     count: (m.items || []).length,
     title: m.caption || '',
+    // 언제의 일인지 ('2026년 9월 20일 ~ 22일'). 고르지 않았으면 빈 문자열 — 줄을 그리지 않는다
+    takenLabel: fmtYmdRange(m.takenFrom, m.takenTo),
     date: fmtDate(m.createdAt),
     // 몇 시에 올렸는지 (예: 오후 3:07)
     time: fmtTime(m.createdAt),
@@ -646,27 +648,8 @@ export function buildVm(app) {
     // 이룬 날 — 체크한 순간이 아니라 실제로 이룬 날을 고른다
     // 년·월·일 휠. 굴려서 멈춘 값이 들어간다
     setBucketDatePart,
-    bucketDateParts: (() => {
-      const m = String(st.bucketDoneAt || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
-      const now = new Date()
-      const thisYear = now.getFullYear()
-      const y = m ? Number(m[1]) : thisYear
-      const mo = m ? Number(m[2]) : 1
-      const d = m ? Number(m[3]) : 1
-      // 앞으로 올 날은 이룬 날이 될 수 없어 올해·이번 달은 오늘까지만
-      const lastMonth = y === thisYear ? now.getMonth() + 1 : 12
-      const lastDay = y === thisYear && mo === now.getMonth() + 1
-        ? now.getDate()
-        : new Date(y, mo, 0).getDate() // 말일은 달마다 다르다
-      const range = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => from + i)
-      return {
-        y, m: mo, d,
-        // 오래전에 이룬 일도 적을 수 있게 넉넉히 1950년부터
-        years: range(BUCKET_FIRST_YEAR, thisYear),
-        months: range(1, lastMonth),
-        days: range(1, lastDay),
-      }
-    })(),
+    // 앞으로 올 날은 이룬 날이 될 수 없어 올해·이번 달은 오늘까지만 (lib/date.js)
+    bucketDateParts: dateWheel(st.bucketDoneAt),
     bucketByName: (() => {
       const it = (st.bucket?.items || []).find((i) => i.no === st.bucketNo)
       return it?.createdBy?.nickname || it?.createdBy?.name || ''
@@ -860,6 +843,12 @@ export function buildVm(app) {
     uploadFixedItems: uploadExisting,
     uploadDraggableItems: uploadPicked,
     reorderUpload: (from, to) => reorderUploadAsset(from, to),
+    // 언제의 일인지 — 시작일(하루면 이것만), 며칠이면 끝나는 날
+    uploadTakenFrom: st.uploadTakenFrom || null,
+    uploadTakenTo: st.uploadTakenTo || null,
+    uploadFromWheel: dateWheel(st.uploadTakenFrom),
+    uploadToWheel: dateWheel(st.uploadTakenTo || st.uploadTakenFrom),
+    addMediaDate, removeMediaDate, toggleMediaRange, setMediaDatePart,
     uploadTitle: editingMedia ? '일상 수정하기' : '새 일상 올리기',
     // 여러 개를 한 개씩 올리므로 진행 상황을 버튼에 같이 보여준다
     uploadCta: st.uploadSaving

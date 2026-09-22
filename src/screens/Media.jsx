@@ -96,6 +96,17 @@ export default function Media() {
         </View>
       </View>
 
+      {/* 언제의 일인지 — 올린 날과 다를 수 있다. 고르지 않은 글은 그리지 않는다 */}
+      {!!m.takenLabel && (
+        <View style={s('flex-direction:row;align-items:center;gap:md;margin:-10px 5xl 3xl;align-self:flex-start;background:#FFF0F5;border-radius:12px;padding:md lg')}>
+          <Svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#FF5E8A" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+            <Path d="M5 6 h14 a1 1 0 0 1 1 1 v12 a1 1 0 0 1 -1 1 H5 a1 1 0 0 1 -1 -1 V7 a1 1 0 0 1 1 -1 Z" />
+            <Path d="M4 10 H20 M8 4 V8 M16 4 V8" />
+          </Svg>
+          <Text style={s('font-size:11.5px;font-weight:700;color:#FF5E8A')}>{m.takenLabel}</Text>
+        </View>
+      )}
+
       <View style={s('margin:0 5xl;gap:lg')}>
         {m.items.map((it, i) =>
           it.type === 'video'

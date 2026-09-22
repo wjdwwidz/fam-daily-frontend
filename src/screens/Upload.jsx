@@ -3,6 +3,7 @@ import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
 import DragReorder from '../components/DragReorder.jsx'
+import WheelChip from '../components/WheelChip.jsx'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -48,6 +49,64 @@ function Thumb({ it, dragging }) {
         )}
       </View>
       <RemoveButton onPress={it.remove} top={6} right={6} size={24} />
+    </>
+  )
+}
+
+// 년·월·일 칩 셋 — 누르면 그 칸만 휠로 떠서 굴려 고른다 (버킷리스트 이룬 날과 같은 모양)
+function DateChips({ wheel, onPart }) {
+  return (
+    <View style={s('flex-direction:row;align-items:center;gap:sm')}>
+      <WheelChip items={wheel.years} value={wheel.y} unit="년" width={84} onChange={(n) => onPart('y', n)} />
+      <WheelChip items={wheel.months} value={wheel.m} unit="월" onChange={(n) => onPart('m', n)} />
+      <WheelChip items={wheel.days} value={wheel.d} unit="일" onChange={(n) => onPart('d', n)} />
+    </View>
+  )
+}
+
+// 언제의 일인지 — 고르지 않으면 날짜 없이 올라간다. 며칠 동안의 일이면 끝나는 날도.
+function DateField({ vm }) {
+  return (
+    <>
+      <Text style={s('margin-top:3xl;font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>언제</Text>
+      {vm.uploadTakenFrom ? (
+        <View style={s('background:#fff;border:1px solid #FFE1EC;border-radius:16px;padding:lg 2xl;gap:md')}>
+          {/* 이름표는 칩 위에 — 옆에 두면 좁은 폰에서 칩 셋에 밀려 '시…' 로 잘린다 */}
+          <View style={s('gap:xs')}>
+            <Text style={s('font-size:10.5px;color:#9DB2BD')}>{vm.uploadTakenTo ? '시작' : '날짜'}</Text>
+            <DateChips wheel={vm.uploadFromWheel} onPart={(part, n) => vm.setMediaDatePart('from', part, n)} />
+          </View>
+          {!!vm.uploadTakenTo && (
+            <View style={s('gap:xs')}>
+              <Text style={s('font-size:10.5px;color:#9DB2BD')}>끝</Text>
+              <DateChips wheel={vm.uploadToWheel} onPart={(part, n) => vm.setMediaDatePart('to', part, n)} />
+            </View>
+          )}
+          <View style={s('flex-direction:row;align-items:center;justify-content:space-between;padding-top:md;border-top:1px solid #FBEDF3')}>
+            {/* 며칠 동안 — 켜면 끝나는 날이 생긴다 (처음엔 시작일과 같은 날) */}
+            <Pressable onPress={vm.toggleMediaRange} hitSlop={6} style={s('flex-direction:row;align-items:center;gap:md;cursor:pointer')}>
+              <View style={s(`width:18px;height:18px;border-radius:5px;align-items:center;justify-content:center;border:1.5px solid ${vm.uploadTakenTo ? '#FF5E8A' : '#E7D3DC'};background:${vm.uploadTakenTo ? '#FF5E8A' : 'transparent'}`)}>
+                {!!vm.uploadTakenTo && (
+                  <Svg viewBox="0 0 24 24" width={11} height={11} fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 13 L10 18 L19 7" /></Svg>
+                )}
+              </View>
+              <Text style={s('font-size:11.5px;color:#6A7E88;font-weight:700')}>며칠 동안이었어요</Text>
+            </Pressable>
+            <Pressable onPress={vm.removeMediaDate} hitSlop={8}>
+              <Text style={s('font-size:11.5px;color:#9DB2BD')}>빼기</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <Pressable onPress={vm.addMediaDate} style={s('flex-direction:row;align-items:center;gap:md;border:1.5px dashed #FFC4D8;border-radius:16px;padding:xl 2xl;background:#FFF6FA;cursor:pointer')}>
+          <Svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="#FF5E8A" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+            <Path d="M5 6 h14 a1 1 0 0 1 1 1 v12 a1 1 0 0 1 -1 1 H5 a1 1 0 0 1 -1 -1 V7 a1 1 0 0 1 1 -1 Z" />
+            <Path d="M4 10 H20 M8 4 V8 M16 4 V8" />
+          </Svg>
+          <Text style={s('font-size:12px;color:#FF5E8A;font-weight:700')}>날짜 추가</Text>
+          <Text style={s('font-size:10.5px;color:#9DB2BD')}>안 고르면 날짜 없이 올라가요</Text>
+        </Pressable>
+      )}
     </>
   )
 }
@@ -118,6 +177,7 @@ export default function Upload() {
         )}
         <Text style={s('margin-top:4xl;font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>설명</Text>
         <TextInput value={vm.uploadCaption} onChangeText={vm.onUploadCaption} multiline textAlignVertical="top" placeholder="이 순간을 한 줄로 남겨보세요" placeholderTextColor="#9DB2BD" style={s('width:100%;min-height:64px;border:none;outline:none;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:16px;padding:2xl 3xl;font-size:12.2px;font-family:inherit;color:#17303B;resize:none')} />
+        <DateField vm={vm} />
         {vm.uploadError && <Text style={s('font-size:12px;color:#E5484D;margin-top:3xl;text-align:center')}>{vm.uploadError}</Text>}
         <Pressable onPress={vm.submitUpload} disabled={vm.uploadSaving} style={s(`margin:ctaTop 0 ctaBottom;height:54px;border-radius:17px;background:#FF5E8A;align-items:center;justify-content:center;flex-direction:row;opacity:${vm.uploadSaving ? 0.7 : 1}`)}>
           <Text style={s('font-size:13.9px;font-weight:700;color:#fff')}>{vm.uploadCta}</Text>

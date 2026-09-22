@@ -1,6 +1,7 @@
 import { api } from '../lib/api.js'
 import { prepareImage, makeThumb } from '../lib/image.js'
 import { runOnce } from './runOnce.js'
+import { todayYmd, withDatePart } from '../lib/date.js'
 import * as ImagePicker from 'expo-image-picker'
 import { Platform, ToastAndroid } from 'react-native'
 
@@ -80,6 +81,27 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
 
   const onUploadCaption = (v) => setState({ uploadCaption: v })
 
+  // ── 언제의 일인지 ─────────────────────────────────────────────────
+  // 고르지 않으면 날짜 없이 올라간다. 추가하면 오늘부터, '며칠 동안' 을 켜면 끝나는 날이 생긴다.
+  // 끝나는 날은 시작보다 앞일 수 없다 — 어느 쪽을 바꾸든 순서가 뒤집히지 않게 맞춘다.
+  const addMediaDate = () => setState({ uploadTakenFrom: todayYmd(), uploadTakenTo: null })
+  const removeMediaDate = () => setState({ uploadTakenFrom: null, uploadTakenTo: null })
+  const toggleMediaRange = () =>
+    setState((p) => ({ uploadTakenTo: p.uploadTakenTo ? null : p.uploadTakenFrom }))
+  const setMediaDatePart = (which, part, value) => {
+    const cur = ref.current
+    let from = cur.uploadTakenFrom
+    let to = cur.uploadTakenTo
+    if (which === 'from') {
+      from = withDatePart(from, part, value)
+      if (to && to < from) to = from
+    } else {
+      to = withDatePart(to || from, part, value)
+      if (to < from) to = from
+    }
+    setState({ uploadTakenFrom: from, uploadTakenTo: to })
+  }
+
   // 새로 고른 사진 순서 바꾸기 (끌어서 놓기). 올릴 때 이 순서대로 붙는다.
   const reorderUploadAsset = (from, to) => {
     const list = [...(ref.current.uploadAssets || [])]
@@ -140,7 +162,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
         await api.putToSignedUrl(slots[i].signedUrl, ready[i], files[i].contentType)
         updateJob(job.id, { done: i + 1 })
       }
-      await api.commitUpload(job.groupId, slots.map((s) => s.uploadId), job.caption)
+      await api.commitUpload(job.groupId, slots.map((s) => s.uploadId), job.caption, job.taken)
       // 목록을 먼저 받은 뒤 카드를 없앤다 — 반대면 실제 글이 뜨기 전에 잠깐 비어 보인다
       if (ref.current.currentGroup?.id === job.groupId) await loadMedia(job.groupId)
       setState((p) => ({ uploadJobs: (p.uploadJobs || []).filter((j) => j.id !== job.id) }))
@@ -174,6 +196,8 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       return
     }
     const caption = (cur.uploadCaption || '').trim()
+    // 언제의 일인지 — 없으면 null 로 (수정에서 날짜를 뺐을 때도 서버가 비우게)
+    const taken = { takenFrom: cur.uploadTakenFrom || null, takenTo: cur.uploadTakenTo || null }
 
     // 버킷리스트에 붙이려고 쓰는 글은 끝까지 기다린다 —
     // 올라간 글을 그 칸에 이어붙이고 곧바로 그 칸으로 돌아가야 하기 때문.
@@ -193,7 +217,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
           await api.putToSignedUrl(slots[i].signedUrl, ready[i], files[i].contentType)
           setState({ uploadDone: i + 1 })
         }
-        const created = await api.commitUpload(groupId, slots.map((s) => s.uploadId), caption)
+        const created = await api.commitUpload(groupId, slots.map((s) => s.uploadId), caption, taken)
         await loadMedia(groupId)
 
         // 칸에 내용이 이미 적혀 있으면 바로 이어붙여 저장한다.
@@ -214,7 +238,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
         }
         setState({
           uploadSaving: false, bucketLinkNo: null, bucketMediaId: created.id,
-          uploadAssets: undefined, uploadCaption: undefined,
+          uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null,
           uploadDone: 0, uploadTotal: 0,
         })
         back()
@@ -231,12 +255,12 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     if (!editId) {
       const job = {
         id: `up-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        groupId, assets, caption,
+        groupId, assets, caption, taken,
         status: 'uploading', done: 0, total: assets.length, error: null,
       }
       setState((p) => ({
         uploadJobs: [job, ...(p.uploadJobs || [])],
-        uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
+        uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadError: null,
       }))
       go('gallery')
       runUploadJob(job)
@@ -268,11 +292,11 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       // 수정은 늘 '남길 기존 사진' 을 함께 보낸다 — 그래야 새로 고른 사진이
       // 기존 것을 밀어내지 않고 뒤에 붙는다. (예전엔 uploadIds 만 보내 통째로 교체됐다)
       const keepUrls = (ref.current.editMediaItems || []).map((it) => it.url)
-      const updated = await api.updateMedia(editId, uploadIds, caption, keepUrls)
+      const updated = await api.updateMedia(editId, uploadIds, caption, keepUrls, taken)
       await loadMedia(groupId)
       setState({
         uploadSaving: false, editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false,
-        uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
+        uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadError: null,
         uploadDone: 0, uploadTotal: 0,
         media: updated, // 되돌아갈 상세 화면이 바뀐 내용을 보도록
       })
@@ -287,7 +311,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
   const openUpload = () => {
     setState({
       editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false,
-      uploadAssets: undefined, uploadCaption: undefined, uploadError: null,
+      uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadError: null,
     })
     go('upload')
   }
@@ -301,6 +325,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     setState({
       editMediaId: m.id, editMediaItems: m.items || [], editItemsTrimmed: false,
       uploadAssets: undefined, uploadCaption: m.caption || '', uploadError: null,
+      uploadTakenFrom: m.takenFrom || null, uploadTakenTo: m.takenTo || null,
     })
     go('upload')
   }
@@ -382,6 +407,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
   return {
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
     removeUploadItem, reorderUploadAsset,
+    addMediaDate, removeMediaDate, toggleMediaRange, setMediaDatePart,
     retryUploadJob, discardUploadJob,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
   }
