@@ -5,6 +5,7 @@ import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import * as Clipboard from 'expo-clipboard'
 import { Platform, Share } from 'react-native'
 import { MAX_WORD_PHOTOS } from '../state/wordActions.js'
+import { clipText } from '../lib/text.js'
 
 // 일상(갤러리) 폴더 탭 색. 멤버 아바타 색을 쓰면 탭마다 색이 튀어 무지개가 된다.
 // 브랜드 핑크(#FF5E8A)와 같은 밝기에서 마젠타 쪽으로 살짝 밀어 또렷하게.
@@ -313,10 +314,8 @@ export function buildVm(app) {
 
   // 홈 '최근 활동' — 사전 추가·일상 올림·질문·답변·댓글·버킷·한마디 (서버가 최신순으로 섞어 준다).
   // 문구: "{이름}님이 {prefix}{highlight}{suffix}"
-  const clip = (t, n = 14) => {
-    const str = String(t || '').trim()
-    return str.length > n ? `${str.slice(0, n)}…` : str
-  }
+  // 이모지를 한 글자로 세고, 잘릴 때도 끝에 붙은 이모지는 살린다 (lib/text.js)
+  const clip = clipText
   const toQna = () => navTo({ screen: 'record', recordTab: 'qna' })
   const recentActivity = (st.groupActivity || []).map((a) => {
     const name = a.author?.nickname || a.author?.name || '가족'
