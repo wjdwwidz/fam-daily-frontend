@@ -1,4 +1,4 @@
-import { View, Text, Pressable, TextInput, Image, ScrollView } from 'react-native'
+import { View, Text, Pressable, TextInput, Image, ScrollView, ActivityIndicator } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
@@ -31,7 +31,16 @@ function Thumb({ it, dragging }) {
   return (
     <>
       <View style={{ width: '100%', height: '100%', borderRadius: 18, overflow: 'hidden', backgroundColor: '#FCEEF4', ...(dragging ? { borderWidth: 2, borderColor: '#FF5E8A' } : null) }}>
-        <Image source={{ uri: it.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        {/* 고른 사진은 원본(수 MB)이다. 안드로이드는 resizeMethod="resize" 로 칸 크기로 줄여 풀고,
+          웹은 작은 미리보기(makeThumb)를 만들어 그걸 쓴다 — 만드는 동안 uri 가 비어 있다 */}
+        {it.uri ? (
+          <Image source={{ uri: it.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" resizeMethod="resize" />
+        ) : (
+          // 웹: 미리보기용 작은 사진을 만드는 중
+          <View style={s('flex:1;align-items:center;justify-content:center')}>
+            <ActivityIndicator color="#FF9FBC" />
+          </View>
+        )}
         {it.isVideo && (
           <View style={s('position:absolute;left:6px;top:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center')}>
             <Svg viewBox="0 0 24 24" width={11} height={11} fill="#fff" stroke="none" style={{ marginLeft: 1 }}><Path d="M8 5 L19 12 L8 19 Z" /></Svg>

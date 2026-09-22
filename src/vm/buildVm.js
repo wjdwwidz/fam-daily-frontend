@@ -103,7 +103,8 @@ export function buildVm(app) {
   // 서버가 '남긴 기존 사진 + 새 사진' 순서로 붙이기 때문.
   const uploadPicked = pickedAssets.map((a, i) => ({
     key: `n-${a.uri}`,
-    uri: a.uri,
+    // 웹은 작은 미리보기가 준비될 때까지 빈 칸 (null). 준비되면 그걸, 못 만들었으면 원본
+    uri: a.thumbPending ? null : a.thumbUri || a.uri,
     isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
     remove: () => removeUploadItem({ kind: 'new', index: i }),
   }))
