@@ -71,7 +71,7 @@ export default function Upload() {
             </View>
             <View style={s('text-align:center')}>
               <Text style={s('font-size:12.6px;font-weight:700;color:#17303B')}>{vm.uploadHint}</Text>
-              <Text style={s('font-size:11px;color:#9DB2BD;margin-top:xs')}>사진을 여러 개 고를 수 있어요 (최대 10개)</Text>
+              <Text style={s('font-size:11px;color:#9DB2BD;margin-top:xs')}>사진은 최대 10장 고를 수 있어요</Text>
             </View>
           </Pressable>
         )}
@@ -102,7 +102,7 @@ export default function Upload() {
                 )}
               />
             </ScrollView>
-            <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md')}>{vm.uploadCount}개 선택됨 · 최대 10개{vm.uploadDraggableItems.length > 1 ? ' · 끌어서 순서 변경' : ''}</Text>
+            <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md')}>{vm.uploadCount}장 선택됨 · 최대 10장{vm.uploadDraggableItems.length > 1 ? ' · 끌어서 순서 변경' : ''}</Text>
           </View>
         )}
         {/* 버킷리스트 칸에 붙이려고 쓰는 중이면 알려준다 */}
