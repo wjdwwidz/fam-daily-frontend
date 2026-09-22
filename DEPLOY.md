@@ -54,6 +54,8 @@ gh pr create --base main --head <브랜치> && gh pr merge <번호> --merge
 
 # 앱 (JS 변경)
 npx eas-cli update --branch preview --message "무엇을 바꿨는지"
+# → 서버 주소는 .env.production 에서 읽는다 (eas.json 의 build.env 는 APK 빌드에만 쓰인다).
+#   서버 주소를 바꾼 직후엔 --clear-cache 를 붙인다 — 안 붙이면 예전 주소가 캐시에서 그대로 나간다.
 
 # 앱 (네이티브 변경)
 npx eas-cli build -p android --profile preview
@@ -104,6 +106,12 @@ curl -s https://woorikkiri-jade.vercel.app | grep -oE "index-[a-f0-9]+\.js"
 
 # 앱 — 발행된 업데이트 목록
 npx eas-cli update:list --branch preview
+
+# 앱 — 방금 만든 번들에 운영 서버 주소가 들어갔는지 (비어 있으면 localhost 로 붙는 업데이트다)
+strings dist/_expo/static/js/android/*.hbc | grep -o "https://web-production-cb610[^ ]*"
+
+# 앱 — 업데이트를 실제로 받아 실행한 기기 수
+npx eas-cli update:insights <Update group ID> --platform android
 ```
 
 웹 번들에서 한글 문구를 찾는 방식은 **통하지 않는다** (번들에 인코딩돼 들어간다).
