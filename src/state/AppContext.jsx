@@ -60,7 +60,9 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
   }, [st.moodPin])
 
   // 하단 알림 — 잠시 뒤 자동으로 사라진다. 그 사이 다른 알림이 떴으면 건드리지 않는다.
-  const showToast = (text, ms = 2200) => {
+  // 머무는 시간은 문구 길이에 맞춘다. 늘 2.2초면 '최대 10장이라 15장 중 10장만 담았어요' 같은
+  // 긴 문구는 다 읽기 전에 사라졌다. (짧은 '저장했어요' 류는 예전과 비슷하게 짧게)
+  const showToast = (text, ms = Math.min(5000, 2000 + String(text || '').length * 90)) => {
     setState({ toast: text })
     setTimeout(() => setState((p) => (p.toast === text ? { toast: null } : {})), ms)
   }
