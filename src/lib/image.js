@@ -99,3 +99,30 @@ export async function prepareImage(asset, { maxSide = PHOTO_MAX_SIDE, quality = 
     return asset
   }
 }
+
+// 미리보기용 작은 사진 (웹 전용) — 고른 원본(수 MB)을 140px 칸에 그대로 그리면
+// 아이폰 사파리가 한 장씩 원본 크기로 풀어 느리고 메모리도 모자란다. 한 번 줄여 두고 그걸 보여준다.
+// 올릴 때는 여전히 원본에서 prepareImage 로 줄인다. 실패하면 null — 원본을 그대로 보여준다.
+// (네이티브는 Image 의 resizeMethod="resize" 가 칸 크기로 풀어 주므로 만들지 않는다)
+export const THUMB_SIDE = 320 // 칸 140px × 레티나 2배 + 여유
+export async function makeThumb(asset) {
+  if (Platform.OS !== 'web' || !asset || isVideo(asset)) return null
+  try {
+    const w = asset.width || 0
+    const h = asset.height || 0
+    if (!w || !h) return null
+    // 짧은 변을 THUMB_SIDE 로 — 칸은 정사각형으로 잘라 보여주므로 짧은 변이 칸을 채워야 한다
+    const scale = Math.min(1, THUMB_SIDE / Math.min(w, h))
+    const tw = Math.max(1, Math.round(w * scale))
+    const th = Math.max(1, Math.round(h * scale))
+    const ctx = ImageManipulator.manipulate(asset.uri)
+    if (scale < 1) ctx.resize({ width: tw, height: th })
+    // PNG 등 투명한 부분은 흰 바탕 — 안 깔면 JPEG 에서 검게 나온다
+    if (mayHaveAlpha(asset)) ctx.extent({ backgroundColor: '#ffffff', width: tw, height: th })
+    const ref = await ctx.renderAsync()
+    const out = await ref.saveAsync({ format: SaveFormat.JPEG, compress: 0.7 })
+    return out.uri
+  } catch {
+    return null
+  }
+}

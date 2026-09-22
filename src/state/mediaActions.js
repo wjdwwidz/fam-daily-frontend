@@ -1,7 +1,8 @@
 import { api } from '../lib/api.js'
-import { prepareImage } from '../lib/image.js'
+import { prepareImage, makeThumb } from '../lib/image.js'
 import { runOnce } from './runOnce.js'
 import * as ImagePicker from 'expo-image-picker'
+import { Platform, ToastAndroid } from 'react-native'
 
 // 일상 사진 액션: 목록 로드 / 사진 고르기 / 올리기 / 수정 / 삭제.
 export function createMediaActions({ ref, setState, go, back, showToast }) {
@@ -36,6 +37,11 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       }
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (perm.status !== 'granted') return
+      // 안드로이드는 기기에 따라 개수 제한이 없는 갤러리 앱이 열린다 (selectionLimit 이 안 먹는다).
+      // 앱 안 알림은 갤러리에 가려 안 보이므로, 갤러리 위에도 뜨는 시스템 토스트로 미리 알려둔다.
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(`최대 ${room}장까지 고를 수 있어요`, ToastAndroid.LONG)
+      }
       const result = await ImagePicker.launchImageLibraryAsync({
         // 배열 형태가 현재 API. MediaTypeOptions 는 deprecated.
         // 영상은 아직 받지 않는다 (저장 공간). 이미 올라간 영상은 그대로 재생된다.
@@ -46,9 +52,30 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
         quality: 1,
       })
       if (result.canceled || !result.assets || !result.assets.length) return
-      const next = [...picked, ...result.assets].slice(0, MAX_PICK)
-      setState({ uploadAssets: next, uploadError: null })
+      // 넘치게 고른 건 앞에서부터 남은 자리만큼만 담는다.
+      // (예전엔 MAX_PICK 로 잘라, 수정 중이면 기존 사진과 합쳐 10장을 넘을 수 있었다)
+      // 웹은 미리보기용 작은 사진을 만드는 동안 빈 칸으로 먼저 보여준다 (원본을 그리면 느리다)
+      const web = Platform.OS === 'web'
+      const taken = result.assets.slice(0, room).map((a) => (web ? { ...a, thumbPending: true } : a))
+      setState({ uploadAssets: [...picked, ...taken], uploadError: null })
+      if (result.assets.length > room) {
+        showToast(`최대 ${MAX_PICK}장이라 ${result.assets.length}장 중 ${room}장만 담았어요`)
+      }
+      if (web) fillThumbs(taken)
     } catch {}
+  }
+
+  // 미리보기용 작은 사진을 한 장씩 만들어 채운다. 한꺼번에 만들면 아이폰 사파리 메모리가 모자란다.
+  // 그사이 사진을 빼거나 순서를 바꿔도 되게 uri 로 찾아 바꾼다. 실패하면 원본을 그대로 보여준다.
+  const fillThumbs = async (assets) => {
+    for (const a of assets) {
+      const thumbUri = await makeThumb(a)
+      setState((p) => ({
+        uploadAssets: (p.uploadAssets || []).map((x) =>
+          x.uri === a.uri ? { ...x, thumbUri, thumbPending: false } : x,
+        ),
+      }))
+    }
   }
 
   const onUploadCaption = (v) => setState({ uploadCaption: v })
