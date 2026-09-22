@@ -1,8 +1,6 @@
 // 앱 전체 뷰모델 조립. app = useApp() 결과(상태·네비게이션·액션)를 받아
 // 화면들이 쓰는 vm 객체를 만든다. 화면은 useVm()으로 이걸 가져간다.
 import { QUESTION_BANK } from '../data/questionBank.js'
-import { CALENDAR_SINGLE, CALENDAR_RANGES, CALENDAR_EVENTS } from '../data/mockCalendar.js'
-import { MOCK_JOIN_GROUPS } from '../data/mockGroups.js'
 import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import * as Clipboard from 'expo-clipboard'
 import { Platform, Share } from 'react-native'
@@ -282,7 +280,7 @@ export function buildVm(app) {
   })
   // 일상 글 열기 — 이전 글에서 쓰던 댓글 입력(답글·수정 중)은 비운다
   const openMediaDetail = (m) =>
-    navTo({ screen: 'media', media: m, mediaLiked: false, commentDraft: '', commentReplyTo: null, commentEditingId: null, commentError: null })
+    navTo({ screen: 'media', media: m, commentDraft: '', commentReplyTo: null, commentEditingId: null, commentError: null })
   const media = (st.groupMedia || []).map((m) => ({
     ...shapeMedia(m),
     open: () => openMediaDetail(m),
@@ -393,23 +391,6 @@ export function buildVm(app) {
     const sel = t.key === gFilter
     return { label: t.label, sel, bg: sel ? FOLDER_TAB_COLOR : '#fff', color: sel ? '#fff' : '#6A7E88', border: sel ? FOLDER_TAB_COLOR : '#FFE1EC', pick: () => setState({ galleryFilter: t.key }) }
   })
-  const single = CALENDAR_SINGLE
-  const ranges = CALENDAR_RANGES
-  const days = []
-  for (let i = 0; i < 4; i++) days.push({ n: '', hasRange: false, rangeStyle: '', numBg: 'transparent', numColor: 'transparent', numWeight: 600, hasDot: false, dot: '' })
-  for (let d = 1; d <= 31; d++) {
-    const today = d === 7
-    const rg = ranges.find((x) => d >= x.start && d <= x.end)
-    let rangeStyle = ''
-    if (rg) {
-      const isStart = d === rg.start, isEnd = d === rg.end
-      const lr = isStart ? '3px' : '0', rr = isEnd ? '3px' : '0'
-      const li = isStart ? '9px' : '0', ri = isEnd ? '9px' : '0'
-      rangeStyle = `position:absolute;bottom:6px;height:5px;left:${li};right:${ri};background:${rg.c};border-radius:${lr} ${rr} ${rr} ${lr};z-index:0`
-    }
-    days.push({ n: d, hasRange: !!rg, rangeStyle, numBg: today ? '#FF5E8A' : 'transparent', numColor: today ? '#ffffff' : '#3F4E58', numWeight: today ? 800 : 600, hasDot: !rg && !!single[d], dot: single[d] || '' })
-  }
-  const events = CALENDAR_EVENTS
 
   const qc = st.qnaCurrent
   const todayQ = qc && qc.question
@@ -434,16 +415,6 @@ export function buildVm(app) {
     const src = pool.length ? pool : qBank
     return src[(st.qnaCurrent?.total || 0) % src.length]
   }
-
-  const joinGroups = MOCK_JOIN_GROUPS
-  const sj = st.selectedJoin ?? 0
-  const joinList = joinGroups.map((g, i) => ({
-    name: g.name, sub: g.sub, sel: i === sj,
-    cardStyle: `flex-direction:row;align-items:center;gap:12px;background:#fff;border:2px solid ${i === sj ? '#FF5E8A' : '#FFE1EC'};border-radius:20px;padding:15px 16px`,
-    checkStyle: `width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;border:2px solid ${i === sj ? '#FF5E8A' : '#E3D2DA'};background:${i === sj ? '#FF5E8A' : 'transparent'};color:#fff`,
-    avatars: g.avatars.map((a, j) => ({ i: a.i, photoUrl: a.photoUrl, style: `margin-left:${j === 0 ? '0' : '-8px'}` })),
-    pick: () => setState({ selectedJoin: i }),
-  }))
 
   const ut = st.uploadType
   const navC = (on) => (on ? '#FF5E8A' : '#A6B4BD')
@@ -543,13 +514,10 @@ export function buildVm(app) {
     sheetGoJoin: () => { setState({ spaceSheetOpen: false }); go('joinSpace') },
     // 인증
     isAuth: scr === 'auth',
-    authMode: st.authMode || 'login',
     authError: st.authError || null, authLoading: !!st.authLoading,
     // 앱을 켤 때 저장된 로그인을 확인하는 중 (이때는 시작 화면)
     booting: !!st.booting,
-    authNotice: st.authNotice || null,
     kakaoLogin,
-    setAuthMode: (m) => setState({ authMode: m, authError: null }),
     logout,
     // 가족 삭제 — 방장(canEditGroupName)에게만 버튼이 보이고, 서버도 방장만 허용한다
     deleteGroup: () => askConfirm({
@@ -581,19 +549,18 @@ export function buildVm(app) {
     doJoinGroup,
     actionLoading: !!st.actionLoading, actionError: st.actionError || null,
     showNav: ['home', 'record', 'dict', 'gallery', 'members', 'qna'].indexOf(scr) !== -1,
-    members, words, media, days, events, dictGroups,
+    members, words, media, dictGroups,
     galleryMedia, galleryTabs, galleryEmpty: galleryMedia.length === 0 && uploadJobs.length === 0,
     uploadJobs,
     // 모든 가족을 통틀어 올리는 중인 작업 수 (웹에서 탭 닫기 확인용)
     uploadingCount: (st.uploadJobs || []).filter((j) => j.status === 'uploading').length,
-    todayQ, pastQs, joinList,
+    todayQ, pastQs,
     qnaHistory, qnaHistoryTotal,
     qnaLoading: !!st.qnaLoading,
     isQnaHistory: scr === 'qnahistory',
     openQnaHistory: () => go('qnahistory'),
 
     // 버킷리스트 — 1~100 칸을 늘 다 그린다. 채운 칸만 서버에서 오고 나머지는 빈 칸.
-    isBucket: scr === 'record' && (st.recordTab || 'dict') === 'bucket',
     isBucketItem: scr === 'bucketitem',
     loadBucket,
     bucketLoading: !!st.bucketLoading,
@@ -740,7 +707,6 @@ export function buildVm(app) {
     answerOpen: !!st.answerOpen,
     eventCats,
     addEventOpen: !!st.addEventOpen,
-    openAddEvent: () => setState({ addEventOpen: true }),
     closeAddEvent: () => setState({ addEventOpen: false }),
     isRange: st.eventRange === true,
     isOneDay: st.eventRange !== true,
@@ -822,7 +788,6 @@ export function buildVm(app) {
       const d = new Date()
       return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
     })(),
-    todayWord: words[0],
     // st.word 는 열었던 시점의 스냅샷이라, 저장 직후엔 같은 id 를 최신 목록에서 다시 찾아 반영한다.
     // 목록에 없으면(갱신 실패 등) 서버 응답을 화면 형태로 변환해 쓴다 — by/date 누락 방지.
     currentWord:
@@ -841,9 +806,8 @@ export function buildVm(app) {
     commentError: st.commentError || null,
     loadComments: () => loadComments(st.media?.id),
     onCommentDraft, submitComment, cancelCommentMode,
-    mediaLiked: !!st.mediaLiked,
-    isMenuWord: st.menuOpen === 'word', isMenuMedia: st.menuOpen === 'media',
-    toggleMenuWord: () => toggleMenu('word'), toggleMenuMedia: () => toggleMenu('media'),
+    isMenuMedia: st.menuOpen === 'media',
+    toggleMenuMedia: () => toggleMenu('media'),
     startEditWord, startAddWord,
     // 삭제는 항상 확인 모달을 거친다
     confirm: st.confirm || null, confirmOpen: !!st.confirm, askConfirm, closeConfirm, confirmYes,
@@ -865,22 +829,14 @@ export function buildVm(app) {
     navHome: navC(scr === 'home'), navDict: navC(scr === 'dict'), navQna: navC(scr === 'qna'),
     navRecord: navC(scr === 'record'),
     navGallery: navC(scr === 'gallery'), navMembers: navC(scr === 'members'),
-    photoTabBg: ut === 'photo' ? '#FFF0F5' : 'transparent',
-    photoTabColor: ut === 'photo' ? '#FF5E8A' : '#9DB2BD',
-    videoTabBg: ut === 'video' ? '#FFF0F5' : 'transparent',
-    videoTabColor: ut === 'video' ? '#FF5E8A' : '#9DB2BD',
     uploadHint: ut === 'photo' ? '사진을 선택하세요' : '영상을 선택하세요',
-    enter: () => { setState({ authNext: null }); go('auth') },
-    enterJoin: () => { setState({ authNext: 'joinSpace' }); go('auth') },
     goSpace: () => go('space'), goCreate: () => go('createSpace'), goJoin: () => go('joinSpace'), finishOnboard: () => go('spaceSelect'), goLogin: () => go('login'), goSignupBack: () => go('signup'),
     linkSheetOpen: !!st.linkSheetOpen, openLinkSheet: () => setState({ linkSheetOpen: true }), closeLinkSheet: () => setState({ linkSheetOpen: false }),
     goHome: () => go('home'),
     goRecord: () => go('record'), // 기록 탭 (마지막 서브탭 유지)
-    goDict: () => navTo({ screen: 'record', recordTab: 'dict' }),
     goGallery: () => go('gallery'),
     goMembers: () => navTo({ screen: 'members', membersFromLink: false }),
     goMembersDeep: () => navTo({ screen: 'members', membersFromLink: true }),
-    goCalendar: () => go('calendar'), goQna: () => navTo({ screen: 'record', recordTab: 'qna' }),
     // 문답 답변 남기기 (오늘의 질문에 대해)
     answerDraft: st.answerDraft ?? '',
     onAnswerInput: (text) => setState({ answerDraft: text }),
@@ -899,13 +855,11 @@ export function buildVm(app) {
     submitQuestion,
     goUpload: openUpload,
     // 새 일상 올리기 (사진·영상 여러 개가 글 하나)
-    uploadItems: uploadPreview,
     uploadCount: uploadPreview.length,
     // 순서 바꾸기는 새로 고른 사진에만 — 기존 사진은 그대로 앞에 남는다
     uploadFixedItems: uploadExisting,
     uploadDraggableItems: uploadPicked,
     reorderUpload: (from, to) => reorderUploadAsset(from, to),
-    isEditUpload: editingMedia,
     uploadTitle: editingMedia ? '일상 수정하기' : '새 일상 올리기',
     // 여러 개를 한 개씩 올리므로 진행 상황을 버튼에 같이 보여준다
     uploadCta: st.uploadSaving
@@ -917,9 +871,6 @@ export function buildVm(app) {
     uploadError: st.uploadError || null,
     pickUploadPhoto, onUploadCaption, submitUpload, editMedia,
     mediaLoading: !!st.mediaLoading,
-    openTodayWord: () => navTo({ screen: 'word', word: words[0], editPost: null, menuOpen: null, wordError: null }),
-    setPhoto: () => setState({ uploadType: 'photo' }),
-    setVideo: () => setState({ uploadType: 'video' }),
     back,
   }
 }

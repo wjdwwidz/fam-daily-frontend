@@ -1,4 +1,4 @@
-import { api, getToken, setToken, clearToken } from '../lib/api.js'
+import { api, getToken, clearToken } from '../lib/api.js'
 import { prepareImage, PROFILE_MAX_SIDE, PROFILE_QUALITY } from '../lib/image.js'
 import * as ImagePicker from 'expo-image-picker'
 
