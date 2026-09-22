@@ -3,6 +3,7 @@ import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 
 import DragReorder from '../components/DragReorder.jsx'
+import WheelChip from '../components/WheelChip.jsx'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -48,6 +49,139 @@ function Thumb({ it, dragging }) {
         )}
       </View>
       <RemoveButton onPress={it.remove} top={6} right={6} size={24} />
+    </>
+  )
+}
+
+// 년·월·일 칩 셋 — 누르면 그 칸만 휠로 떠서 굴려 고른다 (버킷리스트 이룬 날과 같은 모양)
+function DateChips({ wheel, onPart }) {
+  return (
+    <View style={s('flex-direction:row;align-items:center;gap:sm')}>
+      <WheelChip items={wheel.years} value={wheel.y} unit="년" width={84} onChange={(n) => onPart('y', n)} />
+      <WheelChip items={wheel.months} value={wheel.m} unit="월" onChange={(n) => onPart('m', n)} />
+      <WheelChip items={wheel.days} value={wheel.d} unit="일" onChange={(n) => onPart('d', n)} />
+    </View>
+  )
+}
+
+// 언제의 일인지 — 고르지 않으면 날짜 없이 올라간다. 며칠 동안의 일이면 끝나는 날도.
+function DateField({ vm }) {
+  return (
+    <>
+      <Text style={s('margin-top:3xl;font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>언제</Text>
+      {vm.uploadTakenFrom ? (
+        <View style={s('background:#fff;border:1px solid #FFE1EC;border-radius:16px;padding:lg 2xl;gap:md')}>
+          {/* 이름표는 칩 위에 — 옆에 두면 좁은 폰에서 칩 셋에 밀려 '시…' 로 잘린다 */}
+          <View style={s('gap:xs')}>
+            <Text style={s('font-size:10.5px;color:#9DB2BD')}>{vm.uploadTakenTo ? '시작' : '날짜'}</Text>
+            <DateChips wheel={vm.uploadFromWheel} onPart={(part, n) => vm.setMediaDatePart('from', part, n)} />
+          </View>
+          {!!vm.uploadTakenTo && (
+            <View style={s('gap:xs')}>
+              <Text style={s('font-size:10.5px;color:#9DB2BD')}>끝</Text>
+              <DateChips wheel={vm.uploadToWheel} onPart={(part, n) => vm.setMediaDatePart('to', part, n)} />
+            </View>
+          )}
+          <View style={s('flex-direction:row;align-items:center;justify-content:space-between;padding-top:md;border-top:1px solid #FBEDF3')}>
+            {/* 며칠 동안 — 켜면 끝나는 날이 생긴다 (처음엔 시작일과 같은 날) */}
+            <Pressable onPress={vm.toggleMediaRange} hitSlop={6} style={s('flex-direction:row;align-items:center;gap:md;cursor:pointer')}>
+              <View style={s(`width:18px;height:18px;border-radius:5px;align-items:center;justify-content:center;border:1.5px solid ${vm.uploadTakenTo ? '#FF5E8A' : '#E7D3DC'};background:${vm.uploadTakenTo ? '#FF5E8A' : 'transparent'}`)}>
+                {!!vm.uploadTakenTo && (
+                  <Svg viewBox="0 0 24 24" width={11} height={11} fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 13 L10 18 L19 7" /></Svg>
+                )}
+              </View>
+              <Text style={s('font-size:11.5px;color:#6A7E88;font-weight:700')}>며칠 동안이었어요</Text>
+            </Pressable>
+            <Pressable onPress={vm.removeMediaDate} hitSlop={8}>
+              <Text style={s('font-size:11.5px;color:#9DB2BD')}>빼기</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <Pressable onPress={vm.addMediaDate} style={s('flex-direction:row;align-items:center;gap:md;border:1.5px dashed #FFC4D8;border-radius:16px;padding:xl 2xl;background:#FFF6FA;cursor:pointer')}>
+          <Svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="#FF5E8A" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+            <Path d="M5 6 h14 a1 1 0 0 1 1 1 v12 a1 1 0 0 1 -1 1 H5 a1 1 0 0 1 -1 -1 V7 a1 1 0 0 1 1 -1 Z" />
+            <Path d="M4 10 H20 M8 4 V8 M16 4 V8" />
+          </Svg>
+          <Text style={s('font-size:12px;color:#FF5E8A;font-weight:700')}>날짜 추가</Text>
+          <Text style={s('font-size:10.5px;color:#9DB2BD')}>안 고르면 날짜 없이 올라가요</Text>
+        </Pressable>
+      )}
+    </>
+  )
+}
+
+function PinIcon({ size = 14, color = '#FF5E8A' }) {
+  return (
+    <Svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M12 21 C12 21 5 14.5 5 9.5 A7 7 0 0 1 19 9.5 C19 14.5 12 21 12 21 Z" />
+      <Path d="M12 12 A2.5 2.5 0 1 0 12 7 A2.5 2.5 0 1 0 12 12 Z" />
+    </Svg>
+  )
+}
+
+// 장소 — 구글 장소 검색으로 찾아 붙인다 (해외도 된다). 붙이면 글에서 누를 때 구글 지도가 열린다.
+function PlaceField({ vm }) {
+  return (
+    <>
+      <Text style={s('margin-top:3xl;font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>장소</Text>
+      {vm.uploadPlace ? (
+        // 고른 곳 — 이름과 주소, 오른쪽에 빼기
+        <View style={s('flex-direction:row;align-items:center;gap:lg;background:#fff;border:1px solid #FFE1EC;border-radius:16px;padding:xl 2xl')}>
+          <PinIcon size={16} />
+          <View style={s('flex:1;min-width:0')}>
+            <Text numberOfLines={1} style={s('font-size:12.5px;font-weight:700;color:#17303B')}>{vm.uploadPlace.name}</Text>
+            {!!vm.uploadPlace.address && (
+              <Text numberOfLines={1} style={s('font-size:10.5px;color:#9DB2BD;margin-top:hair')}>{vm.uploadPlace.address}</Text>
+            )}
+          </View>
+          <Pressable onPress={vm.removePlace} hitSlop={8}>
+            <Text style={s('font-size:11.5px;color:#9DB2BD')}>빼기</Text>
+          </Pressable>
+        </View>
+      ) : vm.placeSearchOpen ? (
+        <View style={s('background:#fff;border:1px solid #FFE1EC;border-radius:16px;padding:md 2xl lg')}>
+          <View style={s('flex-direction:row;align-items:center;gap:md')}>
+            <PinIcon size={15} color="#9DB2BD" />
+            <TextInput
+              value={vm.placeQuery}
+              onChangeText={vm.onPlaceQuery}
+              autoFocus
+              returnKeyType="search"
+              placeholder="장소 이름이나 주소 (해외도 돼요)"
+              placeholderTextColor="#9DB2BD"
+              style={s('flex:1;min-width:0;height:40px;border:none;outline:none;background:transparent;font-size:12.5px;font-family:inherit;color:#17303B')}
+            />
+            {vm.placeSearching && <ActivityIndicator size="small" color="#FF9FBC" />}
+            <Pressable onPress={vm.closePlaceSearch} hitSlop={8}>
+              <Text style={s('font-size:11.5px;color:#9DB2BD')}>닫기</Text>
+            </Pressable>
+          </View>
+          {!!vm.placeError && (vm.placeLimited ? (
+            // 오늘 검색 한도를 다 씀 — 잘못한 게 아니라서 빨간 오류 대신 연분홍 안내로
+            <View style={s('flex-direction:row;align-items:flex-start;gap:md;margin-top:sm;background:#FFF0F5;border:1px solid #FFD3E2;border-radius:12px;padding:lg xl')}>
+              <Text style={s('font-size:12px')}>🔒</Text>
+              <Text style={s('flex:1;min-width:0;font-size:11.5px;color:#17303B;line-height:1.5')}>{vm.placeError}</Text>
+            </View>
+          ) : (
+            <Text style={s('font-size:11px;color:#E5484D;padding:sm 0')}>{vm.placeError}</Text>
+          ))}
+          {!vm.placeSearching && !vm.placeError && !!vm.placeQuery.trim() && vm.placeResults.length === 0 && (
+            <Text style={s('font-size:11px;color:#9DB2BD;padding:sm 0')}>찾는 곳이 없어요. 다르게 적어볼까요?</Text>
+          )}
+          {vm.placeResults.map((p) => (
+            <Pressable key={p.placeId} onPress={p.pick} style={s('padding:lg 0;border-top:1px solid #FBEDF3;cursor:pointer')}>
+              <Text numberOfLines={1} style={s('font-size:12.5px;font-weight:700;color:#17303B')}>{p.name}</Text>
+              {!!p.address && <Text numberOfLines={1} style={s('font-size:10.5px;color:#9DB2BD;margin-top:hair')}>{p.address}</Text>}
+            </Pressable>
+          ))}
+        </View>
+      ) : (
+        <Pressable onPress={vm.openPlaceSearch} style={s('flex-direction:row;align-items:center;gap:md;border:1.5px dashed #FFC4D8;border-radius:16px;padding:xl 2xl;background:#FFF6FA;cursor:pointer')}>
+          <PinIcon size={15} />
+          <Text style={s('font-size:12px;color:#FF5E8A;font-weight:700')}>장소 추가</Text>
+        </Pressable>
+      )}
     </>
   )
 }
@@ -118,6 +252,8 @@ export default function Upload() {
         )}
         <Text style={s('margin-top:4xl;font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>설명</Text>
         <TextInput value={vm.uploadCaption} onChangeText={vm.onUploadCaption} multiline textAlignVertical="top" placeholder="이 순간을 한 줄로 남겨보세요" placeholderTextColor="#9DB2BD" style={s('width:100%;min-height:64px;border:none;outline:none;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:16px;padding:2xl 3xl;font-size:12.2px;font-family:inherit;color:#17303B;resize:none')} />
+        <DateField vm={vm} />
+        <PlaceField vm={vm} />
         {vm.uploadError && <Text style={s('font-size:12px;color:#E5484D;margin-top:3xl;text-align:center')}>{vm.uploadError}</Text>}
         <Pressable onPress={vm.submitUpload} disabled={vm.uploadSaving} style={s(`margin:ctaTop 0 ctaBottom;height:54px;border-radius:17px;background:#FF5E8A;align-items:center;justify-content:center;flex-direction:row;opacity:${vm.uploadSaving ? 0.7 : 1}`)}>
           <Text style={s('font-size:13.9px;font-weight:700;color:#fff')}>{vm.uploadCta}</Text>

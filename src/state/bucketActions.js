@@ -1,11 +1,5 @@
 import { api } from '../lib/api.js'
-
-// 오늘을 'YYYY-MM-DD' 로. 현지 기준이어야 자정 무렵에 하루가 어긋나지 않는다.
-const todayYmd = () => {
-  const d = new Date()
-  const p2 = (n) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`
-}
+import { todayYmd, withDatePart } from '../lib/date.js'
 
 // 가족 버킷리스트 — 1~100 칸을 골라 채우고, 달성하면 일상 글과 이어붙인다.
 export function createBucketActions({ st, setState, ref, go, back, showToast }) {
@@ -45,9 +39,9 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
     setState({
       bucketLinkNo: cur.bucketNo,
       editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false,
-      uploadError: null,
+      uploadError: null, placeSearchOpen: false,
       // 앞서 올리다 실패해 남겨둔 사진이 있으면 그대로 이어서 쓴다
-      ...(cur.bucketLinkNo === cur.bucketNo ? {} : { uploadAssets: undefined, uploadCaption: undefined }),
+      ...(cur.bucketLinkNo === cur.bucketNo ? {} : { uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadPlace: undefined }),
     })
     go('upload')
   }
@@ -81,19 +75,9 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
   }
 
   const onBucketDraft = (v) => setState({ bucketDraft: v, bucketError: null })
-  // 년·월·일을 따로 고른다. 말일이 넘어가면(2월 31일 등) 그 달 마지막 날로 당기고,
-  // 오늘보다 뒤로 가면(올해로 바꿨더니 아직 안 온 달 등) 오늘로 당긴다.
-  const setBucketDatePart = (part, value) => {
-    const cur = ref.current
-    const [y, m, d] = (cur.bucketDoneAt || todayYmd()).split('-').map(Number)
-    const next = { y, m, d, [part]: value }
-    const last = new Date(next.y, next.m, 0).getDate()
-    if (next.d > last) next.d = last
-    const p2 = (n) => String(n).padStart(2, '0')
-    const ymd = `${next.y}-${p2(next.m)}-${p2(next.d)}`
-    const today = todayYmd()
-    setState({ bucketDoneAt: ymd > today ? today : ymd })
-  }
+  // 년·월·일을 따로 고른다 (말일·미래 날짜는 lib/date.js 가 당긴다)
+  const setBucketDatePart = (part, value) =>
+    setState({ bucketDoneAt: withDatePart(ref.current.bucketDoneAt, part, value) })
   const toggleBucketDone = () => setState((p) => ({ bucketDone: !p.bucketDone }))
   const openBucketPicker = () => setState({ bucketPicking: true })
   const closeBucketPicker = () => setState({ bucketPicking: false })

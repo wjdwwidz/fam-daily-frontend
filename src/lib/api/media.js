@@ -15,21 +15,26 @@ export const mediaApi = {
   prepareUpload: (groupId, files) =>
     request(`/groups/${groupId}/media/prepare`, { method: 'POST', body: { files } }),
 
-  commitUpload: (groupId, uploadIds, caption) =>
-    request(`/groups/${groupId}/media/commit`, { method: 'POST', body: { uploadIds, caption } }),
+  // extra: 글에 덧붙이는 것들 — { takenFrom, takenTo } (언제의 일인지), { place } (장소)
+  commitUpload: (groupId, uploadIds, caption, extra = {}) =>
+    request(`/groups/${groupId}/media/commit`, { method: 'POST', body: { uploadIds, caption, ...extra } }),
 
   // uploadIds 를 주면 사진이 통째로 교체된다.
   // keepUrls 를 주면 거기 없는 기존 사진이 지워진다(한 장씩 빼기).
-  // 둘 다 없으면 글(caption)만 바뀐다.
-  updateMedia: (mediaId, uploadIds, caption, keepUrls) =>
+  // 둘 다 없으면 글(caption)만 바뀐다. extra 는 commitUpload 와 같다 (날짜·장소를 빼려면 null 로 보낸다).
+  updateMedia: (mediaId, uploadIds, caption, keepUrls, extra = {}) =>
     request(`/media/${mediaId}`, {
       method: 'PATCH',
       body: {
         caption,
         ...(uploadIds?.length ? { uploadIds } : {}),
         ...(keepUrls ? { keepUrls } : {}),
+        ...extra,
       },
     }),
+
+  // 장소 검색 (구글) — 키는 서버에만 있어서 서버를 거친다
+  searchPlaces: (q) => request(`/places/search?q=${encodeURIComponent(q)}`),
 
   // 댓글 — 쓰기 요청은 모두 갱신된 목록 { count, comments } 을 돌려준다
   listComments: (mediaId) => request(`/media/${mediaId}/comments`),
