@@ -860,6 +860,7 @@ export function buildVm(app) {
     placeQuery: st.placeQuery || '',
     placeSearching: !!st.placeSearching,
     placeError: st.placeError || null,
+    placeLimited: !!st.placeLimited,
     placeResults: (st.placeResults || []).map((p) => ({ ...p, pick: () => pickPlace(p) })),
     openPlaceSearch, closePlaceSearch, onPlaceQuery, removePlace,
     uploadTitle: editingMedia ? '일상 수정하기' : '새 일상 올리기',

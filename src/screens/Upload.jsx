@@ -157,7 +157,15 @@ function PlaceField({ vm }) {
               <Text style={s('font-size:11.5px;color:#9DB2BD')}>닫기</Text>
             </Pressable>
           </View>
-          {!!vm.placeError && <Text style={s('font-size:11px;color:#E5484D;padding:sm 0')}>{vm.placeError}</Text>}
+          {!!vm.placeError && (vm.placeLimited ? (
+            // 오늘 검색 한도를 다 씀 — 잘못한 게 아니라서 빨간 오류 대신 연분홍 안내로
+            <View style={s('flex-direction:row;align-items:flex-start;gap:md;margin-top:sm;background:#FFF0F5;border:1px solid #FFD3E2;border-radius:12px;padding:lg xl')}>
+              <Text style={s('font-size:12px')}>🔒</Text>
+              <Text style={s('flex:1;min-width:0;font-size:11.5px;color:#17303B;line-height:1.5')}>{vm.placeError}</Text>
+            </View>
+          ) : (
+            <Text style={s('font-size:11px;color:#E5484D;padding:sm 0')}>{vm.placeError}</Text>
+          ))}
           {!vm.placeSearching && !vm.placeError && !!vm.placeQuery.trim() && vm.placeResults.length === 0 && (
             <Text style={s('font-size:11px;color:#9DB2BD;padding:sm 0')}>찾는 곳이 없어요. 다르게 적어볼까요?</Text>
           )}

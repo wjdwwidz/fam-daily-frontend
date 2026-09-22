@@ -23,7 +23,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
   }
 
   // 장소 검색 창을 닫은 상태
-  const PLACE_SEARCH_CLOSED = { placeSearchOpen: false, placeQuery: '', placeResults: [], placeSearching: false, placeError: null }
+  const PLACE_SEARCH_CLOSED = { placeSearchOpen: false, placeQuery: '', placeResults: [], placeSearching: false, placeError: null, placeLimited: false }
 
   // 한 글에 담을 수 있는 최대 개수 (서버의 MAX_FILES 와 같은 값).
   const MAX_PICK = 10
@@ -112,7 +112,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
   // ── 장소 (구글 장소 검색) ─────────────────────────────────────────
   // 치는 동안 매번 부르면 요청이 많아 요금이 붙는다. 멈추고 잠깐 뒤에 한 번만 찾는다.
   // 늦게 도착한 옛 검색 결과가 새 결과를 덮지 않게 마지막 검색어와 맞는지 본다.
-  const openPlaceSearch = () => setState({ placeSearchOpen: true, placeQuery: '', placeResults: [], placeError: null })
+  const openPlaceSearch = () => setState({ placeSearchOpen: true, placeQuery: '', placeResults: [], placeError: null, placeLimited: false })
   const closePlaceSearch = () => { clearTimeout(placeTimer); setState(PLACE_SEARCH_CLOSED) }
   const onPlaceQuery = (q) => {
     setState({ placeQuery: q, placeError: null })
@@ -127,7 +127,8 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
         setState({ placeResults: results || [], placeSearching: false })
       } catch (e) {
         if ((ref.current.placeQuery || '').trim() !== text) return
-        setState({ placeResults: [], placeSearching: false, placeError: e.message })
+        // 429 = 오늘 검색 한도를 다 씀 — 오류가 아니라 안내로 보여준다 (서버 문구에 몇 회인지·어떻게 하면 되는지가 있다)
+        setState({ placeResults: [], placeSearching: false, placeError: e.message, placeLimited: e.status === 429 })
       }
     }, 450)
   }
