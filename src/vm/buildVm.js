@@ -3,10 +3,11 @@
 import { QUESTION_BANK } from '../data/questionBank.js'
 import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import * as Clipboard from 'expo-clipboard'
-import { Platform, Share } from 'react-native'
+import { Linking, Platform, Share } from 'react-native'
 import { MAX_WORD_PHOTOS } from '../state/wordActions.js'
 import { clipText } from '../lib/text.js'
 import { dateWheel, fmtYmdRange } from '../lib/date.js'
+import { placeMapUrl } from '../lib/place.js'
 
 // 일상(갤러리) 폴더 탭 색. 멤버 아바타 색을 쓰면 탭마다 색이 튀어 무지개가 된다.
 // 브랜드 핑크(#FF5E8A)와 같은 밝기에서 마젠타 쪽으로 살짝 밀어 또렷하게.
@@ -62,6 +63,7 @@ export function buildVm(app) {
     loadQna, submitAnswer, submitQuestion,
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem, reorderUploadAsset,
     addMediaDate, removeMediaDate, toggleMediaRange, setMediaDatePart,
+    openPlaceSearch, closePlaceSearch, onPlaceQuery, pickPlace, removePlace,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
     retryUploadJob, discardUploadJob,
   } = app
@@ -270,6 +272,9 @@ export function buildVm(app) {
     title: m.caption || '',
     // 언제의 일인지 ('2026년 9월 20일 ~ 22일'). 고르지 않았으면 빈 문자열 — 줄을 그리지 않는다
     takenLabel: fmtYmdRange(m.takenFrom, m.takenTo),
+    // 이 순간이 있었던 곳 — 누르면 구글 지도
+    place: m.place || null,
+    openPlace: m.place ? () => Linking.openURL(placeMapUrl(m.place)).catch(() => {}) : undefined,
     date: fmtDate(m.createdAt),
     // 몇 시에 올렸는지 (예: 오후 3:07)
     time: fmtTime(m.createdAt),
@@ -849,6 +854,14 @@ export function buildVm(app) {
     uploadFromWheel: dateWheel(st.uploadTakenFrom),
     uploadToWheel: dateWheel(st.uploadTakenTo || st.uploadTakenFrom),
     addMediaDate, removeMediaDate, toggleMediaRange, setMediaDatePart,
+    // 장소 — 구글 장소 검색으로 골라 붙인다
+    uploadPlace: st.uploadPlace || null,
+    placeSearchOpen: !!st.placeSearchOpen,
+    placeQuery: st.placeQuery || '',
+    placeSearching: !!st.placeSearching,
+    placeError: st.placeError || null,
+    placeResults: (st.placeResults || []).map((p) => ({ ...p, pick: () => pickPlace(p) })),
+    openPlaceSearch, closePlaceSearch, onPlaceQuery, removePlace,
     uploadTitle: editingMedia ? '일상 수정하기' : '새 일상 올리기',
     // 여러 개를 한 개씩 올리므로 진행 상황을 버튼에 같이 보여준다
     uploadCta: st.uploadSaving

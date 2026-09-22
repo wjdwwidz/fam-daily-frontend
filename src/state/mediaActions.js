@@ -5,6 +5,10 @@ import { todayYmd, withDatePart } from '../lib/date.js'
 import * as ImagePicker from 'expo-image-picker'
 import { Platform, ToastAndroid } from 'react-native'
 
+// 장소 검색 입력을 멈출 때까지 기다리는 타이머. 액션은 렌더마다 새로 만들어지므로
+// 여기(모듈)에 둬야 앞서 건 타이머를 취소할 수 있다.
+let placeTimer = null
+
 // 일상 사진 액션: 목록 로드 / 사진 고르기 / 올리기 / 수정 / 삭제.
 export function createMediaActions({ ref, setState, go, back, showToast }) {
   const loadMedia = async (groupId) => {
@@ -17,6 +21,9 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       setState({ groupMedia: [], mediaLoading: false })
     }
   }
+
+  // 장소 검색 창을 닫은 상태
+  const PLACE_SEARCH_CLOSED = { placeSearchOpen: false, placeQuery: '', placeResults: [], placeSearching: false, placeError: null }
 
   // 한 글에 담을 수 있는 최대 개수 (서버의 MAX_FILES 와 같은 값).
   const MAX_PICK = 10
@@ -102,6 +109,37 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     setState({ uploadTakenFrom: from, uploadTakenTo: to })
   }
 
+  // ── 장소 (구글 장소 검색) ─────────────────────────────────────────
+  // 치는 동안 매번 부르면 요청이 많아 요금이 붙는다. 멈추고 잠깐 뒤에 한 번만 찾는다.
+  // 늦게 도착한 옛 검색 결과가 새 결과를 덮지 않게 마지막 검색어와 맞는지 본다.
+  const openPlaceSearch = () => setState({ placeSearchOpen: true, placeQuery: '', placeResults: [], placeError: null })
+  const closePlaceSearch = () => { clearTimeout(placeTimer); setState(PLACE_SEARCH_CLOSED) }
+  const onPlaceQuery = (q) => {
+    setState({ placeQuery: q, placeError: null })
+    clearTimeout(placeTimer)
+    const text = q.trim()
+    if (!text) { setState({ placeResults: [], placeSearching: false }); return }
+    placeTimer = setTimeout(async () => {
+      setState({ placeSearching: true })
+      try {
+        const results = await api.searchPlaces(text)
+        if ((ref.current.placeQuery || '').trim() !== text) return
+        setState({ placeResults: results || [], placeSearching: false })
+      } catch (e) {
+        if ((ref.current.placeQuery || '').trim() !== text) return
+        setState({ placeResults: [], placeSearching: false, placeError: e.message })
+      }
+    }, 450)
+  }
+  const pickPlace = (p) => {
+    clearTimeout(placeTimer)
+    setState({
+      uploadPlace: { name: p.name, address: p.address || undefined, placeId: p.placeId, lat: p.lat ?? undefined, lng: p.lng ?? undefined },
+      ...PLACE_SEARCH_CLOSED,
+    })
+  }
+  const removePlace = () => setState({ uploadPlace: null })
+
   // 새로 고른 사진 순서 바꾸기 (끌어서 놓기). 올릴 때 이 순서대로 붙는다.
   const reorderUploadAsset = (from, to) => {
     const list = [...(ref.current.uploadAssets || [])]
@@ -162,7 +200,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
         await api.putToSignedUrl(slots[i].signedUrl, ready[i], files[i].contentType)
         updateJob(job.id, { done: i + 1 })
       }
-      await api.commitUpload(job.groupId, slots.map((s) => s.uploadId), job.caption, job.taken)
+      await api.commitUpload(job.groupId, slots.map((s) => s.uploadId), job.caption, job.extra)
       // 목록을 먼저 받은 뒤 카드를 없앤다 — 반대면 실제 글이 뜨기 전에 잠깐 비어 보인다
       if (ref.current.currentGroup?.id === job.groupId) await loadMedia(job.groupId)
       setState((p) => ({ uploadJobs: (p.uploadJobs || []).filter((j) => j.id !== job.id) }))
@@ -198,6 +236,9 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     const caption = (cur.uploadCaption || '').trim()
     // 언제의 일인지 — 없으면 null 로 (수정에서 날짜를 뺐을 때도 서버가 비우게)
     const taken = { takenFrom: cur.uploadTakenFrom || null, takenTo: cur.uploadTakenTo || null }
+    // 장소 — 뺐으면 null (수정에서 서버도 비우게)
+    const place = cur.uploadPlace || null
+    const extra = { ...taken, place }
 
     // 버킷리스트에 붙이려고 쓰는 글은 끝까지 기다린다 —
     // 올라간 글을 그 칸에 이어붙이고 곧바로 그 칸으로 돌아가야 하기 때문.
@@ -217,7 +258,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
           await api.putToSignedUrl(slots[i].signedUrl, ready[i], files[i].contentType)
           setState({ uploadDone: i + 1 })
         }
-        const created = await api.commitUpload(groupId, slots.map((s) => s.uploadId), caption, taken)
+        const created = await api.commitUpload(groupId, slots.map((s) => s.uploadId), caption, extra)
         await loadMedia(groupId)
 
         // 칸에 내용이 이미 적혀 있으면 바로 이어붙여 저장한다.
@@ -238,7 +279,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
         }
         setState({
           uploadSaving: false, bucketLinkNo: null, bucketMediaId: created.id,
-          uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null,
+          uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadPlace: undefined,
           uploadDone: 0, uploadTotal: 0,
         })
         back()
@@ -255,12 +296,12 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     if (!editId) {
       const job = {
         id: `up-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        groupId, assets, caption, taken,
+        groupId, assets, caption, extra,
         status: 'uploading', done: 0, total: assets.length, error: null,
       }
       setState((p) => ({
         uploadJobs: [job, ...(p.uploadJobs || [])],
-        uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadError: null,
+        uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadPlace: undefined, uploadError: null,
       }))
       go('gallery')
       runUploadJob(job)
@@ -292,11 +333,12 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       // 수정은 늘 '남길 기존 사진' 을 함께 보낸다 — 그래야 새로 고른 사진이
       // 기존 것을 밀어내지 않고 뒤에 붙는다. (예전엔 uploadIds 만 보내 통째로 교체됐다)
       const keepUrls = (ref.current.editMediaItems || []).map((it) => it.url)
-      const updated = await api.updateMedia(editId, uploadIds, caption, keepUrls, taken)
+      // 날짜·장소는 늘 보낸다 — 뺐으면 null 로 보내야 서버에서도 빠진다
+      const updated = await api.updateMedia(editId, uploadIds, caption, keepUrls, extra)
       await loadMedia(groupId)
       setState({
         uploadSaving: false, editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false,
-        uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadError: null,
+        uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadPlace: undefined, uploadError: null,
         uploadDone: 0, uploadTotal: 0,
         media: updated, // 되돌아갈 상세 화면이 바뀐 내용을 보도록
       })
@@ -311,7 +353,8 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
   const openUpload = () => {
     setState({
       editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false,
-      uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadError: null,
+      uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadPlace: undefined, uploadError: null,
+      ...PLACE_SEARCH_CLOSED,
     })
     go('upload')
   }
@@ -325,7 +368,8 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     setState({
       editMediaId: m.id, editMediaItems: m.items || [], editItemsTrimmed: false,
       uploadAssets: undefined, uploadCaption: m.caption || '', uploadError: null,
-      uploadTakenFrom: m.takenFrom || null, uploadTakenTo: m.takenTo || null,
+      uploadTakenFrom: m.takenFrom || null, uploadTakenTo: m.takenTo || null, uploadPlace: m.place || undefined,
+      ...PLACE_SEARCH_CLOSED,
     })
     go('upload')
   }
@@ -408,6 +452,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
     removeUploadItem, reorderUploadAsset,
     addMediaDate, removeMediaDate, toggleMediaRange, setMediaDatePart,
+    openPlaceSearch, closePlaceSearch, onPlaceQuery, pickPlace, removePlace,
     retryUploadJob, discardUploadJob,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
   }

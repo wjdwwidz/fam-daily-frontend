@@ -107,6 +107,18 @@ export default function Media() {
         </View>
       )}
 
+      {/* 장소 — 누르면 구글 지도 (폰에 앱이 있으면 앱으로) */}
+      {m.place && (
+        <Pressable onPress={m.openPlace} style={s('flex-direction:row;align-items:center;gap:md;margin:-10px 5xl 3xl;align-self:flex-start;background:#FFF0F5;border-radius:12px;padding:md lg;cursor:pointer')}>
+          <Svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="#FF5E8A" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+            <Path d="M12 21 C12 21 5 14.5 5 9.5 A7 7 0 0 1 19 9.5 C19 14.5 12 21 12 21 Z" />
+            <Path d="M12 12 A2.5 2.5 0 1 0 12 7 A2.5 2.5 0 1 0 12 12 Z" />
+          </Svg>
+          <Text numberOfLines={1} style={s('flex-shrink:1;font-size:11.5px;font-weight:700;color:#FF5E8A')}>{m.place.name}</Text>
+          <Text style={s('font-size:11px;color:#FF9FBC')}>›</Text>
+        </Pressable>
+      )}
+
       <View style={s('margin:0 5xl;gap:lg')}>
         {m.items.map((it, i) =>
           it.type === 'video'

@@ -39,9 +39,9 @@ export function createBucketActions({ st, setState, ref, go, back, showToast }) 
     setState({
       bucketLinkNo: cur.bucketNo,
       editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false,
-      uploadError: null,
+      uploadError: null, placeSearchOpen: false,
       // 앞서 올리다 실패해 남겨둔 사진이 있으면 그대로 이어서 쓴다
-      ...(cur.bucketLinkNo === cur.bucketNo ? {} : { uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null }),
+      ...(cur.bucketLinkNo === cur.bucketNo ? {} : { uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadPlace: undefined }),
     })
     go('upload')
   }

@@ -111,6 +111,73 @@ function DateField({ vm }) {
   )
 }
 
+function PinIcon({ size = 14, color = '#FF5E8A' }) {
+  return (
+    <Svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M12 21 C12 21 5 14.5 5 9.5 A7 7 0 0 1 19 9.5 C19 14.5 12 21 12 21 Z" />
+      <Path d="M12 12 A2.5 2.5 0 1 0 12 7 A2.5 2.5 0 1 0 12 12 Z" />
+    </Svg>
+  )
+}
+
+// 장소 — 구글 장소 검색으로 찾아 붙인다 (해외도 된다). 붙이면 글에서 누를 때 구글 지도가 열린다.
+function PlaceField({ vm }) {
+  return (
+    <>
+      <Text style={s('margin-top:3xl;font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>장소</Text>
+      {vm.uploadPlace ? (
+        // 고른 곳 — 이름과 주소, 오른쪽에 빼기
+        <View style={s('flex-direction:row;align-items:center;gap:lg;background:#fff;border:1px solid #FFE1EC;border-radius:16px;padding:xl 2xl')}>
+          <PinIcon size={16} />
+          <View style={s('flex:1;min-width:0')}>
+            <Text numberOfLines={1} style={s('font-size:12.5px;font-weight:700;color:#17303B')}>{vm.uploadPlace.name}</Text>
+            {!!vm.uploadPlace.address && (
+              <Text numberOfLines={1} style={s('font-size:10.5px;color:#9DB2BD;margin-top:hair')}>{vm.uploadPlace.address}</Text>
+            )}
+          </View>
+          <Pressable onPress={vm.removePlace} hitSlop={8}>
+            <Text style={s('font-size:11.5px;color:#9DB2BD')}>빼기</Text>
+          </Pressable>
+        </View>
+      ) : vm.placeSearchOpen ? (
+        <View style={s('background:#fff;border:1px solid #FFE1EC;border-radius:16px;padding:md 2xl lg')}>
+          <View style={s('flex-direction:row;align-items:center;gap:md')}>
+            <PinIcon size={15} color="#9DB2BD" />
+            <TextInput
+              value={vm.placeQuery}
+              onChangeText={vm.onPlaceQuery}
+              autoFocus
+              returnKeyType="search"
+              placeholder="장소 이름이나 주소 (해외도 돼요)"
+              placeholderTextColor="#9DB2BD"
+              style={s('flex:1;min-width:0;height:40px;border:none;outline:none;background:transparent;font-size:12.5px;font-family:inherit;color:#17303B')}
+            />
+            {vm.placeSearching && <ActivityIndicator size="small" color="#FF9FBC" />}
+            <Pressable onPress={vm.closePlaceSearch} hitSlop={8}>
+              <Text style={s('font-size:11.5px;color:#9DB2BD')}>닫기</Text>
+            </Pressable>
+          </View>
+          {!!vm.placeError && <Text style={s('font-size:11px;color:#E5484D;padding:sm 0')}>{vm.placeError}</Text>}
+          {!vm.placeSearching && !vm.placeError && !!vm.placeQuery.trim() && vm.placeResults.length === 0 && (
+            <Text style={s('font-size:11px;color:#9DB2BD;padding:sm 0')}>찾는 곳이 없어요. 다르게 적어볼까요?</Text>
+          )}
+          {vm.placeResults.map((p) => (
+            <Pressable key={p.placeId} onPress={p.pick} style={s('padding:lg 0;border-top:1px solid #FBEDF3;cursor:pointer')}>
+              <Text numberOfLines={1} style={s('font-size:12.5px;font-weight:700;color:#17303B')}>{p.name}</Text>
+              {!!p.address && <Text numberOfLines={1} style={s('font-size:10.5px;color:#9DB2BD;margin-top:hair')}>{p.address}</Text>}
+            </Pressable>
+          ))}
+        </View>
+      ) : (
+        <Pressable onPress={vm.openPlaceSearch} style={s('flex-direction:row;align-items:center;gap:md;border:1.5px dashed #FFC4D8;border-radius:16px;padding:xl 2xl;background:#FFF6FA;cursor:pointer')}>
+          <PinIcon size={15} />
+          <Text style={s('font-size:12px;color:#FF5E8A;font-weight:700')}>장소 추가</Text>
+        </Pressable>
+      )}
+    </>
+  )
+}
+
 export default function Upload() {
   const vm = useVm()
   return (
@@ -178,6 +245,7 @@ export default function Upload() {
         <Text style={s('margin-top:4xl;font-size:11.3px;font-weight:700;color:#17303B;margin-bottom:md')}>설명</Text>
         <TextInput value={vm.uploadCaption} onChangeText={vm.onUploadCaption} multiline textAlignVertical="top" placeholder="이 순간을 한 줄로 남겨보세요" placeholderTextColor="#9DB2BD" style={s('width:100%;min-height:64px;border:none;outline:none;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:16px;padding:2xl 3xl;font-size:12.2px;font-family:inherit;color:#17303B;resize:none')} />
         <DateField vm={vm} />
+        <PlaceField vm={vm} />
         {vm.uploadError && <Text style={s('font-size:12px;color:#E5484D;margin-top:3xl;text-align:center')}>{vm.uploadError}</Text>}
         <Pressable onPress={vm.submitUpload} disabled={vm.uploadSaving} style={s(`margin:ctaTop 0 ctaBottom;height:54px;border-radius:17px;background:#FF5E8A;align-items:center;justify-content:center;flex-direction:row;opacity:${vm.uploadSaving ? 0.7 : 1}`)}>
           <Text style={s('font-size:13.9px;font-weight:700;color:#fff')}>{vm.uploadCta}</Text>
