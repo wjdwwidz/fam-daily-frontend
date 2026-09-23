@@ -22,12 +22,9 @@ export default function Notifications() {
         <Pressable onPress={vm.back} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#17303B')}>
           <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#17303B"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
         </Pressable>
-        <Text style={s('font-size:20px;font-weight:800;color:#17303B;letter-spacing:-0.4px')}>알림</Text>
+        <Text style={s('font-size:20px;font-weight:800;color:#17303B;letter-spacing:-0.4px')}>내 활동 알림</Text>
       </View>
-      <Text style={s('font-size:11.3px;color:#9DB2BD;margin:0 hair 2xl')}>
-        {vm.notificationsLoading ? '불러오는 중…' : '내 일상의 댓글과 내 댓글의 답글'}
-      </Text>
-
+      {/* 불러오는 동안엔 빙글빙글 도는 표시만 (글씨까지 있으면 두 번 말하는 셈) */}
       {vm.notificationsLoading && items.length === 0 && (
         <View style={s('align-items:center;padding:6xl 0')}>
           <ActivityIndicator color="#FF9FBC" />
@@ -41,7 +38,7 @@ export default function Notifications() {
         </View>
       )}
 
-      <View style={s('gap:md')}>
+      <View style={s('gap:md;margin-top:2xl')}>
         {items.map((n) => (
           <Pressable
             key={n.key}
