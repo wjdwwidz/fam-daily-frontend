@@ -3,6 +3,7 @@ import { View, Text, Image, Pressable, TextInput } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import Avatar from '../components/Avatar.jsx'
+import ActivityRow from '../components/ActivityRow.jsx'
 import mascot from '../../assets/img/mascot.png'
 
 import { useVm } from '../vm/useVm.js'
@@ -18,7 +19,8 @@ export default function Home() {
   // 다른 화면에서 글을 쓰거나 한마디를 남기고 돌아와도 바로 보이게.
   // 구성원 상세에만 mood 가 들어 있다 (가족 목록 API 에는 없다).
   const groupId = vm.currentGroup?.id
-  useEffect(() => { vm.loadActivity(); vm.loadMembers() }, [groupId])
+  // 홈에 올 때마다 최근 활동·구성원과 함께 알림 개수(종 모양 뱃지)도 새로 받는다
+  useEffect(() => { vm.loadActivity(); vm.loadMembers(); vm.refreshNotificationCount() }, [groupId])
   return (
     <View style={s('padding:screenTop screenX screenBottom')}>
       <View style={s('display:flex;align-items:flex-start;justify-content:space-between;margin:sm 0 lg')}>
@@ -28,9 +30,23 @@ export default function Home() {
             <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px;white-space:nowrap')}>오늘의 한마디!</Text>
           </View>
         </View>
-        <Pressable onPress={vm.goProfileEdit} style={s('align-self:center')}>
-          <Avatar photoUrl={vm.myPhoto} ini={vm.myInitial} size={44} style={{ borderRadius: 15 }} />
-        </Pressable>
+        <View style={s('flex-direction:row;align-items:center;gap:lg;align-self:center')}>
+          {/* 알림 — 내 일상의 댓글·내 댓글의 답글. 안 읽은 게 있으면 숫자 뱃지 */}
+          <Pressable onPress={vm.openNotifications} hitSlop={8} style={s('width:40px;height:40px;border-radius:14px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);align-items:center;justify-content:center;cursor:pointer')}>
+            <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="#FF5E8A" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <Path d="M18 16 v-5 a6 6 0 0 0 -12 0 v5 l-1.5 2.5 h15 Z" />
+              <Path d="M10 20 a2 2 0 0 0 4 0" />
+            </Svg>
+            {vm.hasNotifications && (
+              <View style={s('position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#FF5E8A;border:2px solid #FFF6FB;align-items:center;justify-content:center;padding:0 xs')}>
+                <Text style={s('font-size:9.5px;font-weight:800;color:#fff')}>{vm.notificationBadge}</Text>
+              </View>
+            )}
+          </Pressable>
+          <Pressable onPress={vm.goProfileEdit}>
+            <Avatar photoUrl={vm.myPhoto} ini={vm.myInitial} size={44} style={{ borderRadius: 15 }} />
+          </Pressable>
+        </View>
       </View>
 
       <View style={s('display:flex;justify-content:flex-end;margin:0 hair hair')}>
@@ -91,7 +107,12 @@ export default function Home() {
         </View>
       )}
 
-      <Text style={s('margin:xs hair lg;font-size:13px;font-weight:500;color:#7C8B95')}>최근 활동</Text>
+      <View style={s('flex-direction:row;align-items:center;justify-content:space-between;margin:xs hair lg')}>
+        <Text style={s('font-size:13px;font-weight:500;color:#7C8B95')}>최근 활동</Text>
+        <Pressable onPress={vm.openActivityAll}>
+          <Text style={s('font-size:12px;color:#8497A1;cursor:pointer')}>더보기 ›</Text>
+        </Pressable>
+      </View>
       <View style={s('background:rgba(255,255,255,0.45);border:1px solid rgba(255,225,236,0.6);border-radius:26px;padding:hair 3xl;')}>
         {vm.recentActivity.length === 0 && (
           <Text style={s('padding:3xl 0;text-align:center;font-size:11.5px;color:#9DB2BD')}>
@@ -99,18 +120,7 @@ export default function Home() {
           </Text>
         )}
         {vm.recentActivity.map((a) => (
-          <Pressable key={a.key} onPress={a.open} style={s('display:flex;align-items:center;gap:xl;padding:lg 0;border-bottom:1px solid rgba(239,244,247,0.7);cursor:pointer')}>
-            {/* 버킷리스트 달성처럼 '가족이 함께 이룬 일'은 사람 대신 체크 배지를 둔다 */}
-            {a.by ? (
-              <Avatar photoUrl={a.by.photoUrl} ini={a.by.ini} size={30} />
-            ) : (
-              <View style={s('width:30px;height:30px;border-radius:50%;background:#FF5E8A;align-items:center;justify-content:center;flex:0 0 auto')}>
-                <Svg viewBox="0 0 24 24" width={15} height={15} fill="none" stroke="#fff" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 13 L10 18 L19 7" /></Svg>
-              </View>
-            )}
-            <Text numberOfLines={1} style={s('flex:1;font-size:11.5px;color:#57646E')}>{a.by && <><Text style={s('color:#17303B;font-weight:700')}>{a.by.name}</Text>님이 </>}{a.prefix}<Text style={s('color:#FF5E8A;font-weight:700')}>{a.highlight}</Text>{a.suffix}</Text>
-            <Text style={s('font-size:10px;color:#B4C1CA')}>{a.date}</Text>
-          </Pressable>
+          <ActivityRow key={a.key} a={a} />
         ))}
       </View>
     </View>

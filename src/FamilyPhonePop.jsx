@@ -22,6 +22,8 @@ import Gallery from './screens/Gallery.jsx'
 import Media from './screens/Media.jsx'
 import QnaHistory from './screens/QnaHistory.jsx'
 import MoodHistory from './screens/MoodHistory.jsx'
+import Notifications from './screens/Notifications.jsx'
+import ActivityAll from './screens/ActivityAll.jsx'
 import BucketItem from './screens/BucketItem.jsx'
 import Upload from './screens/Upload.jsx'
 import Members from './screens/Members.jsx'
@@ -77,6 +79,7 @@ export default function FamilyPhonePop() {
     vm.isJoinSpace ? JoinSpace : vm.isHome ? Home : vm.isRecord ? Record : vm.isWord ? Word :
     vm.isGallery ? Gallery : vm.isMedia ? Media :
     vm.isQnaHistory ? QnaHistory : vm.isMoodHistory ? MoodHistory : vm.isBucketItem ? BucketItem : vm.isUpload ? Upload :
+    vm.isNotifications ? Notifications : vm.isActivityAll ? ActivityAll :
     vm.isMembers ? Members : vm.isProfile ? Profile : Login
 
   return (
