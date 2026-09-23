@@ -83,12 +83,33 @@ export function createGroupActions({ ref, setState }, afterAuth) {
   }
   const cancelEditGroupName = () => setState({ editingGroupName: false, groupNameError: null })
 
+  // 알림 — 나에게 온 것(내 글 댓글·내 댓글 답글). 홈의 종 모양에 안 읽은 수를 띄운다.
+  // 화면을 열면 읽음으로 표시하되, 목록의 '안 읽음' 표시는 그대로 둬서 무엇이 새로 왔는지 보이게 한다.
+  const loadNotifications = async (groupId, { markSeen = false } = {}) => {
+    if (!groupId) return
+    setState({ notificationsLoading: true })
+    try {
+      const r = await api.notifications(groupId, 30)
+      if (ref.current.currentGroup?.id !== groupId) {
+        setState({ notificationsLoading: false })
+        return
+      }
+      setState({ notifications: r?.items || [], notificationsUnread: r?.unread || 0, notificationsLoading: false })
+      if (markSeen) {
+        await api.markNotificationsSeen(groupId).catch(() => {})
+        setState({ notificationsUnread: 0 })
+      }
+    } catch {
+      setState({ notificationsLoading: false })
+    }
+  }
+
   // 홈 '최근 활동' 불러오기. 실패하면 들고 있던 목록을 그대로 둔다.
-  const loadActivity = async (groupId) => {
+  const loadActivity = async (groupId, limit = 5) => {
     if (!groupId) return
     setState({ activityLoading: true })
     try {
-      const list = await api.groupActivity(groupId, 5)
+      const list = await api.groupActivity(groupId, limit)
       // 불러오는 사이 다른 가족으로 전환했으면 이 결과는 버린다
       if (ref.current.currentGroup?.id !== groupId) {
         setState({ activityLoading: false })
@@ -112,7 +133,7 @@ export function createGroupActions({ ref, setState }, afterAuth) {
         groupDeleting: false,
         currentGroup: null, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [],
         moodPin: null,
-        word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, spaceSheetOpen: false, groupActivity: [],
+        word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, spaceSheetOpen: false, groupActivity: [], notifications: [], notificationsUnread: 0,
         groups: (p.groups || []).filter((g) => g.id !== gid),
         screen: 'spaceSelect', _hist: [],
       }))
@@ -155,5 +176,5 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     }
   }
 
-  return { doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName, cancelEditGroupName, deleteGroup, loadActivity, sendMood, openInvite }
+  return { doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName, cancelEditGroupName, deleteGroup, loadActivity, loadNotifications, sendMood, openInvite }
 }

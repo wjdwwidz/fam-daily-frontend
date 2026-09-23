@@ -57,7 +57,7 @@ export function buildVm(app) {
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, reorderBucket,
     startBucketMedia, cancelBucketLink, setBucketDatePart, toggleBucketRow,
-    cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity,
+    cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity, loadNotifications,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
@@ -750,6 +750,39 @@ export function buildVm(app) {
     recentActivity,
     activityLoading: !!st.activityLoading,
     loadActivity: () => loadActivity(st.currentGroup?.id),
+    // 최근 활동 '더보기' — 홈은 5개, 이 화면은 넉넉히 받아 온다
+    isActivityAll: scr === 'activity',
+    openActivityAll: () => go('activity'),
+    loadActivityAll: () => loadActivity(st.currentGroup?.id, 60),
+
+    // 알림 — 내 글의 댓글·내 댓글의 답글
+    isNotifications: scr === 'notifications',
+    openNotifications: () => go('notifications'),
+    loadNotifications: () => loadNotifications(st.currentGroup?.id, { markSeen: true }),
+    refreshNotificationCount: () => loadNotifications(st.currentGroup?.id),
+    notificationsLoading: !!st.notificationsLoading,
+    // 종 모양 옆 숫자 — 9 를 넘으면 '9+' (자리를 넘치지 않게)
+    notificationBadge: (st.notificationsUnread || 0) > 9 ? '9+' : String(st.notificationsUnread || 0),
+    hasNotifications: (st.notificationsUnread || 0) > 0,
+    notifications: (st.notifications || []).map((n) => {
+      const name = n.author?.nickname || n.author?.name || '가족'
+      return {
+        key: n.id,
+        by: { name, ini: String(name).slice(0, 1), photoUrl: personPhoto(n.author) },
+        // 답글이면 '내 댓글에', 아니면 '내 일상에'
+        what: n.kind === 'reply' ? '내 댓글에 답글' : '내 일상에 댓글',
+        text: n.text,
+        coverUrl: n.coverUrl || null,
+        unread: !!n.unread,
+        when: `${fmtDate(n.createdAt)} ${fmtTime(n.createdAt)}`.trim(),
+        // 누르면 그 일상 글로
+        open: () => {
+          const m = (st.groupMedia || []).find((x) => x.id === n.mediaId)
+          if (m) openMediaDetail(m)
+          else go('gallery')
+        },
+      }
+    }),
     loadMembers: () => loadMembers(st.currentGroup?.id),
     // 아래로 당겨서 새로고침 — 화면마다 새로 받는 것이 다르다.
     // 목록이 있는 화면에서만 켠다 (입력 화면에서 당기면 쓰던 내용이 날아간 것처럼 느껴진다).
