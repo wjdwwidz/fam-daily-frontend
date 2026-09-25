@@ -40,6 +40,9 @@ export function createCalendarActions({ ref, setState, showToast }) {
     setState({ calYear: yy, calMonth: mm, calPicked: null })
     loadEvents(yy, mm)
   }
+  // 제목의 년·월 칩에서 고른 달로 바로 이동
+  const setCalYear = (y) => { const cur = shown(); showMonth(y, cur.m) }
+  const setCalMonth = (m) => { const cur = shown(); showMonth(cur.y, m) }
   const prevMonth = () => { const { y, m } = shown(); showMonth(y, m - 1) }
   const nextMonth = () => { const { y, m } = shown(); showMonth(y, m + 1) }
   const goThisMonth = () => { const n = new Date(); showMonth(n.getFullYear(), n.getMonth() + 1) }
@@ -134,7 +137,7 @@ export function createCalendarActions({ ref, setState, showToast }) {
 
   return {
     loadEvents: () => { const { y, m } = shown(); return loadEvents(y, m) },
-    prevMonth, nextMonth, goThisMonth, pickDay,
+    prevMonth, nextMonth, goThisMonth, pickDay, setCalYear, setCalMonth,
     openEvent, closeEvent, onEventTitle, pickEventCategory, toggleEventRange,
     setEventDatePart, saveEvent, removeEvent,
   }

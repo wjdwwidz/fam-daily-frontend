@@ -10,7 +10,9 @@ const GAP = 6
 const EDGE = 12
 const POP_H = 36 * 5 + 20 // 휠 5칸 + 위아래 여백·테두리
 
-export default function WheelChip({ items, value, unit = '', width = 76, onChange }) {
+// closeOnPick: 고르자마자 닫는다 (달력 제목처럼 '고르면 끝' 인 곳).
+// 날짜를 잇달아 맞추는 곳(일상·일정 날짜)에서는 열어둔 채로 둔다.
+export default function WheelChip({ items, value, unit = '', width = 76, onChange, closeOnPick = false }) {
   const chipRef = useRef(null)
   const [pos, setPos] = useState(null) // 열려 있으면 { x, y, w, h } (칩의 화면 좌표)
   const { width: winW, height: winH } = useWindowDimensions()
@@ -39,7 +41,7 @@ export default function WheelChip({ items, value, unit = '', width = 76, onChang
             // 안쪽을 눌러도 닫히지 않게 한 번 더 감싼다
             <Pressable onPress={() => {}} style={[s('position:absolute;background:#fff;border:1px solid #FFE1EC;border-radius:16px;padding:sm 6px;box-shadow:0 10px 24px rgba(255,94,138,0.18)'), { top, left }]}>
               <View>
-                <WheelPicker items={items} value={value} unit={unit} width={width} onChange={onChange} />
+                <WheelPicker items={items} value={value} unit={unit} width={width} onChange={(n) => { onChange(n); if (closeOnPick) close() }} />
               </View>
             </Pressable>
           )}

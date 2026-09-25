@@ -6,7 +6,7 @@ import * as Clipboard from 'expo-clipboard'
 import { Linking, Platform, Share } from 'react-native'
 import { MAX_WORD_PHOTOS } from '../state/wordActions.js'
 import { clipText } from '../lib/text.js'
-import { dateWheel, fmtYmdRange, todayYmd } from '../lib/date.js'
+import { dateWheel, fmtYmdRange, todayYmd, FIRST_YEAR } from '../lib/date.js'
 import { placeMapUrl } from '../lib/place.js'
 
 // 일상(갤러리) 폴더 탭 색. 멤버 아바타 색을 쓰면 탭마다 색이 튀어 무지개가 된다.
@@ -58,7 +58,7 @@ export function buildVm(app) {
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, reorderBucket,
     startBucketMedia, cancelBucketLink, setBucketDatePart, toggleBucketRow,
     cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity, loadNotifications,
-    loadEvents, prevMonth, nextMonth, goThisMonth, pickDay,
+    loadEvents, prevMonth, nextMonth, goThisMonth, pickDay, setCalYear, setCalMonth,
     openEvent, closeEvent, onEventTitle, pickEventCategory, toggleEventRange,
     setEventDatePart, saveEvent, removeEvent,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
@@ -730,9 +730,10 @@ export function buildVm(app) {
     isCalendar: scr === 'record' && (st.recordTab || 'dict') === 'calendar',
     loadEvents, prevMonth, nextMonth, goThisMonth,
     calLoading: !!st.calLoading,
-    calTitle: `${calY}년 ${calM}월`,
-    // 이번 달이 아니면 '오늘로' 를 보여준다
-    calIsThisMonth: calY === calNow.getFullYear() && calM === calNow.getMonth() + 1,
+    // 제목의 년·월 — 누르면 휠로 골라 그 달로 바로 간다 (앞으로의 일정도 잡으니 10년 뒤까지)
+    calY, calM, setCalYear, setCalMonth,
+    calYears: Array.from({ length: calNow.getFullYear() + 10 - FIRST_YEAR + 1 }, (_, i) => FIRST_YEAR + i),
+    calMonths: Array.from({ length: 12 }, (_, i) => i + 1),
     calWeekdays: ['일', '월', '화', '수', '목', '금', '토'],
     // 달력 칸 — 1일이 무슨 요일인지에 따라 앞을 빈 칸으로 채운다
     calCells: (() => {

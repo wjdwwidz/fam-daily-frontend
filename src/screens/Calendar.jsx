@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { View, Text, Pressable, ScrollView } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
+import WheelChip from '../components/WheelChip.jsx'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -10,7 +11,8 @@ import { useVm } from '../vm/useVm.js'
 export default function Calendar() {
   const vm = useVm()
   const groupId = vm.currentGroup?.id
-  useEffect(() => { vm.loadEvents() }, [groupId])
+  // 들어올 때마다 이번 달로 (지난번에 넘겨 보던 달을 기억하지 않는다)
+  useEffect(() => { vm.goThisMonth() }, [groupId])
 
   return (
     <View>
@@ -19,14 +21,10 @@ export default function Calendar() {
         <Pressable onPress={vm.prevMonth} hitSlop={8} style={s('width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;background:#fff;border:1px solid #FFE1EC;cursor:pointer')}>
           <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#FF5E8A" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
         </Pressable>
-        <View style={s('flex-direction:row;align-items:center;gap:lg')}>
-          <Text style={s('font-size:15px;font-weight:800;color:#17303B;font-variant:tabular-nums')}>{vm.calTitle}</Text>
-          {/* 다른 달을 보고 있을 때만 — 이번 달로 돌아오는 길 */}
-          {!vm.calIsThisMonth && (
-            <Pressable onPress={vm.goThisMonth} hitSlop={6} style={s('background:#FFF0F5;border-radius:10px;padding:xs md')}>
-              <Text style={s('font-size:10.5px;font-weight:700;color:#FF5E8A')}>오늘로</Text>
-            </Pressable>
-          )}
+        <View style={s('flex-direction:row;align-items:center;gap:sm')}>
+          {/* 년·월을 눌러 고르면 그 달로 바로 간다 */}
+          <WheelChip items={vm.calYears} value={vm.calY} unit="년" width={84} onChange={vm.setCalYear} closeOnPick />
+          <WheelChip items={vm.calMonths} value={vm.calM} unit="월" onChange={vm.setCalMonth} closeOnPick />
         </View>
         <Pressable onPress={vm.nextMonth} hitSlop={8} style={s('width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;background:#fff;border:1px solid #FFE1EC;cursor:pointer')}>
           <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#FF5E8A" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M9.5 5 L16.5 12 L9.5 19" /></Svg>
@@ -87,8 +85,12 @@ export default function Calendar() {
                 {e.when}{e.category ? ` · ${e.category}` : ''}{e.byName ? ` · ${e.byName}님` : ''}
               </Text>
             </View>
-            <Pressable onPress={e.remove} hitSlop={8}>
-              <Text style={s('font-size:11.5px;color:#9DB2BD')}>지우기</Text>
+            {/* 휴지통 — 누르면 확인 창을 한 번 거친다 */}
+            <Pressable onPress={e.remove} hitSlop={10} accessibilityLabel="일정 지우기" style={s('width:30px;height:30px;border-radius:10px;align-items:center;justify-content:center;cursor:pointer')}>
+              <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#B4C1CA" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M5 7 h14 M9 7 V5 h6 v2 M6 7 l1 13 h10 l1 -13" />
+                <Path d="M10 11 v6 M14 11 v6" />
+              </Svg>
             </Pressable>
           </Pressable>
         ))}
