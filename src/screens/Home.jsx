@@ -4,6 +4,7 @@ import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import Avatar from '../components/Avatar.jsx'
 import ActivityRow from '../components/ActivityRow.jsx'
+import { HOME_ACTIVITY_LIMIT } from '../state/groupActions.js'
 import mascot from '../../assets/img/mascot.png'
 
 import { useVm } from '../vm/useVm.js'
@@ -20,7 +21,7 @@ export default function Home() {
   // 구성원 상세에만 mood 가 들어 있다 (가족 목록 API 에는 없다).
   const groupId = vm.currentGroup?.id
   // 홈에 올 때마다 최근 활동·구성원과 함께 알림 개수(종 모양 뱃지)도 새로 받는다
-  useEffect(() => { vm.loadActivity(); vm.loadMembers(); vm.refreshNotificationCount() }, [groupId])
+  useEffect(() => { vm.loadActivity(); vm.loadMembers(); vm.refreshNotificationCount(); vm.loadDday() }, [groupId])
   return (
     <View style={s('padding:screenTop screenX screenBottom')}>
       <View style={s('display:flex;align-items:flex-start;justify-content:space-between;margin:sm 0 lg')}>
@@ -107,6 +108,23 @@ export default function Home() {
         </View>
       )}
 
+      {/* 다가오는 일정 — 일정에 'D-day 로 보여주기' 를 켠 것만 (가까운 순 3개) */}
+      {vm.ddayEvents.length > 0 && (
+        <View style={s('gap:md;margin:xs hair 5xl')}>
+          {vm.ddayEvents.map((d) => (
+            // 한 줄에 하나 — 테두리·배경 없이 홈 바탕 위에 그대로
+            <Pressable key={d.key} onPress={d.open} style={s('flex-direction:row;align-items:center;gap:lg;padding:0 hair;cursor:pointer')}>
+              <View style={{ width: 4, height: 30, borderRadius: 2, backgroundColor: d.color }} />
+              <View style={s('flex:1;min-width:0')}>
+                <Text numberOfLines={1} style={s('font-size:12.5px;font-weight:700;color:#17303B')}>{d.title}</Text>
+                <Text style={s('font-size:10.5px;color:#9DB2BD;margin-top:hair')}>{d.when}</Text>
+              </View>
+              <Text style={s('font-size:14px;font-weight:800;color:#FF5E8A;font-variant:tabular-nums')}>{d.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
       <View style={s('flex-direction:row;align-items:center;justify-content:space-between;margin:xs hair lg')}>
         <Text style={s('font-size:13px;font-weight:500;color:#7C8B95')}>최근 활동</Text>
         <Pressable onPress={vm.openActivityAll}>
@@ -119,7 +137,8 @@ export default function Home() {
             {vm.activityLoading ? '불러오는 중…' : '아직 활동이 없어요'}
           </Text>
         )}
-        {vm.recentActivity.map((a) => (
+        {/* 더보기 화면에서 길게 받아 온 뒤 돌아와도 홈에서는 앞의 몇 개만 */}
+        {vm.recentActivity.slice(0, HOME_ACTIVITY_LIMIT).map((a) => (
           <ActivityRow key={a.key} a={a} />
         ))}
       </View>

@@ -16,6 +16,20 @@ function DateChips({ wheel, onPart }) {
   )
 }
 
+// 체크 한 줄 (매년 반복 · D-day)
+function Check({ on, onPress, label }) {
+  return (
+    <Pressable onPress={onPress} hitSlop={6} style={s('flex-direction:row;align-items:center;gap:md;margin-top:xl;cursor:pointer')}>
+      <View style={s(`width:20px;height:20px;border-radius:6px;align-items:center;justify-content:center;border:1.5px solid ${on ? '#FF5E8A' : '#E7D3DC'};background:${on ? '#FF5E8A' : 'transparent'}`)}>
+        {on && (
+          <Svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 13 L10 18 L19 7" /></Svg>
+        )}
+      </View>
+      <Text style={s('font-size:12px;font-weight:700;color:#17303B')}>{label}</Text>
+    </Pressable>
+  )
+}
+
 // 일정 추가·수정 — 달력에서 연다. 가족 공용이라 누가 적었든 고치고 지울 수 있다.
 export default function AddEventSheet() {
   const vm = useVm()
@@ -57,7 +71,25 @@ export default function AddEventSheet() {
           )}
         </View>
 
-        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:4xl hair xl')}>색상 <Text style={s('font-weight:500;color:#9DB2BD')}>· 일정 종류를 색으로 구분해요</Text></Text>
+        {/* 해마다 돌아오는 일정 (생일·기념일) */}
+        <Check on={vm.eventRepeatYearly} onPress={vm.toggleEventRepeat} label="매년 반복하기" />
+        {/* 홈에 D-day 로 띄우기 */}
+        <Check on={vm.eventIsDday} onPress={vm.toggleEventDday} label="D-day 설정하기" />
+
+        {/* 세는 방법 — 기념일이면 '날짜수', 임신·백일이면 '주수' 처럼 고른다 */}
+        {/* 매년 돌아오는 일정은 늘 '다음 차례까지 남은 날' 이라 고를 게 없다 */}
+        {vm.eventIsDday && !vm.eventRepeatYearly && (
+          <View style={s('flex-direction:row;gap:sm;background:#FFF0F5;border-radius:13px;padding:xs;margin-top:md')}>
+            {vm.ddayModes.map((m) => (
+              <Pressable key={m.key} onPress={m.pick} style={s(`flex:1;height:40px;border-radius:10px;align-items:center;justify-content:center;background:${m.sel ? '#fff' : 'transparent'}`)}>
+                <Text style={s(`font-size:12.2px;font-weight:700;color:${m.sel ? '#FF5E8A' : '#B39AA4'}`)}>{m.label}</Text>
+                <Text style={s(`font-size:9.5px;color:${m.sel ? '#FF8FAE' : '#C9B4BE'}`)}>{m.hint}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+
+        <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:3xl hair xl')}>색상 <Text style={s('font-weight:500;color:#9DB2BD')}>· 일정 종류를 색으로 구분해요</Text></Text>
         <View style={s('flex-direction:row;justify-content:space-between;padding:0 hair')}>
           {/* 색만 고른다 — 이름표(가족 모임·병원 …)는 두지 않는다 */}
           {vm.eventCats.map((k) => (

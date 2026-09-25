@@ -33,6 +33,17 @@ export function createCalendarActions({ ref, setState, showToast }) {
     }
   }
 
+  // 홈에 띄울 D-day 일정 — 홈에 들어올 때와 일정이 바뀔 때 받아 둔다
+  const loadDday = async () => {
+    const id = gid()
+    if (!id) return
+    try {
+      const rows = await api.ddayEvents(id, 3)
+      if (gid() !== id) return
+      setState({ ddayEvents: rows || [] })
+    } catch {}
+  }
+
   const showMonth = (y, m) => {
     // 12월 다음은 다음 해 1월, 1월 이전은 지난해 12월
     const yy = m < 1 ? y - 1 : m > 12 ? y + 1 : y
@@ -63,6 +74,9 @@ export function createCalendarActions({ ref, setState, showToast }) {
         startDate: start,
         endDate: event?.endDate || null,
         category: event?.category || null,
+        repeatYearly: !!event?.repeatYearly,
+        isDday: !!event?.isDday,
+        ddayMode: event?.ddayMode || 'dday',
       },
       eventError: null,
     })
@@ -70,6 +84,15 @@ export function createCalendarActions({ ref, setState, showToast }) {
   const closeEvent = () => setState({ eventSheet: null, eventError: null })
   const onEventTitle = (title) =>
     setState((p) => ({ eventSheet: { ...p.eventSheet, title }, eventError: null }))
+  // 해마다 같은 날 돌아오는 일정 (생일·기념일)
+  const toggleEventRepeat = () =>
+    setState((p) => ({ eventSheet: { ...p.eventSheet, repeatYearly: !p.eventSheet?.repeatYearly } }))
+  // 홈에 D-day 로 띄울지
+  const toggleEventDday = () =>
+    setState((p) => ({ eventSheet: { ...p.eventSheet, isDday: !p.eventSheet?.isDday } }))
+  // 세는 방법 — 남은 날(dday) · 지난 날수(count) · 주수(week)
+  const setDdayMode = (ddayMode) =>
+    setState((p) => ({ eventSheet: { ...p.eventSheet, ddayMode, isDday: true } }))
   const pickEventCategory = (category) =>
     setState((p) => ({
       eventSheet: { ...p.eventSheet, category: p.eventSheet?.category === category ? null : category },
@@ -110,12 +133,16 @@ export function createCalendarActions({ ref, setState, showToast }) {
       startDate: sheet.startDate,
       endDate: sheet.endDate || null,
       category: sheet.category || null,
+      repeatYearly: !!sheet.repeatYearly,
+      isDday: !!sheet.isDday,
+      ddayMode: sheet.ddayMode || 'dday',
     }
     try {
       if (sheet.id) await api.updateEvent(sheet.id, body)
       else await api.createEvent(id, body)
       const { y, m } = shown()
       await loadEvents(y, m)
+      await loadDday()
       setState({ eventSaving: false, eventSheet: null })
       showToast(sheet.id ? '일정을 수정했어요' : '일정을 추가했어요')
     } catch (e) {
@@ -128,6 +155,7 @@ export function createCalendarActions({ ref, setState, showToast }) {
       await api.deleteEvent(eventId)
       const { y, m } = shown()
       await loadEvents(y, m)
+      await loadDday()
       setState({ eventSheet: null })
       showToast('일정을 지웠어요')
     } catch (e) {
@@ -137,7 +165,8 @@ export function createCalendarActions({ ref, setState, showToast }) {
 
   return {
     loadEvents: () => { const { y, m } = shown(); return loadEvents(y, m) },
-    prevMonth, nextMonth, goThisMonth, pickDay, setCalYear, setCalMonth,
+    loadDday,
+    prevMonth, nextMonth, goThisMonth, pickDay, setCalYear, setCalMonth, toggleEventDday, setDdayMode, toggleEventRepeat,
     openEvent, closeEvent, onEventTitle, pickEventCategory, toggleEventRange,
     setEventDatePart, saveEvent, removeEvent,
   }
