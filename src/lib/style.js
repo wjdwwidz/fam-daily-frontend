@@ -209,6 +209,3 @@ export function s(str) {
   }
   return raw
 }
-
-// 여러 스타일 병합 (배열 형태로 넘겨도 됨)
-export const sx = (...parts) => Object.assign({}, ...parts.map((p) => (typeof p === 'string' ? s(p) : p || {})))
