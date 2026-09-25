@@ -73,7 +73,7 @@ export default function Calendar() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s('gap:md;padding-bottom:6xl')}>
         {/* 일정 추가 — 날짜를 골라 뒀으면 그날로 채워서 열린다 */}
-        <Pressable onPress={vm.openEvent} style={s('align-self:flex-start;flex-direction:row;align-items:center;gap:sm;border:1.5px dashed #FFC4D8;border-radius:14px;padding:md xl;background:#FFF6FA;cursor:pointer')}>
+        <Pressable onPress={vm.openEvent} style={s('align-self:center;flex-direction:row;align-items:center;gap:sm;border:1.5px dashed #FFC4D8;border-radius:14px;padding:md xl;background:#FFF6FA;cursor:pointer')}>
           <Text style={s('font-size:14px;font-weight:800;color:#FF5E8A;line-height:1')}>＋</Text>
           <Text style={s('font-size:12px;font-weight:700;color:#FF5E8A')}>{vm.calAddLabel}</Text>
         </Pressable>
