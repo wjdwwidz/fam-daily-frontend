@@ -6,20 +6,26 @@ import { useVm } from '../vm/useVm.js'
 import Dict from './Dict.jsx'
 import Qna from './Qna.jsx'
 import Bucket from './Bucket.jsx'
+import Calendar from './Calendar.jsx'
 
 // '기록' 탭: 사전/문답을 하나의 화면 안에서 상단 세그먼트로 전환.
 // 각 하위 화면(Dict/Qna)은 제목줄 없이 본문만 렌더하고, 헤더는 여기서 소유한다.
+// 문답은 아직 다듬는 중이라 개발 중에만 보여준다 (배포본에서는 탭이 없다)
 const SUBTABS = [
   { key: 'dict', label: '사전' },
-  { key: 'qna', label: '문답' },
+  ...(__DEV__ ? [{ key: 'qna', label: '문답' }] : []),
   { key: 'bucket', label: '버킷리스트' },
+  { key: 'calendar', label: '달력' },
 ]
 
 export default function Record() {
   const vm = useVm()
-  const tab = vm.recordTab || 'dict'
+  // 배포본에서 문답으로 들어오면(옛 화면 기억·최근 활동 링크) 사전으로 보낸다
+  const saved = vm.recordTab || 'dict'
+  const tab = saved === 'qna' && !__DEV__ ? 'dict' : saved
   const isDict = tab === 'dict'
   const isQna = tab === 'qna'
+  const isCalendar = tab === 'calendar'
   return (
     <View style={s('padding:screenTop screenX screenBottom')}>
       <View style={s('flex-direction:row;align-items:flex-start;justify-content:space-between;margin:sm hair lg')}>
@@ -48,7 +54,7 @@ export default function Record() {
           </Pressable>
         ) : null}
       </View>
-      {isDict ? <Dict /> : isQna ? <Qna /> : <Bucket />}
+      {isDict ? <Dict /> : isQna ? <Qna /> : isCalendar ? <Calendar /> : <Bucket />}
     </View>
   )
 }

@@ -1,6 +1,9 @@
 import { api } from '../lib/api.js'
 import { runOnce } from './runOnce.js'
 
+// 홈 '최근 활동' 에 보여줄 개수 (더보기 화면은 훨씬 많이 받아 간다)
+export const HOME_ACTIVITY_LIMIT = 3
+
 // 그룹 만들기/참여. afterAuth 는 성공 후 그룹 목록을 다시 불러오려고 주입받음.
 export function createGroupActions({ ref, setState }, afterAuth) {
   // 만들기·참여 버튼을 여러 번 눌러도 한 번만 보낸다 (가족이 두 개 생기지 않게)
@@ -105,7 +108,7 @@ export function createGroupActions({ ref, setState }, afterAuth) {
   }
 
   // 홈 '최근 활동' 불러오기. 실패하면 들고 있던 목록을 그대로 둔다.
-  const loadActivity = async (groupId, limit = 5) => {
+  const loadActivity = async (groupId, limit = HOME_ACTIVITY_LIMIT) => {
     if (!groupId) return
     setState({ activityLoading: true })
     try {

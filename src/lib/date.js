@@ -12,34 +12,36 @@ export function todayYmd() {
 // 고를 수 있는 가장 이른 해 — 오래전 일도 적을 수 있게 넉넉히
 export const FIRST_YEAR = 1950
 
-// 년·월·일 중 하나만 바꾼다. 말일이 넘어가면(2월 31일 등) 그 달 마지막 날로,
-// 오늘보다 뒤로 가면(올해로 바꿨더니 아직 안 온 달 등) 오늘로 당긴다.
-export function withDatePart(ymd, part, value) {
+// 년·월·일 중 하나만 바꾼다. 말일이 넘어가면(2월 31일 등) 그 달 마지막 날로 당긴다.
+// 지난 일(일상·버킷)은 오늘 뒤로 못 가게 막고, 앞으로의 일(일정)은 future 로 열어둔다.
+export function withDatePart(ymd, part, value, { future = false } = {}) {
   const [y, m, d] = (ymd || todayYmd()).split('-').map(Number)
   const next = { y, m, d, [part]: value }
   const last = new Date(next.y, next.m, 0).getDate()
   if (next.d > last) next.d = last
   const out = `${next.y}-${p2(next.m)}-${p2(next.d)}`
   const today = todayYmd()
-  return out > today ? today : out
+  return !future && out > today ? today : out
 }
 
-// 휠에 늘어놓을 년·월·일 목록. 앞으로 올 날은 고를 수 없어 올해·이번 달은 오늘까지만.
-export function dateWheel(ymd) {
+// 휠에 늘어놓을 년·월·일 목록.
+// 지난 일은 올해·이번 달을 오늘까지만 보여주고, 앞으로의 일(future)은 끝까지 보여준다.
+export function dateWheel(ymd, { future = false } = {}) {
   const m = String(ymd || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
   const now = new Date()
   const thisYear = now.getFullYear()
   const y = m ? Number(m[1]) : thisYear
   const mo = m ? Number(m[2]) : 1
   const d = m ? Number(m[3]) : 1
-  const lastMonth = y === thisYear ? now.getMonth() + 1 : 12
-  const lastDay = y === thisYear && mo === now.getMonth() + 1
+  const lastMonth = !future && y === thisYear ? now.getMonth() + 1 : 12
+  const lastDay = !future && y === thisYear && mo === now.getMonth() + 1
     ? now.getDate()
     : new Date(y, mo, 0).getDate() // 말일은 달마다 다르다
   const range = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => from + i)
   return {
     y, m: mo, d,
-    years: range(FIRST_YEAR, thisYear),
+    // 앞으로의 일정은 10년 뒤까지 고를 수 있게
+    years: range(FIRST_YEAR, future ? thisYear + 10 : thisYear),
     months: range(1, lastMonth),
     days: range(1, lastDay),
   }

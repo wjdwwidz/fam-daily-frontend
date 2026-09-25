@@ -40,8 +40,6 @@ const ROLES = {
 
 export const SPACE = { ...SCALE, ...ROLES }
 
-export const SPACE_TOKENS = Object.keys(SPACE)
-
 // 토큰이면 숫자를, 토큰이 아니면 null 을 돌려준다. (style.js 에서 margin/padding/gap 해석용)
 export function resolveSpace(val) {
   const t = String(val).trim()

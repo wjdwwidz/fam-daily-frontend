@@ -51,6 +51,11 @@ export default function Nav() {
           <Svg viewBox="0 0 24 24" width={26} height={26} fill="none" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 5 V19" /><Path d="M5 12 H19" /></Svg>
         </Pressable>
       )}
+      {vm.isRecord && vm.recordTab === 'calendar' && (
+        <Pressable onPress={vm.openEvent} accessibilityLabel="일정 추가" style={{ position: 'absolute', right: 18, bottom: 88, width: 60, height: 60, borderRadius: 22, backgroundColor: '#FF5E8A', alignItems: 'center', justifyContent: 'center', zIndex: 25, shadowColor: '#FF5E8A', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.45, shadowRadius: 17, elevation: 8 }}>
+          <Svg viewBox="0 0 24 24" width={26} height={26} fill="none" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 5 V19" /><Path d="M5 12 H19" /></Svg>
+        </Pressable>
+      )}
       {vm.isRecord && vm.recordTab === 'dict' && (
         <Pressable onPress={vm.startAddWord} style={{ position: 'absolute', right: 18, bottom: 88, width: 60, height: 60, borderRadius: 22, backgroundColor: '#FF5E8A', alignItems: 'center', justifyContent: 'center', zIndex: 25, shadowColor: '#FF5E8A', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.45, shadowRadius: 17, elevation: 8 }}>
           <Svg viewBox="0 0 24 24" width={26} height={26} fill="none" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 5 V19" /><Path d="M5 12 H19" /></Svg>
