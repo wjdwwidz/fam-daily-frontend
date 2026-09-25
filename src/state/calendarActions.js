@@ -2,6 +2,9 @@ import { api } from '../lib/api.js'
 import { todayYmd, withDatePart } from '../lib/date.js'
 import { runOnce } from './runOnce.js'
 
+// 홈에 보여줄 D-day 개수. 더 보고 싶으면 '전체보기' 로 들어간다.
+export const HOME_DDAY_LIMIT = 3
+
 const p2 = (n) => String(n).padStart(2, '0')
 const ymd = (y, m, d) => `${y}-${p2(m)}-${p2(d)}`
 // 그 달의 1일과 말일 ('YYYY-MM-DD')
@@ -33,12 +36,13 @@ export function createCalendarActions({ ref, setState, showToast }) {
     }
   }
 
-  // 홈에 띄울 D-day 일정 — 홈에 들어올 때와 일정이 바뀔 때 받아 둔다
-  const loadDday = async () => {
+  // 홈에 띄울 D-day 일정 — 홈에 들어올 때와 일정이 바뀔 때 받아 둔다.
+  // 전체보기 화면에서는 길게 받는다 (홈은 앞의 몇 개만 그린다).
+  const loadDday = async (limit = HOME_DDAY_LIMIT) => {
     const id = gid()
     if (!id) return
     try {
-      const rows = await api.ddayEvents(id, 3)
+      const rows = await api.ddayEvents(id, limit)
       if (gid() !== id) return
       setState({ ddayEvents: rows || [] })
     } catch {}

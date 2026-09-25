@@ -734,6 +734,10 @@ export function buildVm(app) {
     calLoading: !!st.calLoading,
     // 홈의 다가오는 일정 (D-day 로 켠 것만)
     loadDday,
+    // 전체보기 — 홈은 앞의 몇 개만, 여기서 다 본다
+    isDdayAll: scr === 'dday',
+    openDdayAll: () => go('dday'),
+    loadDdayAll: () => loadDday(100),
     ddayEvents: (st.ddayEvents || []).map((e) => {
       const today = todayYmd()
       const dayDiff = (a, b) =>
