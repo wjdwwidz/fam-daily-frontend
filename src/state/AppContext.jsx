@@ -5,6 +5,7 @@ import { createWordActions } from './wordActions.js'
 import { createQnaActions } from './qnaActions.js'
 import { createMediaActions } from './mediaActions.js'
 import { createBucketActions } from './bucketActions.js'
+import { createCalendarActions } from './calendarActions.js'
 
 // 앱 전역 상태 + 네비게이션 + 도메인 액션을 담는 컨텍스트.
 // 화면/오버레이는 useApp() 으로 필요한 것만 꺼내 쓴다.
@@ -74,13 +75,14 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
   const qna = createQnaActions(core)
   const media = createMediaActions(core)
   const bucket = createBucketActions(core)
+  const calendar = createCalendarActions(core)
 
   // 앱을 켤 때 한 번: 저장된 로그인 되살리기 (로그인 화면은 확인하는 동안 로딩만 보여준다)
   useEffect(() => {
     auth.restoreSession()
   }, [])
 
-  const value = { ...core, back, initialScreen, variant, ...auth, ...groups, ...words, ...qna, ...media, ...bucket }
+  const value = { ...core, back, initialScreen, variant, ...auth, ...groups, ...words, ...qna, ...media, ...bucket, ...calendar }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

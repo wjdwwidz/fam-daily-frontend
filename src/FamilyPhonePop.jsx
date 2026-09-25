@@ -118,7 +118,7 @@ export default function FamilyPhonePop() {
       {vm.linkSheetOpen && <LinkSheet />}
       {vm.answerOpen && <AnswerSheet />}
       {vm.questionOpen && <QuestionSheet />}
-      {vm.addEventOpen && <AddEventSheet />}
+      {vm.eventSheetOpen && <AddEventSheet />}
       {vm.inviteOpen && <InviteSheet />}
       {vm.searchOpen && <SearchOverlay />}
       {vm.showNav && <Nav />}

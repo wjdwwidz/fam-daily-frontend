@@ -6,6 +6,7 @@ import { useVm } from '../vm/useVm.js'
 import Dict from './Dict.jsx'
 import Qna from './Qna.jsx'
 import Bucket from './Bucket.jsx'
+import Calendar from './Calendar.jsx'
 
 // '기록' 탭: 사전/문답을 하나의 화면 안에서 상단 세그먼트로 전환.
 // 각 하위 화면(Dict/Qna)은 제목줄 없이 본문만 렌더하고, 헤더는 여기서 소유한다.
@@ -13,6 +14,7 @@ const SUBTABS = [
   { key: 'dict', label: '사전' },
   { key: 'qna', label: '문답' },
   { key: 'bucket', label: '버킷리스트' },
+  { key: 'calendar', label: '달력' },
 ]
 
 export default function Record() {
@@ -20,6 +22,7 @@ export default function Record() {
   const tab = vm.recordTab || 'dict'
   const isDict = tab === 'dict'
   const isQna = tab === 'qna'
+  const isCalendar = tab === 'calendar'
   return (
     <View style={s('padding:screenTop screenX screenBottom')}>
       <View style={s('flex-direction:row;align-items:flex-start;justify-content:space-between;margin:sm hair lg')}>
@@ -46,9 +49,14 @@ export default function Record() {
             <Text style={s('color:#fff;font-size:14px;font-weight:800;line-height:1')}>＋</Text>
             <Text style={s('color:#fff;font-size:12px;font-weight:700')}>새 질문</Text>
           </Pressable>
+        ) : isCalendar ? (
+          <Pressable onPress={vm.openEvent} style={s('flex-direction:row;align-items:center;gap:sm;background:#FF5E8A;border-radius:13px;padding:btnY 2xl')}>
+            <Text style={s('color:#fff;font-size:14px;font-weight:800;line-height:1')}>＋</Text>
+            <Text style={s('color:#fff;font-size:12px;font-weight:700')}>일정</Text>
+          </Pressable>
         ) : null}
       </View>
-      {isDict ? <Dict /> : isQna ? <Qna /> : <Bucket />}
+      {isDict ? <Dict /> : isQna ? <Qna /> : isCalendar ? <Calendar /> : <Bucket />}
     </View>
   )
 }

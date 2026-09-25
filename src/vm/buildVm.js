@@ -6,7 +6,7 @@ import * as Clipboard from 'expo-clipboard'
 import { Linking, Platform, Share } from 'react-native'
 import { MAX_WORD_PHOTOS } from '../state/wordActions.js'
 import { clipText } from '../lib/text.js'
-import { dateWheel, fmtYmdRange } from '../lib/date.js'
+import { dateWheel, fmtYmdRange, todayYmd } from '../lib/date.js'
 import { placeMapUrl } from '../lib/place.js'
 
 // 일상(갤러리) 폴더 탭 색. 멤버 아바타 색을 쓰면 탭마다 색이 튀어 무지개가 된다.
@@ -58,6 +58,9 @@ export function buildVm(app) {
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, reorderBucket,
     startBucketMedia, cancelBucketLink, setBucketDatePart, toggleBucketRow,
     cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity, loadNotifications,
+    loadEvents, prevMonth, nextMonth, goThisMonth, pickDay,
+    openEvent, closeEvent, onEventTitle, pickEventCategory, toggleEventRange,
+    setEventDatePart, saveEvent, removeEvent,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
@@ -426,14 +429,44 @@ export function buildVm(app) {
   const ut = st.uploadType
   const navC = (on) => (on ? '#FF5E8A' : '#A6B4BD')
 
+  // ── 달력 (가족 일정) ─────────────────────────────────────────────
+  // 종류(카테고리)는 이름으로 저장하고 색은 여기서 정한다 — 색을 바꿔도 옛 일정까지 같이 바뀐다.
   const CATS = EVENT_CATEGORIES
-  const selColor = st.newEventColor || CATS[0].c
-  const eventCats = CATS.map((k) => ({
-    label: k.label, c: k.c, sel: k.c === selColor,
-    swStyle: `width:46px;height:46px;border-radius:50%;background:${k.c};border:3px solid ${k.c === selColor ? '#17303B' : 'transparent'};box-shadow:0 3px 8px rgba(0,0,0,0.12);transform:scale(${k.c === selColor ? 1.08 : 1});align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800`,
-    labelStyle: `font-size:11px;margin-top:6px;font-weight:${k.c === selColor ? 700 : 500};color:${k.c === selColor ? '#17303B' : '#9DB2BD'}`,
-    pick: () => setState({ newEventColor: k.c }),
-  }))
+  const catColor = (name) => CATS.find((k) => k.label === name)?.c || '#C4CFD6'
+  const sheet = st.eventSheet || null
+  const eventCats = CATS.map((k) => {
+    const sel = sheet?.category === k.label
+    return {
+      label: k.label, c: k.c, sel,
+      swStyle: `width:46px;height:46px;border-radius:50%;background:${k.c};border:3px solid ${sel ? '#17303B' : 'transparent'};box-shadow:0 3px 8px rgba(0,0,0,0.12);transform:scale(${sel ? 1.08 : 1});align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800`,
+      labelStyle: `font-size:11px;margin-top:6px;font-weight:${sel ? 700 : 500};color:${sel ? '#17303B' : '#9DB2BD'}`,
+      pick: () => pickEventCategory(k.label),
+    }
+  })
+
+  // 지금 보고 있는 달
+  const calNow = new Date()
+  const calY = st.calYear || calNow.getFullYear()
+  const calM = st.calMonth || calNow.getMonth() + 1
+  const calToday = todayYmd()
+  const ymdOf = (d) => `${calY}-${String(calM).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+  const eventsOfDay = (d) => {
+    const day = ymdOf(d)
+    return (st.events || []).filter((e) => day >= e.startDate && day <= (e.endDate || e.startDate))
+  }
+  const eventVm = (e) => ({
+    ...e,
+    color: catColor(e.category),
+    when: fmtYmdRange(e.startDate, e.endDate),
+    byName: e.createdBy?.nickname || e.createdBy?.name || '',
+    edit: () => openEvent(e),
+    remove: () => askConfirm({
+      title: '이 일정을 지울까요?',
+      message: `'${e.title}' 이 달력에서 사라져요.`,
+      yesText: '지우기',
+      onYes: () => removeEvent(e.id),
+    }),
+  })
 
   return {
     isCards: v === 'cards', isGrid: v === 'grid',
@@ -693,17 +726,65 @@ export function buildVm(app) {
     ringAvatarSize: AV,
     membersFromLink: !!st.membersFromLink,
     answerOpen: !!st.answerOpen,
+    // ── 달력 (가족 일정) ───────────────────────────────────────────
+    isCalendar: scr === 'record' && (st.recordTab || 'dict') === 'calendar',
+    loadEvents, prevMonth, nextMonth, goThisMonth,
+    calLoading: !!st.calLoading,
+    calTitle: `${calY}년 ${calM}월`,
+    // 이번 달이 아니면 '오늘로' 를 보여준다
+    calIsThisMonth: calY === calNow.getFullYear() && calM === calNow.getMonth() + 1,
+    calWeekdays: ['일', '월', '화', '수', '목', '금', '토'],
+    // 달력 칸 — 1일이 무슨 요일인지에 따라 앞을 빈 칸으로 채운다
+    calCells: (() => {
+      const first = new Date(calY, calM - 1, 1).getDay()
+      const days = new Date(calY, calM, 0).getDate()
+      const cells = Array.from({ length: first }, (_, i) => ({ key: `e${i}`, empty: true }))
+      for (let d = 1; d <= days; d++) {
+        const list = eventsOfDay(d)
+        const day = ymdOf(d)
+        cells.push({
+          key: day,
+          empty: false,
+          n: d,
+          today: day === calToday,
+          picked: st.calPicked === d,
+          // 색 점은 세 개까지만 (칸이 좁다)
+          dots: list.slice(0, 3).map((e, i) => ({ key: e.id || i, c: catColor(e.category) })),
+          more: Math.max(0, list.length - 3),
+          pick: () => pickDay(d),
+        })
+      }
+      return cells
+    })(),
+    // 아래 목록 — 날짜를 고르면 그날 것만, 아니면 이 달 전체
+    calPickedLabel: st.calPicked ? `${calM}월 ${st.calPicked}일` : `${calM}월 전체`,
+    calDayEvents: (st.calPicked
+      ? eventsOfDay(st.calPicked)
+      : [...(st.events || [])].sort((a, b) => a.startDate.localeCompare(b.startDate))
+    ).map(eventVm),
+
+    // 일정 추가·수정 시트
     eventCats,
-    addEventOpen: !!st.addEventOpen,
-    closeAddEvent: () => setState({ addEventOpen: false }),
-    isRange: st.eventRange === true,
-    isOneDay: st.eventRange !== true,
-    setRange: () => setState({ eventRange: true }),
-    setOneDay: () => setState({ eventRange: false }),
-    oneDayBg: st.eventRange !== true ? '#fff' : 'transparent',
-    oneDayColor: st.eventRange !== true ? '#FF5E8A' : '#B39AA4',
-    rangeBg: st.eventRange === true ? '#fff' : 'transparent',
-    rangeColor: st.eventRange === true ? '#FF5E8A' : '#B39AA4',
+    openEvent: () => openEvent(null),
+    eventSheetOpen: !!sheet,
+    closeEvent, onEventTitle, toggleEventRange, saveEvent,
+    eventTitle: sheet?.title || '',
+    eventIsEdit: !!sheet?.id,
+    eventSaving: !!st.eventSaving,
+    eventError: st.eventError || null,
+    eventRemove: sheet?.id ? () => removeEvent(sheet.id) : undefined,
+    isRange: !!sheet?.endDate,
+    isOneDay: !sheet?.endDate,
+    setRange: () => { if (!sheet?.endDate) toggleEventRange() },
+    setOneDay: () => { if (sheet?.endDate) toggleEventRange() },
+    oneDayBg: !sheet?.endDate ? '#fff' : 'transparent',
+    oneDayColor: !sheet?.endDate ? '#FF5E8A' : '#B39AA4',
+    rangeBg: sheet?.endDate ? '#fff' : 'transparent',
+    rangeColor: sheet?.endDate ? '#FF5E8A' : '#B39AA4',
+    // 앞으로의 일정이라 미래 날짜도 고를 수 있다
+    eventFromWheel: dateWheel(sheet?.startDate, { future: true }),
+    eventToWheel: dateWheel(sheet?.endDate || sheet?.startDate, { future: true }),
+    setEventDatePart,
     goProfileEdit: openProfile,
     myMood: st.myMood ?? '',
     myMoodSent: !!st.myMoodSent,

@@ -6,6 +6,7 @@ import { groupsApi } from './api/groups.js'
 import { wordsApi } from './api/words.js'
 import { qnaApi } from './api/qna.js'
 import { mediaApi, putToSignedUrl, assetContentType } from './api/media.js'
+import { calendarApi } from './api/calendar.js'
 import { uploadImage, updateMyPhoto } from './api/uploads.js'
 
 export { API_BASE, getToken, setToken, clearToken, kakaoLogin }
@@ -17,6 +18,7 @@ export const api = {
   ...wordsApi,
   ...qnaApi,
   ...mediaApi,
+  ...calendarApi,
   putToSignedUrl,
   assetContentType,
   uploadImage,
