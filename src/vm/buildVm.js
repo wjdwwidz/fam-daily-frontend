@@ -482,7 +482,9 @@ export function buildVm(app) {
     isQna: scr === 'qna', isProfile: scr === 'profile',
     isRecord: scr === 'record', // 사전+문답 통합 탭
     recordTab: st.recordTab || 'dict', // 'dict' | 'qna'
-    setRecordTab: (k) => setState({ recordTab: k }),
+    setRecordTab: (k) => setState({ recordTab: k, recordSolo: false }),
+    // 달력만 단독으로 띄운 상태인지 (D-day 목록에서 들어왔을 때)
+    recordSolo: !!st.recordSolo,
     isSignup: scr === 'signup', isSpace: scr === 'space', isCreateSpace: scr === 'createSpace', isJoinSpace: scr === 'joinSpace',
     isSpaceSelect: scr === 'spaceSelect',
     // 백엔드에서 불러온 실제 그룹 목록
@@ -734,9 +736,12 @@ export function buildVm(app) {
     calLoading: !!st.calLoading,
     // 홈의 다가오는 일정 (D-day 로 켠 것만)
     loadDday,
-    // 전체보기 — 홈은 앞의 몇 개만, 여기서 다 본다
+    // 모아보기 — 홈은 앞의 몇 개만. 홈에서 누른 일정은 그 화면에서 잠깐 표시해 준다
+    // (나갔다 들어오면 표시 없이 그냥 목록).
     isDdayAll: scr === 'dday',
-    openDdayAll: () => go('dday'),
+    openDdayAll: (id) => navTo({ screen: 'dday', ddayFocus: id ?? null }),
+    clearDdayFocus: () => setState({ ddayFocus: null }),
+    ddayFocus: st.ddayFocus || null,
     loadDdayAll: () => loadDday(100),
     ddayEvents: (st.ddayEvents || []).map((e) => {
       const today = todayYmd()
@@ -765,7 +770,8 @@ export function buildVm(app) {
         color: catColor(e.category),
         when: fmtYmdRange(e.startDate, e.endDate),
         label,
-        open: () => navTo({ screen: 'record', recordTab: 'calendar' }),
+        // D-day 에서 들어온 달력은 서브탭 없이 '뒤로가기 + 달력' 으로 연다
+        open: () => navTo({ screen: 'record', recordTab: 'calendar', recordSolo: true }),
       }
     }),
     // 제목의 년·월 — 누르면 휠로 골라 그 달로 바로 간다 (앞으로의 일정도 잡으니 10년 뒤까지)
@@ -985,7 +991,8 @@ export function buildVm(app) {
     goSpace: () => go('space'), goCreate: () => go('createSpace'), goJoin: () => go('joinSpace'), finishOnboard: () => go('spaceSelect'), goLogin: () => go('login'), goSignupBack: () => go('signup'),
     linkSheetOpen: !!st.linkSheetOpen, openLinkSheet: () => setState({ linkSheetOpen: true }), closeLinkSheet: () => setState({ linkSheetOpen: false }),
     goHome: () => go('home'),
-    goRecord: () => go('record'), // 기록 탭 (마지막 서브탭 유지)
+    // 기록 탭 (마지막 서브탭 유지). 달력만 단독으로 보던 상태면 풀고 들어간다.
+    goRecord: () => { setState({ recordSolo: false }); go('record') },
     goGallery: () => go('gallery'),
     goMembers: () => navTo({ screen: 'members', membersFromLink: false }),
     goMembersDeep: () => navTo({ screen: 'members', membersFromLink: true }),

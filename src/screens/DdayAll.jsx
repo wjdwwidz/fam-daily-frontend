@@ -10,6 +10,9 @@ export default function DdayAll() {
   const vm = useVm()
   const groupId = vm.currentGroup?.id
   useEffect(() => { vm.loadDdayAll() }, [groupId])
+  // 홈에서 누르고 들어온 일정만 잠깐 표시해 둔다. 나갈 때 지워서,
+  // 다음에 그냥 들어오면 표시 없이 목록만 보이게.
+  useEffect(() => () => vm.clearDdayFocus(), [])
 
   const items = vm.ddayEvents
   return (
@@ -20,15 +23,13 @@ export default function DdayAll() {
         </Pressable>
         <Text style={s('font-size:20px;font-weight:800;color:#17303B;letter-spacing:-0.4px')}>다가오는 일정</Text>
       </View>
-      <Text style={s('font-size:11.3px;color:#9DB2BD;margin:0 hair 2xl')}>D-day 로 켜둔 일정을 가까운 순으로</Text>
-
       {items.length === 0 && (
         <Text style={s('padding:6xl 0;text-align:center;font-size:12.5px;color:#9DB2BD')}>아직 D-day 로 켜둔 일정이 없어요</Text>
       )}
 
-      <View style={s('gap:md')}>
+      <View style={s('gap:sm;margin-top:2xl')}>
         {items.map((d) => (
-          <Pressable key={d.key} onPress={d.open} style={s('flex-direction:row;align-items:center;gap:lg;padding:0 hair;cursor:pointer')}>
+          <Pressable key={d.key} onPress={d.open} style={s(`flex-direction:row;align-items:center;gap:lg;padding:md lg;border-radius:16px;cursor:pointer;background:${d.key === vm.ddayFocus ? '#FFF0F5' : 'transparent'};border:1px solid ${d.key === vm.ddayFocus ? '#FFD3E2' : 'transparent'}`)}>
             <View style={{ width: 4, height: 30, borderRadius: 2, backgroundColor: d.color }} />
             <View style={s('flex:1;min-width:0')}>
               <Text numberOfLines={1} style={s('font-size:12.5px;font-weight:700;color:#17303B')}>{d.title}</Text>

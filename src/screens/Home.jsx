@@ -112,17 +112,12 @@ export default function Home() {
       {/* 다가오는 일정 — 일정에 'D-day 설정하기' 를 켠 것만 (가까운 순 몇 개, 나머지는 전체보기) */}
       {vm.ddayEvents.length > 0 && (
         <>
-          <View style={s('flex-direction:row;align-items:center;justify-content:space-between;margin:xs hair lg')}>
-            <Text style={s('font-size:13px;font-weight:500;color:#7C8B95')}>다가오는 일정</Text>
-            <Pressable onPress={vm.openDdayAll}>
-              <Text style={s('font-size:12px;color:#8497A1;cursor:pointer')}>전체보기 ›</Text>
-            </Pressable>
-          </View>
           <View style={s('gap:md;margin:xs hair 5xl')}>
             {/* 전체보기에서 길게 받아 온 뒤 돌아와도 홈에서는 앞의 몇 개만 */}
             {vm.ddayEvents.slice(0, HOME_DDAY_LIMIT).map((d) => (
               // 한 줄에 하나 — 테두리·배경 없이 홈 바탕 위에 그대로
-              <Pressable key={d.key} onPress={d.open} style={s('flex-direction:row;align-items:center;gap:lg;padding:0 hair;cursor:pointer')}>
+              // 누르면 D-day 를 모아 둔 화면으로 (누른 것에 표시가 붙는다)
+              <Pressable key={d.key} onPress={() => vm.openDdayAll(d.key)} style={s('flex-direction:row;align-items:center;gap:lg;padding:0 hair;cursor:pointer')}>
                 <View style={{ width: 4, height: 30, borderRadius: 2, backgroundColor: d.color }} />
                 <View style={s('flex:1;min-width:0')}>
                   <Text numberOfLines={1} style={s('font-size:12.5px;font-weight:700;color:#17303B')}>{d.title}</Text>

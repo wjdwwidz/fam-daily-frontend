@@ -98,13 +98,13 @@ export default function Bucket() {
 
         {/* 페이지 넘기기 — 한 장(100칸)을 다 채우면 다음 장이 열린다 */}
         <View style={s('flex-direction:row;align-items:center;justify-content:center;gap:2xl;padding:3xl 0 lg')}>
-          <Pressable onPress={vm.bucketPrev} disabled={vm.bucketPage <= 1} style={s(`width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;background:#fff;border:1px solid #FFE1EC;opacity:${vm.bucketPage <= 1 ? 0.35 : 1}`)}>
+          <Pressable onPress={vm.bucketPrev} disabled={vm.bucketPage <= 1} style={s(`width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;opacity:${vm.bucketPage <= 1 ? 0.35 : 1}`)}>
             <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#FF5E8A" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
           </Pressable>
           <Text style={s('font-size:12.5px;font-weight:700;color:#17303B;font-variant:tabular-nums')}>
             {vm.bucketPage} / {vm.bucketPages}
           </Text>
-          <Pressable onPress={vm.bucketNext} disabled={vm.bucketPage >= vm.bucketPages} style={s(`width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;background:#fff;border:1px solid #FFE1EC;opacity:${vm.bucketPage >= vm.bucketPages ? 0.35 : 1}`)}>
+          <Pressable onPress={vm.bucketNext} disabled={vm.bucketPage >= vm.bucketPages} style={s(`width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;opacity:${vm.bucketPage >= vm.bucketPages ? 0.35 : 1}`)}>
             <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#FF5E8A" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M9.5 5 L16.5 12 L9.5 19" /></Svg>
           </Pressable>
         </View>

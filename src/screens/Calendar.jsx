@@ -17,17 +17,16 @@ export default function Calendar() {
   return (
     <View>
       {/* 달 이동 */}
-      <View style={s('flex-direction:row;align-items:center;justify-content:space-between;margin:0 hair lg')}>
-        <Pressable onPress={vm.prevMonth} hitSlop={8} style={s('width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;background:#fff;border:1px solid #FFE1EC;cursor:pointer')}>
-          <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#FF5E8A" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
+      {/* 버킷리스트 페이지 넘기기와 같은 모양 — 화살표를 년·월 바로 옆에 두고 가운데 정렬 */}
+      <View style={s('flex-direction:row;align-items:center;justify-content:center;gap:lg;margin:0 hair lg')}>
+        <Pressable onPress={vm.prevMonth} hitSlop={8} style={s('width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;cursor:pointer')}>
+          <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#FFBBD0" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
         </Pressable>
-        <View style={s('flex-direction:row;align-items:center;gap:sm')}>
-          {/* 년·월을 눌러 고르면 그 달로 바로 간다 */}
-          <WheelChip items={vm.calYears} value={vm.calY} unit="년" width={84} onChange={vm.setCalYear} closeOnPick />
-          <WheelChip items={vm.calMonths} value={vm.calM} unit="월" onChange={vm.setCalMonth} closeOnPick />
-        </View>
-        <Pressable onPress={vm.nextMonth} hitSlop={8} style={s('width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;background:#fff;border:1px solid #FFE1EC;cursor:pointer')}>
-          <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#FF5E8A" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M9.5 5 L16.5 12 L9.5 19" /></Svg>
+        {/* 년·월을 눌러 고르면 그 달로 바로 간다 */}
+        <WheelChip items={vm.calYears} value={vm.calY} unit="년" width={84} onChange={vm.setCalYear} closeOnPick />
+        <WheelChip items={vm.calMonths} value={vm.calM} unit="월" onChange={vm.setCalMonth} closeOnPick />
+        <Pressable onPress={vm.nextMonth} hitSlop={8} style={s('width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;cursor:pointer')}>
+          <Svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#FFBBD0" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M9.5 5 L16.5 12 L9.5 19" /></Svg>
         </Pressable>
       </View>
 

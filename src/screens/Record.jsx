@@ -26,6 +26,21 @@ export default function Record() {
   const isDict = tab === 'dict'
   const isQna = tab === 'qna'
   const isCalendar = tab === 'calendar'
+  // D-day 목록에서 들어온 달력은 서브탭 대신 '뒤로가기 + 달력' 으로 (돌아갈 곳이 D-day 라서)
+  const solo = isCalendar && vm.recordSolo
+  if (solo) {
+    return (
+      <View style={s('padding:screenTop screenX screenBottom')}>
+        <View style={s('display:flex;align-items:center;gap:xl;margin:sm 0 lg')}>
+          <Pressable onPress={vm.back} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);display:flex;align-items:center;justify-content:center;cursor:pointer')}>
+            <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="#17303B" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
+          </Pressable>
+          <Text style={s('font-size:20px;font-weight:800;color:#17303B;letter-spacing:-0.4px')}>달력</Text>
+        </View>
+        <Calendar />
+      </View>
+    )
+  }
   return (
     <View style={s('padding:screenTop screenX screenBottom')}>
       <View style={s('flex-direction:row;align-items:flex-start;justify-content:space-between;margin:sm hair lg')}>
