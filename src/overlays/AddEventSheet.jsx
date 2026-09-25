@@ -58,10 +58,10 @@ export default function AddEventSheet() {
 
         <Text style={s('font-size:11.3px;font-weight:700;color:#17303B;margin:4xl hair xl')}>색상 <Text style={s('font-weight:500;color:#9DB2BD')}>· 일정 종류를 색으로 구분해요</Text></Text>
         <View style={s('flex-direction:row;justify-content:space-between;padding:0 hair')}>
+          {/* 색만 고른다 — 이름표(가족 모임·병원 …)는 두지 않는다 */}
           {vm.eventCats.map((k) => (
-            <Pressable key={k.label} onPress={k.pick} style={s('flex-direction:column;align-items:center')}>
+            <Pressable key={k.label} onPress={k.pick} accessibilityLabel={k.label} style={s('align-items:center')}>
               <View style={s(k.swStyle)}><Text style={s('color:#fff;font-size:18px;font-weight:800')}>{k.sel ? '✓' : ''}</Text></View>
-              <Text style={s(k.labelStyle)}>{k.label}</Text>
             </Pressable>
           ))}
         </View>

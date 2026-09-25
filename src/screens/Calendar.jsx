@@ -34,7 +34,7 @@ export default function Calendar() {
       </View>
 
       {/* 달력 한 장 */}
-      <View style={s('background:#fff;border:1px solid #FFE1EC;border-radius:20px;padding:xl md lg')}>
+      <View style={s('background:#fff;border:1px solid #FFE1EC;border-radius:20px;padding:2xl md 2xl')}>
         <View style={s('flex-direction:row')}>
           {vm.calWeekdays.map((w, i) => (
             <View key={w} style={s('flex:1;align-items:center;padding-bottom:md')}>
@@ -44,19 +44,19 @@ export default function Calendar() {
         </View>
         <View style={s('flex-direction:row;flex-wrap:wrap')}>
           {vm.calCells.map((c) => (
-            <View key={c.key} style={{ width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 3 }}>
+            <View key={c.key} style={{ width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 5 }}>
               {c.empty ? (
-                <View style={s('width:34px;height:42px')} />
+                <View style={s('width:40px;height:56px')} />
               ) : (
-                <Pressable onPress={c.pick} style={s(`width:34px;height:42px;border-radius:12px;align-items:center;padding-top:xs;cursor:pointer;background:${c.picked ? '#FFF0F5' : 'transparent'};border:1px solid ${c.picked ? '#FFD3E2' : 'transparent'}`)}>
+                <Pressable onPress={c.pick} style={s(`width:40px;height:56px;border-radius:14px;align-items:center;justify-content:center;gap:xs;cursor:pointer;background:${c.picked ? '#FFF0F5' : 'transparent'};border:1px solid ${c.picked ? '#FFD3E2' : 'transparent'}`)}>
                   {/* 오늘은 분홍 동그라미 */}
-                  <View style={s(`width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;background:${c.today ? '#FF5E8A' : 'transparent'}`)}>
-                    <Text style={s(`font-size:11.5px;font-variant:tabular-nums;font-weight:${c.today ? 800 : 600};color:${c.today ? '#fff' : '#3F4E58'}`)}>{c.n}</Text>
+                  <View style={s(`width:26px;height:26px;border-radius:50%;align-items:center;justify-content:center;background:${c.today ? '#FF5E8A' : 'transparent'}`)}>
+                    <Text style={s(`font-size:12.5px;font-variant:tabular-nums;font-weight:${c.today ? 800 : 600};color:${c.today ? '#fff' : '#3F4E58'}`)}>{c.n}</Text>
                   </View>
                   {/* 그날 일정 — 색 점 (세 개까지) */}
-                  <View style={s('flex-direction:row;align-items:center;gap:2px;margin-top:2px')}>
+                  <View style={s('flex-direction:row;align-items:center;gap:2px;height:6px')}>
                     {c.dots.map((d) => (
-                      <View key={d.key} style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: d.c }} />
+                      <View key={d.key} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: d.c }} />
                     ))}
                     {c.more > 0 && <Text style={s('font-size:8px;color:#B4C1CA')}>+{c.more}</Text>}
                   </View>
