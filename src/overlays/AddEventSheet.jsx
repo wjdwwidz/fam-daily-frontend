@@ -25,7 +25,7 @@ function Check({ on, onPress, label }) {
           <Svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 13 L10 18 L19 7" /></Svg>
         )}
       </View>
-      <Text style={s('font-size:12px;font-weight:700;color:#17303B')}>{label}</Text>
+      <Text style={s('font-size:12px;font-weight:600;color:#8497A1')}>{label}</Text>
     </Pressable>
   )
 }
