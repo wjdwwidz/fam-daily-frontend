@@ -113,7 +113,7 @@ export default function Home() {
         <View style={s('gap:md;margin:xs hair 5xl')}>
           {vm.ddayEvents.map((d) => (
             // 한 줄에 하나 — 테두리·배경 없이 홈 바탕 위에 그대로
-            <Pressable key={d.key} onPress={d.open} style={s('flex-direction:row;align-items:center;gap:lg;padding:0 4xl 0 hair;cursor:pointer')}>
+            <Pressable key={d.key} onPress={d.open} style={s('flex-direction:row;align-items:center;gap:lg;padding:0 hair;cursor:pointer')}>
               <View style={{ width: 4, height: 30, borderRadius: 2, backgroundColor: d.color }} />
               <View style={s('flex:1;min-width:0')}>
                 <Text numberOfLines={1} style={s('font-size:12.5px;font-weight:700;color:#17303B')}>{d.title}</Text>
