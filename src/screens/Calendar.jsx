@@ -72,8 +72,13 @@ export default function Calendar() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s('gap:md;padding-bottom:6xl')}>
+        {/* 일정 추가 — 날짜를 골라 뒀으면 그날로 채워서 열린다 */}
+        <Pressable onPress={vm.openEvent} style={s('flex-direction:row;align-items:center;justify-content:center;gap:md;border:1.5px dashed #FFC4D8;border-radius:16px;padding:xl 2xl;background:#FFF6FA;cursor:pointer')}>
+          <Text style={s('font-size:14px;font-weight:800;color:#FF5E8A;line-height:1')}>＋</Text>
+          <Text style={s('font-size:12px;font-weight:700;color:#FF5E8A')}>{vm.calAddLabel}</Text>
+        </Pressable>
         {!vm.calLoading && vm.calDayEvents.length === 0 && (
-          <Text style={s('padding:3xl 0;text-align:center;font-size:11.5px;color:#9DB2BD')}>아직 일정이 없어요</Text>
+          <Text style={s('padding:2xl 0;text-align:center;font-size:11.5px;color:#9DB2BD')}>아직 일정이 없어요</Text>
         )}
         {vm.calDayEvents.map((e) => (
           <Pressable key={e.id} onPress={e.edit} style={s('flex-direction:row;align-items:center;gap:lg;background:#fff;border:1px solid #FFE1EC;border-radius:16px;padding:xl 2xl;cursor:pointer')}>

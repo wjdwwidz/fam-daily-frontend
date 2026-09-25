@@ -52,11 +52,6 @@ export default function Record() {
             <Text style={s('color:#fff;font-size:14px;font-weight:800;line-height:1')}>＋</Text>
             <Text style={s('color:#fff;font-size:12px;font-weight:700')}>새 질문</Text>
           </Pressable>
-        ) : isCalendar ? (
-          <Pressable onPress={vm.openEvent} style={s('flex-direction:row;align-items:center;gap:sm;background:#FF5E8A;border-radius:13px;padding:btnY 2xl')}>
-            <Text style={s('color:#fff;font-size:14px;font-weight:800;line-height:1')}>＋</Text>
-            <Text style={s('color:#fff;font-size:12px;font-weight:700')}>일정</Text>
-          </Pressable>
         ) : null}
       </View>
       {isDict ? <Dict /> : isQna ? <Qna /> : isCalendar ? <Calendar /> : <Bucket />}

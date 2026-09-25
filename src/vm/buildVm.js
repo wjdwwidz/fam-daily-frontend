@@ -759,6 +759,8 @@ export function buildVm(app) {
     })(),
     // 아래 목록 — 날짜를 고르면 그날 것만, 아니면 이 달 전체
     calPickedLabel: st.calPicked ? `${calM}월 ${st.calPicked}일` : `${calM}월 전체`,
+    // 날짜를 골라 뒀으면 그날에 넣는다는 뜻이 드러나게
+    calAddLabel: st.calPicked ? `${calM}월 ${st.calPicked}일에 일정 추가` : '일정 추가',
     calDayEvents: (st.calPicked
       ? eventsOfDay(st.calPicked)
       : [...(st.events || [])].sort((a, b) => a.startDate.localeCompare(b.startDate))
