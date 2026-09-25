@@ -1,4 +1,5 @@
 import { View, Text, Pressable, TextInput } from 'react-native'
+import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import WheelChip from '../components/WheelChip.jsx'
 
@@ -71,9 +72,13 @@ export default function AddEventSheet() {
         <Pressable onPress={vm.saveEvent} disabled={vm.eventSaving} style={s(`margin-top:ctaTop;height:54px;border-radius:17px;background:#FF5E8A;align-items:center;justify-content:center;opacity:${vm.eventSaving ? 0.7 : 1}`)}>
           <Text style={s('font-size:13.9px;font-weight:700;color:#fff')}>{vm.eventSaving ? '저장 중…' : vm.eventIsEdit ? '수정하기' : '추가하기'}</Text>
         </Pressable>
+        {/* 수정할 때만 — 휴지통 (달력 목록과 같은 모양) */}
         {!!vm.eventRemove && (
-          <Pressable onPress={vm.eventRemove} style={s('align-self:center;padding:md')}>
-            <Text style={s('font-size:11.5px;color:#9DB2BD')}>이 일정 지우기</Text>
+          <Pressable onPress={vm.eventRemove} hitSlop={10} accessibilityLabel="이 일정 지우기" style={s('align-self:center;width:44px;height:44px;border-radius:14px;align-items:center;justify-content:center;margin-top:md;cursor:pointer')}>
+            <Svg viewBox="0 0 24 24" width={19} height={19} fill="none" stroke="#B4C1CA" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+              <Path d="M5 7 h14 M9 7 V5 h6 v2 M6 7 l1 13 h10 l1 -13" />
+              <Path d="M10 11 v6 M14 11 v6" />
+            </Svg>
           </Pressable>
         )}
       </Pressable>
