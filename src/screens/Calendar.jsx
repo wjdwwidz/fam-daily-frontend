@@ -11,8 +11,9 @@ import { useVm } from '../vm/useVm.js'
 export default function Calendar() {
   const vm = useVm()
   const groupId = vm.currentGroup?.id
-  // 들어올 때마다 이번 달로 (지난번에 넘겨 보던 달을 기억하지 않는다)
-  useEffect(() => { vm.goThisMonth() }, [groupId])
+  // 들어올 때마다 이번 달로 (지난번에 넘겨 보던 달을 기억하지 않는다).
+  // 단, D-day 에서 일정을 눌러 들어왔으면 그 일정의 날짜로 맞춘다.
+  useEffect(() => { vm.openCalendar() }, [groupId])
 
   return (
     <View>
@@ -41,22 +42,22 @@ export default function Calendar() {
         </View>
         <View style={s('flex-direction:row;flex-wrap:wrap')}>
           {vm.calCells.map((c) => (
-            <View key={c.key} style={{ width: `${100 / 7}%`, alignItems: 'center', paddingVertical: 5 }}>
+            <View key={c.key} style={{ width: `${100 / 7}%`, paddingHorizontal: 1, paddingVertical: 3 }}>
               {c.empty ? (
-                <View style={s('width:40px;height:56px')} />
+                <View style={s('height:66px')} />
               ) : (
-                <Pressable onPress={c.pick} style={s(`width:40px;height:56px;border-radius:14px;align-items:center;justify-content:center;gap:xs;cursor:pointer;background:${c.picked ? '#FFF0F5' : 'transparent'};border:1px solid ${c.picked ? '#FFD3E2' : 'transparent'}`)}>
+                <Pressable onPress={c.pick} style={s(`height:66px;border-radius:10px;align-items:center;padding:2px 1px 0;gap:2px;cursor:pointer;background:${c.picked ? '#FFF0F5' : 'transparent'};border:1px solid ${c.picked ? '#FFD3E2' : 'transparent'}`)}>
                   {/* 오늘은 분홍 동그라미 */}
-                  <View style={s(`width:26px;height:26px;border-radius:50%;align-items:center;justify-content:center;background:${c.today ? '#FF5E8A' : 'transparent'}`)}>
-                    <Text style={s(`font-size:12.5px;font-variant:tabular-nums;font-weight:${c.today ? 800 : 600};color:${c.today ? '#fff' : '#3F4E58'}`)}>{c.n}</Text>
+                  <View style={s(`width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;background:${c.today ? '#FF5E8A' : 'transparent'}`)}>
+                    <Text style={s(`font-size:12px;font-variant:tabular-nums;font-weight:${c.today ? 800 : 600};color:${c.today ? '#fff' : '#3F4E58'}`)}>{c.n}</Text>
                   </View>
-                  {/* 그날 일정 — 색 점 (세 개까지) */}
-                  <View style={s('flex-direction:row;align-items:center;gap:2px;height:6px')}>
-                    {c.dots.map((d) => (
-                      <View key={d.key} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: d.c }} />
-                    ))}
-                    {c.more > 0 && <Text style={s('font-size:8px;color:#B4C1CA')}>+{c.more}</Text>}
-                  </View>
+                  {/* 그날 일정 — 제목을 살짝 (두 개까지, 나머지는 +n) */}
+                  {c.items.map((e) => (
+                    <View key={e.key} style={[s('width:100%;border-radius:4px;padding:1px 2px'), { backgroundColor: e.bg }]}>
+                      <Text numberOfLines={1} style={[s('font-size:8px;font-weight:700;text-align:center'), { color: e.c }]}>{e.title}</Text>
+                    </View>
+                  ))}
+                  {c.more > 0 && <Text style={s('font-size:7.5px;color:#B4C1CA')}>+{c.more}</Text>}
                 </Pressable>
               )}
             </View>
@@ -75,13 +76,14 @@ export default function Calendar() {
           <Text style={s('padding:2xl 0;text-align:center;font-size:11.5px;color:#9DB2BD')}>아직 일정이 없어요</Text>
         )}
         {vm.calDayEvents.map((e) => (
-          <Pressable key={e.id} onPress={e.edit} style={s('flex-direction:row;align-items:center;gap:lg;background:#fff;border:1px solid #FFE1EC;border-radius:16px;padding:xl 2xl;cursor:pointer')}>
+          <Pressable key={e.id} onPress={e.edit} style={s('flex-direction:row;align-items:center;gap:lg;padding:md hair;cursor:pointer')}>
             {/* 종류 색 막대 */}
             <View style={{ width: 4, height: 32, borderRadius: 2, backgroundColor: e.color }} />
             <View style={s('flex:1;min-width:0')}>
               <Text numberOfLines={1} style={s('font-size:13px;font-weight:700;color:#17303B')}>{e.title}</Text>
               <Text style={s('font-size:10.5px;color:#9DB2BD;margin-top:hair')}>
-                {e.when}{e.category ? ` · ${e.category}` : ''}{e.byName ? ` · ${e.byName}님` : ''}
+                {/* 색은 구분용 표시일 뿐이라 '여행'·'학교' 같은 이름은 적지 않는다 */}
+                {e.when}{e.byName ? ` · ${e.byName}님` : ''}
               </Text>
             </View>
             {/* 휴지통 — 누르면 확인 창을 한 번 거친다 */}

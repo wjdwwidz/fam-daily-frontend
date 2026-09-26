@@ -58,7 +58,7 @@ export function buildVm(app) {
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, reorderBucket,
     startBucketMedia, cancelBucketLink, setBucketDatePart, toggleBucketRow,
     cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity, loadNotifications,
-    loadDday, prevMonth, nextMonth, goThisMonth, pickDay, setCalYear, setCalMonth,
+    loadDday, prevMonth, nextMonth, goThisMonth, showDate, setCalYear, setCalMonth,
     toggleEventDday, setDdayMode, toggleEventRepeat,
     openEvent, closeEvent, onEventTitle, pickEventCategory, toggleEventRange,
     setEventDatePart, saveEvent, removeEvent,
@@ -726,12 +726,18 @@ export function buildVm(app) {
     membersFromLink: !!st.membersFromLink,
     answerOpen: !!st.answerOpen,
     // ── 달력 (가족 일정) ───────────────────────────────────────────
-    prevMonth, nextMonth, goThisMonth,
+    prevMonth, nextMonth,
+    openCalendar: () => {
+      const focus = st.calFocus
+      if (focus) { showDate(focus); setState({ calFocus: null }) } else goThisMonth()
+    },
     calLoading: !!st.calLoading,
     // 홈의 다가오는 일정 (D-day 로 켠 것만)
     loadDday,
     // 모아보기 — 홈은 앞의 몇 개만. 홈에서 누른 일정은 그 화면에서 잠깐 표시해 준다
     // (나갔다 들어오면 표시 없이 그냥 목록).
+    isDayEvents: scr === 'day',
+    clearPickedDay: () => setState({ calPicked: null }),
     isDdayAll: scr === 'dday',
     openDdayAll: (id) => navTo({ screen: 'dday', ddayFocus: id ?? null }),
     clearDdayFocus: () => setState({ ddayFocus: null }),
@@ -764,8 +770,9 @@ export function buildVm(app) {
         color: catColor(e.category),
         when: fmtYmdRange(e.startDate, e.endDate),
         label,
-        // D-day 에서 들어온 달력은 서브탭 없이 '뒤로가기 + 달력' 으로 연다
-        open: () => navTo({ screen: 'record', recordTab: 'calendar', recordSolo: true }),
+        // D-day 에서 들어온 달력은 서브탭 없이 '뒤로가기 + 달력' 으로 열고,
+        // 그 일정의 날짜로 맞춰서 그날을 짚어 둔다
+        open: () => navTo({ screen: 'record', recordTab: 'calendar', recordSolo: true, calFocus: e.startDate }),
       }
     }),
     // 제목의 년·월 — 누르면 휠로 골라 그 달로 바로 간다 (앞으로의 일정도 잡으니 10년 뒤까지)
@@ -787,10 +794,16 @@ export function buildVm(app) {
           n: d,
           today: day === calToday,
           picked: st.calPicked === d,
-          // 색 점은 세 개까지만 (칸이 좁다)
-          dots: list.slice(0, 3).map((e, i) => ({ key: e.id || i, c: catColor(e.category) })),
-          more: Math.max(0, list.length - 3),
-          pick: () => pickDay(d),
+          // 칸이 좁아서 제목은 두 개까지만 살짝 보여주고, 나머지는 '+n' 으로
+          items: list.slice(0, 2).map((e, i) => ({
+            key: e.id || i,
+            title: e.title,
+            c: catColor(e.category),
+            bg: `${catColor(e.category)}22`,
+          })),
+          more: Math.max(0, list.length - 2),
+          // 그날 일정 목록 화면으로 (거기서 고르면 수정 화면, 더 추가도 할 수 있다)
+          pick: () => navTo({ screen: 'day', calPicked: d }),
         })
       }
       return cells

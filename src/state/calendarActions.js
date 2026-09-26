@@ -61,9 +61,12 @@ export function createCalendarActions({ ref, setState, showToast }) {
   const prevMonth = () => { const { y, m } = shown(); showMonth(y, m - 1) }
   const nextMonth = () => { const { y, m } = shown(); showMonth(y, m + 1) }
   const goThisMonth = () => { const n = new Date(); showMonth(n.getFullYear(), n.getMonth() + 1) }
-  // 날짜를 누르면 그날 일정만 아래에 모아 본다. 같은 날을 다시 누르면 전체로 돌아간다.
-  const pickDay = (day) =>
-    setState((p) => ({ calPicked: p.calPicked === day ? null : day }))
+  // 특정 날짜로 달력을 맞추고 그날을 짚어 둔다 (홈 D-day 에서 일정을 눌러 들어올 때)
+  const showDate = (ymdStr) => {
+    const [y, m, d] = ymdStr.split('-').map(Number)
+    showMonth(y, m)
+    setState({ calPicked: d })
+  }
 
   // ── 일정 추가·수정 시트 ───────────────────────────────────────────
   // 새로 적으면 고른 날(없으면 오늘)부터. 수정이면 그 일정을 채워서 연다.
@@ -169,7 +172,7 @@ export function createCalendarActions({ ref, setState, showToast }) {
 
   return {
     loadDday,
-    prevMonth, nextMonth, goThisMonth, pickDay, setCalYear, setCalMonth, toggleEventDday, setDdayMode, toggleEventRepeat,
+    prevMonth, nextMonth, goThisMonth, showDate, setCalYear, setCalMonth, toggleEventDday, setDdayMode, toggleEventRepeat,
     openEvent, closeEvent, onEventTitle, pickEventCategory, toggleEventRange,
     setEventDatePart, saveEvent, removeEvent,
   }
