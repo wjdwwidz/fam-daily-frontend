@@ -1,15 +1,15 @@
 // 도메인별 모듈(api/*)을 모아 앱에서 쓰는 단일 진입점으로 재노출.
 // 화면은 여기서 `api` 하나만 import 하면 됨.
-import { API_BASE, getToken, setToken, clearToken } from './api/client.js'
-import { authApi, kakaoLogin } from './api/auth.js'
+import { API_BASE, getToken, clearToken } from './api/client.js'
+import { authApi } from './api/auth.js'
 import { groupsApi } from './api/groups.js'
 import { wordsApi } from './api/words.js'
 import { qnaApi } from './api/qna.js'
 import { mediaApi, putToSignedUrl, assetContentType } from './api/media.js'
 import { calendarApi } from './api/calendar.js'
-import { uploadImage, updateMyPhoto } from './api/uploads.js'
+import { uploadImage } from './api/uploads.js'
 
-export { API_BASE, getToken, setToken, clearToken, kakaoLogin }
+export { getToken, clearToken }
 
 export const api = {
   base: API_BASE,
@@ -22,5 +22,4 @@ export const api = {
   putToSignedUrl,
   assetContentType,
   uploadImage,
-  updateMyPhoto,
 }

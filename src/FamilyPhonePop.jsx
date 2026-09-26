@@ -29,7 +29,6 @@ import BucketItem from './screens/BucketItem.jsx'
 import Upload from './screens/Upload.jsx'
 import Members from './screens/Members.jsx'
 import Profile from './screens/Profile.jsx'
-import LinkSheet from './overlays/LinkSheet.jsx'
 import AnswerSheet from './overlays/AnswerSheet.jsx'
 import QuestionSheet from './overlays/QuestionSheet.jsx'
 import AddEventSheet from './overlays/AddEventSheet.jsx'
@@ -116,7 +115,6 @@ export default function FamilyPhonePop() {
         </PullToRefresh>
       </SwipeBack>
 
-      {vm.linkSheetOpen && <LinkSheet />}
       {vm.answerOpen && <AnswerSheet />}
       {vm.questionOpen && <QuestionSheet />}
       {vm.eventSheetOpen && <AddEventSheet />}

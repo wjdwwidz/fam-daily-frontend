@@ -168,7 +168,6 @@ export function createCalendarActions({ ref, setState, showToast }) {
   }
 
   return {
-    loadEvents: () => { const { y, m } = shown(); return loadEvents(y, m) },
     loadDday,
     prevMonth, nextMonth, goThisMonth, pickDay, setCalYear, setCalMonth, toggleEventDday, setDdayMode, toggleEventRepeat,
     openEvent, closeEvent, onEventTitle, pickEventCategory, toggleEventRange,

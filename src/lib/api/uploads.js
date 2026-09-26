@@ -52,9 +52,3 @@ export async function uploadImage(asset, folder) {
   const data = await postFile(`/uploads${qs}`, asset, '사진 업로드에 실패했어요.')
   return data.url
 }
-
-// 프로필 사진 교체 — 서버가 업로드와 DB 기록을 한 요청으로 처리한다.
-// (두 번 나눠 부르면 업로드만 성공했을 때 고아 파일이 남는다)
-export async function updateMyPhoto(asset) {
-  return postFile('/auth/me/photo', asset, '프로필 사진 저장에 실패했어요.')
-}

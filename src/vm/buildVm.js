@@ -5,7 +5,6 @@ import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import * as Clipboard from 'expo-clipboard'
 import { Linking, Platform, Share } from 'react-native'
 import { MAX_WORD_PHOTOS } from '../state/wordActions.js'
-import { HOME_ACTIVITY_LIMIT } from '../state/groupActions.js'
 import { clipText } from '../lib/text.js'
 import { dateWheel, fmtYmdRange, todayYmd, FIRST_YEAR } from '../lib/date.js'
 import { placeMapUrl } from '../lib/place.js'
@@ -59,7 +58,7 @@ export function buildVm(app) {
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, reorderBucket,
     startBucketMedia, cancelBucketLink, setBucketDatePart, toggleBucketRow,
     cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity, loadNotifications,
-    loadEvents, loadDday, prevMonth, nextMonth, goThisMonth, pickDay, setCalYear, setCalMonth,
+    loadDday, prevMonth, nextMonth, goThisMonth, pickDay, setCalYear, setCalMonth,
     toggleEventDday, setDdayMode, toggleEventRepeat,
     openEvent, closeEvent, onEventTitle, pickEventCategory, toggleEventRange,
     setEventDatePart, saveEvent, removeEvent,
@@ -476,10 +475,10 @@ export function buildVm(app) {
     // 뒤로 갈 곳이 있는지 (스와이프 뒤로가기·안드로이드 뒤로가기 버튼용).
     // 히스토리가 없으면 탭 화면이라 뒤로가기가 의미 없다.
     canGoBack: !st.booting && scr !== 'login' && (st._hist || []).length > 0,
-    isLogin: scr === 'login', isHome: scr === 'home', isDict: scr === 'dict', isWord: scr === 'word',
+    isLogin: scr === 'login', isHome: scr === 'home', isWord: scr === 'word',
     isGallery: scr === 'gallery', isMedia: scr === 'media', isUpload: scr === 'upload',
     isMembers: scr === 'members',
-    isQna: scr === 'qna', isProfile: scr === 'profile',
+    isProfile: scr === 'profile',
     isRecord: scr === 'record', // 사전+문답 통합 탭
     recordTab: st.recordTab || 'dict', // 'dict' | 'qna'
     setRecordTab: (k) => setState({ recordTab: k, recordSolo: false }),
@@ -579,7 +578,6 @@ export function buildVm(app) {
       onYes: deleteAccount,
     }),
     accountDeleting: !!st.accountDeleting,
-    me: st.me || null,
     // 그룹 만들기/참여 입력
     createName: st.createName ?? '', createNickname: st.createNickname ?? '',
     createNameErr: !!st.createNameErr, createNickErr: !!st.createNickErr,
@@ -591,23 +589,21 @@ export function buildVm(app) {
     onJoinCode: (t) => setState({ joinCode: t, joinCodeErr: false }),
     onJoinNickname: (t) => setState({ joinNickname: t, joinNickErr: false }),
     doJoinGroup,
-    actionLoading: !!st.actionLoading, actionError: st.actionError || null,
+    actionLoading: !!st.actionLoading,
     showNav: ['home', 'record', 'dict', 'gallery', 'members', 'qna'].indexOf(scr) !== -1,
-    members, words, media, dictGroups,
+    members, dictGroups,
     galleryMedia, galleryTabs, galleryEmpty: galleryMedia.length === 0 && uploadJobs.length === 0,
     uploadJobs,
     // 모든 가족을 통틀어 올리는 중인 작업 수 (웹에서 탭 닫기 확인용)
     uploadingCount: (st.uploadJobs || []).filter((j) => j.status === 'uploading').length,
     todayQ, pastQs,
     qnaHistory, qnaHistoryTotal,
-    qnaLoading: !!st.qnaLoading,
     isQnaHistory: scr === 'qnahistory',
     openQnaHistory: () => go('qnahistory'),
 
     // 버킷리스트 — 1~100 칸을 늘 다 그린다. 채운 칸만 서버에서 오고 나머지는 빈 칸.
     isBucketItem: scr === 'bucketitem',
     loadBucket,
-    bucketLoading: !!st.bucketLoading,
     bucketTotal: st.bucket?.size || 100,
     // 한 장(100칸)씩 넘겨 본다. 앞 장을 다 채우면 서버가 pages 를 늘려준다.
     bucketPages: st.bucket?.pages || 1,
@@ -669,7 +665,6 @@ export function buildVm(app) {
     bucketNo: st.bucketNo || 1,
     bucketDraft: st.bucketDraft ?? '',
     bucketDoneDraft: !!st.bucketDone,
-    bucketMediaId: st.bucketMediaId ?? null,
     bucketMediaCover: (st.groupMedia || []).find((m) => m.id === st.bucketMediaId)
       ? shapeMedia((st.groupMedia || []).find((m) => m.id === st.bucketMediaId)).coverUrl
       : null,
@@ -731,8 +726,7 @@ export function buildVm(app) {
     membersFromLink: !!st.membersFromLink,
     answerOpen: !!st.answerOpen,
     // ── 달력 (가족 일정) ───────────────────────────────────────────
-    isCalendar: scr === 'record' && (st.recordTab || 'dict') === 'calendar',
-    loadEvents, prevMonth, nextMonth, goThisMonth,
+    prevMonth, nextMonth, goThisMonth,
     calLoading: !!st.calLoading,
     // 홈의 다가오는 일정 (D-day 로 켠 것만)
     loadDday,
@@ -812,7 +806,7 @@ export function buildVm(app) {
     eventCats,
     openEvent: () => openEvent(null),
     eventSheetOpen: !!sheet,
-    closeEvent, onEventTitle, toggleEventRange, saveEvent,
+    closeEvent, onEventTitle, saveEvent,
     eventTitle: sheet?.title || '',
     eventIsEdit: !!sheet?.id,
     eventSaving: !!st.eventSaving,
@@ -824,7 +818,6 @@ export function buildVm(app) {
     // 홈에 띄울지와 세는 방법
     eventIsDday: !!sheet?.isDday,
     toggleEventDday,
-    eventDdayMode: sheet?.ddayMode || 'dday',
     ddayModes: [
       { key: 'dday', label: 'D-day', hint: '남은 날' },
       { key: 'count', label: '날짜수', hint: '지난 날' },
@@ -984,12 +977,11 @@ export function buildVm(app) {
     saveWord, cancelEdit,
     editWord: st.editPost === 'word', readWord: st.editPost !== 'word',
     wordDraft: st.wordDraft || {},
-    navHome: navC(scr === 'home'), navDict: navC(scr === 'dict'), navQna: navC(scr === 'qna'),
+    navHome: navC(scr === 'home'),
     navRecord: navC(scr === 'record'),
     navGallery: navC(scr === 'gallery'), navMembers: navC(scr === 'members'),
     uploadHint: ut === 'photo' ? '사진을 선택하세요' : '영상을 선택하세요',
-    goSpace: () => go('space'), goCreate: () => go('createSpace'), goJoin: () => go('joinSpace'), finishOnboard: () => go('spaceSelect'), goLogin: () => go('login'), goSignupBack: () => go('signup'),
-    linkSheetOpen: !!st.linkSheetOpen, openLinkSheet: () => setState({ linkSheetOpen: true }), closeLinkSheet: () => setState({ linkSheetOpen: false }),
+    goSpace: () => go('space'), goCreate: () => go('createSpace'), goJoin: () => go('joinSpace'), finishOnboard: () => go('spaceSelect'),
     goHome: () => go('home'),
     // 기록 탭 (마지막 서브탭 유지). 달력만 단독으로 보던 상태면 풀고 들어간다.
     goRecord: () => { setState({ recordSolo: false }); go('record') },
@@ -1044,7 +1036,6 @@ export function buildVm(app) {
     uploadSaving: !!st.uploadSaving,
     uploadError: st.uploadError || null,
     pickUploadPhoto, onUploadCaption, submitUpload, editMedia,
-    mediaLoading: !!st.mediaLoading,
     back,
   }
 }
