@@ -1,6 +1,7 @@
 // 앱 전체 뷰모델 조립. app = useApp() 결과(상태·네비게이션·액션)를 받아
 // 화면들이 쓰는 vm 객체를 만든다. 화면은 useVm()으로 이걸 가져간다.
 import { QUESTION_BANK } from '../data/questionBank.js'
+import * as Updates from 'expo-updates'
 import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import * as Clipboard from 'expo-clipboard'
 import { Linking, Platform, Share } from 'react-native'
@@ -999,6 +1000,13 @@ export function buildVm(app) {
     // 기록 탭 (마지막 서브탭 유지). 달력만 단독으로 보던 상태면 풀고 들어간다.
     goRecord: () => { setState({ recordSolo: false }); go('record') },
     goGallery: () => go('gallery'),
+    // 가족 화면 맨 아래 한 줄 — 이 기기가 최신인지 가늠하는 용도.
+    // 날짜가 안 보이면 업데이트를 못 받는 옛 앱이라 다시 깔아야 한다.
+    lastUpdatedLabel: (() => {
+      const at = Updates.createdAt
+      if (!at) return ''
+      return `Last updated ${at.getMonth() + 1}월 ${at.getDate()}일`
+    })(),
     goMembers: () => navTo({ screen: 'members', membersFromLink: false }),
     goMembersDeep: () => navTo({ screen: 'members', membersFromLink: true }),
     // 문답 답변 남기기 (오늘의 질문에 대해)

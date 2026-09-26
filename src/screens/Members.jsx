@@ -97,6 +97,11 @@ export default function Members() {
           {vm.groupDeleteError && <Text style={s('font-size:11.5px;color:#E5484D;margin-top:xs')}>{vm.groupDeleteError}</Text>}
         </View>
       )}
+
+      {/* 이 기기가 최신인지 가늠하는 한 줄. 업데이트를 못 받는 옛 앱에서는 아무것도 안 보인다. */}
+      {!!vm.lastUpdatedLabel && (
+        <Text style={s('text-align:center;font-size:10.5px;color:#C4CFD6;margin-top:3xl')}>{vm.lastUpdatedLabel}</Text>
+      )}
     </View>
   )
 }

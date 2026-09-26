@@ -2,7 +2,7 @@
   "expo": {
     "name": "우리끼리",
     "slug": "fam-daily-app",
-    "version": "1.0.3",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -65,7 +65,7 @@
     },
     "owner": "hye14",
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "fingerprint"
     },
     "updates": {
       "url": "https://u.expo.dev/5764520b-e55a-40be-a26d-4d7bf63e1222"
