@@ -99,7 +99,7 @@ export default function Gallery() {
           {toColumns(vm.galleryMedia, 2).map((col, c) => (
             <View key={c} style={[s('row-gap:xl'), { width: '48.5%' }]}>
               {col.map((g, i) => (
-                <Pressable key={i} onPress={g.open} style={s('background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);border-radius:26px;overflow:hidden;')}>
+                <Pressable key={i} onPress={g.open} style={s('background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);overflow:hidden;')}>
                   <View style={{ position: 'relative' }}>
                     <Photo uri={g.coverUrl} fallbackRatio={g.isVideo ? 3 / 4 : 4 / 3} />
                     {g.count > 1 && (
@@ -130,7 +130,7 @@ export default function Gallery() {
             <View key={c} style={{ flex: 1, rowGap: GRID_GAP }}>
               {col.map((g, i) => (
                 <Pressable key={i} onPress={g.open} style={{ position: 'relative' }}>
-                  <Photo uri={g.coverUrl} radius={12} fallbackRatio={g.isVideo ? 3 / 4 : 1} />
+                  <Photo uri={g.coverUrl} fallbackRatio={g.isVideo ? 3 / 4 : 1} />
                   {g.count > 1 && (
                     <View style={s('position:absolute;right:5px;bottom:5px;background:rgba(0,0,0,0.45);border-radius:999px;padding:hair sm')}>
                       <Text style={s('color:#fff;font-size:9.5px;font-weight:700')}>{g.count}</Text>

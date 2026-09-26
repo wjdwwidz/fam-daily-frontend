@@ -126,8 +126,8 @@ export default function Media() {
       <View style={s('margin:0 5xl;gap:lg')}>
         {m.items.map((it, i) =>
           it.type === 'video'
-            ? <VideoItem key={i} uri={it.url} radius={28} />
-            : <Photo key={i} uri={it.url} radius={28} />
+            ? <VideoItem key={i} uri={it.url} />
+            : <Photo key={i} uri={it.url} />
         )}
       </View>
 
