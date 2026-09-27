@@ -10,6 +10,9 @@ import { Platform, ToastAndroid } from 'react-native'
 let placeTimer = null
 
 // 일상 사진 액션: 목록 로드 / 사진 고르기 / 올리기 / 수정 / 삭제.
+// 한 글에 담을 수 있는 최대 개수 (서버의 MAX_FILES·MAX_ITEMS 와 같은 값).
+export const MAX_UPLOAD_PHOTOS = 20
+
 export function createMediaActions({ ref, setState, go, back, showToast }) {
   const loadMedia = async (groupId) => {
     if (!groupId) return
@@ -25,8 +28,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
   // 장소 검색 창을 닫은 상태
   const PLACE_SEARCH_CLOSED = { placeSearchOpen: false, placeQuery: '', placeResults: [], placeSearching: false, placeError: null, placeLimited: false }
 
-  // 한 글에 담을 수 있는 최대 개수 (서버의 MAX_FILES 와 같은 값).
-  const MAX_PICK = 10
+  const MAX_PICK = MAX_UPLOAD_PHOTOS
 
   // 사진 선택 — 기기 안의 파일로 미리보기만. 실제 업로드는 '올리기' 누를 때.
   // (고르기만 하고 나가면 서버엔 아무것도 안 남는다)
@@ -61,7 +63,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       })
       if (result.canceled || !result.assets || !result.assets.length) return
       // 넘치게 고른 건 앞에서부터 남은 자리만큼만 담는다.
-      // (예전엔 MAX_PICK 로 잘라, 수정 중이면 기존 사진과 합쳐 10장을 넘을 수 있었다)
+      // (예전엔 MAX_PICK 로 잘라, 수정 중이면 기존 사진과 합쳐 최대치를 넘을 수 있었다)
       // 웹은 미리보기용 작은 사진을 만드는 동안 빈 칸으로 먼저 보여준다 (원본을 그리면 느리다)
       const web = Platform.OS === 'web'
       const taken = result.assets.slice(0, room).map((a) => (web ? { ...a, thumbPending: true } : a))

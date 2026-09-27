@@ -6,6 +6,7 @@ import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import * as Clipboard from 'expo-clipboard'
 import { Linking, Platform, Share } from 'react-native'
 import { MAX_WORD_PHOTOS } from '../state/wordActions.js'
+import { MAX_UPLOAD_PHOTOS } from '../state/mediaActions.js'
 import { clipText } from '../lib/text.js'
 import { dateWheel, fmtYmdRange, todayYmd, FIRST_YEAR } from '../lib/date.js'
 import { placeMapUrl } from '../lib/place.js'
@@ -984,6 +985,7 @@ export function buildVm(app) {
     removeWordPhoto, pickWordPhoto,
     wordPhotos: (st.wordDraft && st.wordDraft.photos) || [],
     wordPhotoMax: MAX_WORD_PHOTOS,
+    uploadPhotoMax: MAX_UPLOAD_PHOTOS,
     canAddWordPhoto: ((st.wordDraft && st.wordDraft.photos) || []).length < MAX_WORD_PHOTOS,
     photoError: st.photoError || null,
     wordError: st.wordError || null, // 단어 저장 실패 사유 (사전 화면에 표시)
@@ -1032,6 +1034,16 @@ export function buildVm(app) {
     uploadFixedItems: uploadExisting,
     uploadDraggableItems: uploadPicked,
     reorderUpload: (from, to) => reorderUploadAsset(from, to),
+    // 웹은 끌어서 옮기기가 잘 안 먹어서 화살표 단추도 같이 둔다
+    uploadMoveArrows: Platform.OS === 'web',
+    uploadMoveAt: (i) => {
+      const last = (st.uploadAssets || []).length - 1
+      return {
+        left: i > 0 ? () => reorderUploadAsset(i, i - 1) : null,
+        right: i < last ? () => reorderUploadAsset(i, i + 1) : null,
+      }
+    },
+    uploadReorderHint: Platform.OS === 'web' ? ' · 화살표로 순서 변경' : ' · 끌어서 순서 변경',
     // 언제의 일인지 — 시작일(하루면 이것만), 며칠이면 끝나는 날
     uploadTakenFrom: st.uploadTakenFrom || null,
     uploadTakenTo: st.uploadTakenTo || null,

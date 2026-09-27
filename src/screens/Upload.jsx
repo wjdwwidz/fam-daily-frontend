@@ -28,7 +28,7 @@ function RemoveButton({ onPress, top, right, size }) {
 const THUMB = 140
 
 // 썸네일 한 칸 — 고정된 사진과 끌 수 있는 사진이 같은 모양이어야 해서 함수로 뺀다
-function Thumb({ it, dragging }) {
+function Thumb({ it, dragging, onMove }) {
   return (
     <>
       <View style={{ width: '100%', height: '100%', borderRadius: 18, overflow: 'hidden', backgroundColor: '#FCEEF4', ...(dragging ? { borderWidth: 2, borderColor: '#FF5E8A' } : null) }}>
@@ -49,7 +49,26 @@ function Thumb({ it, dragging }) {
         )}
       </View>
       <RemoveButton onPress={it.remove} top={6} right={6} size={24} />
+      {/* 웹은 끌어서 옮기기가 잘 안 먹어서 화살표로도 옮길 수 있게 둔다 */}
+      {!!onMove && (
+        <View style={s('position:absolute;left:6px;bottom:6px;flex-direction:row;gap:xs')}>
+          <Arrow dir="left" onPress={onMove.left} />
+          <Arrow dir="right" onPress={onMove.right} />
+        </View>
+      )}
     </>
+  )
+}
+
+// 사진을 한 칸 앞/뒤로 옮기는 작은 단추. 끝에 닿으면 흐리게 두고 누르면 아무 일도 안 한다.
+function Arrow({ dir, onPress }) {
+  const off = !onPress
+  return (
+    <Pressable onPress={onPress || undefined} disabled={off} hitSlop={4} accessibilityLabel={dir === 'left' ? '앞으로' : '뒤로'} style={s(`width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);cursor:pointer;opacity:${off ? 0.3 : 1}`)}>
+      <Svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke="#fff" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
+        <Path d={dir === 'left' ? 'M14.5 5 L7.5 12 L14.5 19' : 'M9.5 5 L16.5 12 L9.5 19'} />
+      </Svg>
+    </Pressable>
   )
 }
 
@@ -205,7 +224,7 @@ export default function Upload() {
             </View>
             <View style={s('text-align:center')}>
               <Text style={s('font-size:12.6px;font-weight:700;color:#17303B')}>{vm.uploadHint}</Text>
-              <Text style={s('font-size:11px;color:#9DB2BD;margin-top:xs')}>사진은 최대 10장 고를 수 있어요</Text>
+              <Text style={s('font-size:11px;color:#9DB2BD;margin-top:xs')}>사진은 최대 {vm.uploadPhotoMax}장 고를 수 있어요</Text>
             </View>
           </Pressable>
         )}
@@ -231,12 +250,12 @@ export default function Upload() {
                 onReorder={vm.reorderUpload}
                 renderItem={(it, i, dragging) => (
                   <View style={{ height: THUMB }}>
-                    <Thumb it={it} dragging={dragging} />
+                    <Thumb it={it} dragging={dragging} onMove={vm.uploadMoveArrows ? vm.uploadMoveAt(i) : null} />
                   </View>
                 )}
               />
             </ScrollView>
-            <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md')}>{vm.uploadCount}장 선택됨 · 최대 10장{vm.uploadDraggableItems.length > 1 ? ' · 끌어서 순서 변경' : ''}</Text>
+            <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md')}>{vm.uploadCount}장 선택됨 · 최대 {vm.uploadPhotoMax}장{vm.uploadDraggableItems.length > 1 ? vm.uploadReorderHint : ''}</Text>
           </View>
         )}
         {/* 버킷리스트 칸에 붙이려고 쓰는 중이면 알려준다 */}
