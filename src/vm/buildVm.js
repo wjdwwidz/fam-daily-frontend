@@ -67,7 +67,7 @@ export function buildVm(app) {
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
-    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem, reorderUploadAsset,
+    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem, reorderUploadAsset, reorderExistingItem,
     addMediaDate, removeMediaDate, toggleMediaRange, setMediaDatePart,
     openPlaceSearch, closePlaceSearch, onPlaceQuery, pickPlace, removePlace,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
@@ -1034,6 +1034,15 @@ export function buildVm(app) {
     uploadFixedItems: uploadExisting,
     uploadDraggableItems: uploadPicked,
     reorderUpload: (from, to) => reorderUploadAsset(from, to),
+    // 이미 올라간 사진도 순서를 바꾼다 (서버가 보낸 순서대로 저장한다)
+    reorderExisting: (from, to) => reorderExistingItem(from, to),
+    uploadMoveFixedAt: (i) => {
+      const last = uploadExisting.length - 1
+      return {
+        left: i > 0 ? () => reorderExistingItem(i, i - 1) : null,
+        right: i < last ? () => reorderExistingItem(i, i + 1) : null,
+      }
+    },
     // 화살표로도 옮길 수 있게 (웹은 끌기가 잘 안 먹고, 폰에서도 한 칸씩 옮기는 게 편하다)
     uploadMoveAt: (i) => {
       const last = uploadPicked.length - 1

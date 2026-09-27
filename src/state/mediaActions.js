@@ -152,6 +152,15 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     setState({ uploadAssets: list })
   }
 
+  // 이미 올라간 사진 순서 바꾸기 (수정 중). 저장할 때 keepUrls 를 이 순서로 보낸다.
+  const reorderExistingItem = (from, to) => {
+    const list = [...(ref.current.editMediaItems || [])]
+    if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return
+    const [moved] = list.splice(from, 1)
+    list.splice(to, 0, moved)
+    setState({ editMediaItems: list, editItemsTrimmed: true })
+  }
+
   // 첨부된 사진 한 장 빼기.
   // 새로 고른 사진이면 목록에서 빼고, 수정 중인 기존 사진이면 '남길 목록'에서 뺀다
   // (editItemsTrimmed 가 켜져야 저장할 때 keepUrls 를 보낸다).
@@ -453,7 +462,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
 
   return {
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
-    removeUploadItem, reorderUploadAsset,
+    removeUploadItem, reorderUploadAsset, reorderExistingItem,
     addMediaDate, removeMediaDate, toggleMediaRange, setMediaDatePart,
     openPlaceSearch, closePlaceSearch, onPlaceQuery, pickPlace, removePlace,
     retryUploadJob, discardUploadJob,

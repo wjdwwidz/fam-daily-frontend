@@ -236,12 +236,18 @@ export default function Upload() {
                 <Text style={s('font-size:24px;color:#9DB2BD;line-height:1')}>＋</Text>
                 <Text style={s('font-size:11.5px;color:#9DB2BD;margin-top:sm;font-weight:700')}>사진</Text>
               </Pressable>
-              {/* 이미 올라간 사진 — 자리를 지킨다 (서버가 이 뒤에 새 사진을 붙인다) */}
-              {vm.uploadFixedItems.map((it) => (
-                <View key={it.key} style={{ width: THUMB, height: THUMB }}>
-                  <Thumb it={it} />
-                </View>
-              ))}
+              {/* 이미 올라간 사진 — 저장할 때 이 순서 그대로 남는다. 새 사진은 이 뒤에 붙는다 */}
+              <DragReorder
+                items={vm.uploadFixedItems}
+                itemWidth={THUMB}
+                gap={10}
+                onReorder={vm.reorderExisting}
+                renderItem={(it, i, dragging) => (
+                  <View style={{ height: THUMB }}>
+                    <Thumb it={it} dragging={dragging} onMove={vm.uploadMoveFixedAt(i)} />
+                  </View>
+                )}
+              />
               {/* 새로 고른 사진 — 끌어서 순서를 바꾼다 */}
               <DragReorder
                 items={vm.uploadDraggableItems}
@@ -255,7 +261,7 @@ export default function Upload() {
                 )}
               />
             </ScrollView>
-            <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md')}>{vm.uploadCount}장 선택됨 · 최대 {vm.uploadPhotoMax}장{vm.uploadDraggableItems.length > 1 ? vm.uploadReorderHint : ''}</Text>
+            <Text style={s('font-size:11px;color:#9DB2BD;margin-top:md')}>{vm.uploadCount}장 선택됨 · 최대 {vm.uploadPhotoMax}장{vm.uploadCount > 1 ? vm.uploadReorderHint : ''}</Text>
           </View>
         )}
         {/* 버킷리스트 칸에 붙이려고 쓰는 중이면 알려준다 */}
