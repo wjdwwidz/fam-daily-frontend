@@ -1034,16 +1034,15 @@ export function buildVm(app) {
     uploadFixedItems: uploadExisting,
     uploadDraggableItems: uploadPicked,
     reorderUpload: (from, to) => reorderUploadAsset(from, to),
-    // 웹은 끌어서 옮기기가 잘 안 먹어서 화살표 단추도 같이 둔다
-    uploadMoveArrows: Platform.OS === 'web',
+    // 화살표로도 옮길 수 있게 (웹은 끌기가 잘 안 먹고, 폰에서도 한 칸씩 옮기는 게 편하다)
     uploadMoveAt: (i) => {
-      const last = (st.uploadAssets || []).length - 1
+      const last = uploadPicked.length - 1
       return {
         left: i > 0 ? () => reorderUploadAsset(i, i - 1) : null,
         right: i < last ? () => reorderUploadAsset(i, i + 1) : null,
       }
     },
-    uploadReorderHint: Platform.OS === 'web' ? ' · 화살표로 순서 변경' : ' · 끌어서 순서 변경',
+    uploadReorderHint: ' · 화살표로 순서 변경',
     // 언제의 일인지 — 시작일(하루면 이것만), 며칠이면 끝나는 날
     uploadTakenFrom: st.uploadTakenFrom || null,
     uploadTakenTo: st.uploadTakenTo || null,

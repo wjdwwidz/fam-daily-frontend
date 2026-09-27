@@ -250,7 +250,7 @@ export default function Upload() {
                 onReorder={vm.reorderUpload}
                 renderItem={(it, i, dragging) => (
                   <View style={{ height: THUMB }}>
-                    <Thumb it={it} dragging={dragging} onMove={vm.uploadMoveArrows ? vm.uploadMoveAt(i) : null} />
+                    <Thumb it={it} dragging={dragging} onMove={vm.uploadMoveAt(i)} />
                   </View>
                 )}
               />
