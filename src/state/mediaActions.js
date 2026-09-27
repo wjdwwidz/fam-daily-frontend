@@ -67,7 +67,11 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       // 웹은 미리보기용 작은 사진을 만드는 동안 빈 칸으로 먼저 보여준다 (원본을 그리면 느리다)
       const web = Platform.OS === 'web'
       const taken = result.assets.slice(0, room).map((a) => (web ? { ...a, thumbPending: true } : a))
-      setState({ uploadAssets: [...picked, ...taken], uploadError: null })
+      setState((p) => ({
+        uploadAssets: [...picked, ...taken],
+        uploadError: null,
+        ...(p.uploadOrder ? { uploadOrder: [...p.uploadOrder, ...taken.map((a) => `n:${a.uri}`)] } : {}),
+      }))
       if (result.assets.length > room) {
         showToast(`최대 ${MAX_PICK}장이라 ${result.assets.length}장 중 ${room}장만 담았어요`)
       }
@@ -152,13 +156,15 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     setState({ uploadAssets: list })
   }
 
-  // 이미 올라간 사진 순서 바꾸기 (수정 중). 저장할 때 keepUrls 를 이 순서로 보낸다.
-  const reorderExistingItem = (from, to) => {
-    const list = [...(ref.current.editMediaItems || [])]
-    if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return
+  // 수정 중에는 기존·새 사진이 한 줄이라 순서표를 옮긴다 (저장할 때 그대로 보낸다)
+  const moveUploadItem = (from, to) => {
+    const order = ref.current.uploadOrder
+    if (!order) return reorderUploadAsset(from, to)
+    if (from === to || from < 0 || to < 0 || from >= order.length || to >= order.length) return
+    const list = [...order]
     const [moved] = list.splice(from, 1)
     list.splice(to, 0, moved)
-    setState({ editMediaItems: list, editItemsTrimmed: true })
+    setState({ uploadOrder: list, editItemsTrimmed: true })
   }
 
   // 첨부된 사진 한 장 빼기.
@@ -173,16 +179,25 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       setState({ uploadError: '사진은 최소 한 장 남겨야 해요.' })
       return
     }
+    const dropToken = (tok) => (p) =>
+      p.uploadOrder ? { uploadOrder: p.uploadOrder.filter((x) => x !== tok) } : {}
     if (kind === 'new') {
       const next = picked.filter((_, i) => i !== index)
-      setState({ uploadAssets: next.length ? next : undefined, uploadError: null })
+      const tok = `n:${picked[index]?.uri}`
+      setState((p) => ({
+        uploadAssets: next.length ? next : undefined,
+        uploadError: null,
+        ...dropToken(tok)(p),
+      }))
       return
     }
-    setState({
+    const tok = `e:${existing[index]?.url}`
+    setState((p) => ({
       editMediaItems: existing.filter((_, i) => i !== index),
       editItemsTrimmed: true,
       uploadError: null,
-    })
+      ...dropToken(tok)(p),
+    }))
   }
 
   // ── 뒤에서 올리기 ─────────────────────────────────────────────────
@@ -345,11 +360,19 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       // 수정은 늘 '남길 기존 사진' 을 함께 보낸다 — 그래야 새로 고른 사진이
       // 기존 것을 밀어내지 않고 뒤에 붙는다. (예전엔 uploadIds 만 보내 통째로 교체됐다)
       const keepUrls = (ref.current.editMediaItems || []).map((it) => it.url)
+      // 화면에 늘어선 순서 그대로 보낸다 — 새 사진을 기존 사진 앞에 둘 수도 있다.
+      // 토큰(e:url / n:uri)을 서버가 아는 값(url / uploadId)으로 바꾼다.
+      const idOfUri = new Map(assets.map((a, i) => [a.uri, uploadIds?.[i]]))
+      const order = (ref.current.uploadOrder || [])
+        .map((tok) =>
+          tok.startsWith('e:') ? tok.slice(2) : idOfUri.get(tok.slice(2)),
+        )
+        .filter(Boolean)
       // 날짜·장소는 늘 보낸다 — 뺐으면 null 로 보내야 서버에서도 빠진다
-      const updated = await api.updateMedia(editId, uploadIds, caption, keepUrls, extra)
+      const updated = await api.updateMedia(editId, uploadIds, caption, keepUrls, { ...extra, ...(order.length ? { order } : {}) })
       await loadMedia(groupId)
       setState({
-        uploadSaving: false, editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false,
+        uploadSaving: false, editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false, uploadOrder: undefined,
         uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadPlace: undefined, uploadError: null,
         uploadDone: 0, uploadTotal: 0,
         media: updated, // 되돌아갈 상세 화면이 바뀐 내용을 보도록
@@ -364,7 +387,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
   // 올리기 화면 진입 — 이전에 고르다 만 초안은 버린다.
   const openUpload = () => {
     setState({
-      editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false,
+      editMediaId: null, editMediaItems: undefined, editItemsTrimmed: false, uploadOrder: undefined,
       uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadPlace: undefined, uploadError: null,
       ...PLACE_SEARCH_CLOSED,
     })
@@ -379,6 +402,8 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
     if (!m) return
     setState({
       editMediaId: m.id, editMediaItems: m.items || [], editItemsTrimmed: false,
+      // 기존 사진과 새로 고를 사진을 한 줄로 늘어놓기 위한 순서표
+      uploadOrder: (m.items || []).map((it) => `e:${it.url}`),
       uploadAssets: undefined, uploadCaption: m.caption || '', uploadError: null,
       uploadTakenFrom: m.takenFrom || null, uploadTakenTo: m.takenTo || null, uploadPlace: m.place || undefined,
       ...PLACE_SEARCH_CLOSED,
@@ -462,7 +487,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
 
   return {
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia,
-    removeUploadItem, reorderUploadAsset, reorderExistingItem,
+    removeUploadItem, reorderUploadAsset, moveUploadItem,
     addMediaDate, removeMediaDate, toggleMediaRange, setMediaDatePart,
     openPlaceSearch, closePlaceSearch, onPlaceQuery, pickPlace, removePlace,
     retryUploadJob, discardUploadJob,

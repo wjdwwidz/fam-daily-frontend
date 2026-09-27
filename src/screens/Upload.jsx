@@ -236,24 +236,12 @@ export default function Upload() {
                 <Text style={s('font-size:24px;color:#9DB2BD;line-height:1')}>＋</Text>
                 <Text style={s('font-size:11.5px;color:#9DB2BD;margin-top:sm;font-weight:700')}>사진</Text>
               </Pressable>
-              {/* 이미 올라간 사진 — 저장할 때 이 순서 그대로 남는다. 새 사진은 이 뒤에 붙는다 */}
+              {/* 기존 사진과 새로 고른 사진이 한 줄 — 저장할 때 이 순서 그대로 남는다 */}
               <DragReorder
-                items={vm.uploadFixedItems}
+                items={vm.uploadItems}
                 itemWidth={THUMB}
                 gap={10}
-                onReorder={vm.reorderExisting}
-                renderItem={(it, i, dragging) => (
-                  <View style={{ height: THUMB }}>
-                    <Thumb it={it} dragging={dragging} onMove={vm.uploadMoveFixedAt(i)} />
-                  </View>
-                )}
-              />
-              {/* 새로 고른 사진 — 끌어서 순서를 바꾼다 */}
-              <DragReorder
-                items={vm.uploadDraggableItems}
-                itemWidth={THUMB}
-                gap={10}
-                onReorder={vm.reorderUpload}
+                onReorder={vm.moveUpload}
                 renderItem={(it, i, dragging) => (
                   <View style={{ height: THUMB }}>
                     <Thumb it={it} dragging={dragging} onMove={vm.uploadMoveAt(i)} />

@@ -67,7 +67,7 @@ export function buildVm(app) {
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
     loadQna, submitAnswer, submitQuestion,
-    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem, reorderUploadAsset, reorderExistingItem,
+    loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem, reorderUploadAsset, moveUploadItem,
     addMediaDate, removeMediaDate, toggleMediaRange, setMediaDatePart,
     openPlaceSearch, closePlaceSearch, onPlaceQuery, pickPlace, removePlace,
     loadComments, onCommentDraft, startReply, startEditComment, cancelCommentMode, submitComment, removeComment,
@@ -117,7 +117,21 @@ export function buildVm(app) {
     isVideo: a.type === 'video' || /^video\//.test(a.mimeType || ''),
     remove: () => removeUploadItem({ kind: 'new', index: i }),
   }))
-  const uploadPreview = [...uploadExisting, ...uploadPicked]
+  // 수정 중이면 순서표(uploadOrder)대로 한 줄로 늘어놓는다 — 새 사진을 기존 사진 앞에 둘 수 있다.
+  // 순서표가 없으면(새 글) 고른 순서 그대로.
+  const uploadItems = (() => {
+    const order = st.uploadOrder
+    if (!order) return [...uploadExisting, ...uploadPicked]
+    const all = [...uploadExisting, ...uploadPicked]
+    const byKey = new Map(all.map((it) => [it.key, it]))
+    const listed = order
+      .map((tok) => byKey.get(tok.startsWith('e:') ? `e-${tok.slice(2)}` : `n-${tok.slice(2)}`))
+      .filter(Boolean)
+    // 순서표에 빠진 게 있어도 사진이 사라지지 않게 뒤에 붙인다
+    const seen = new Set(listed)
+    return [...listed, ...all.filter((it) => !seen.has(it))]
+  })()
+  const uploadPreview = uploadItems
   const cancelEdit = () => setState({ editPost: null })
 
   const v = variant === 'grid' ? 'grid' : 'cards'
@@ -1031,24 +1045,14 @@ export function buildVm(app) {
     // 새 일상 올리기 (사진·영상 여러 개가 글 하나)
     uploadCount: uploadPreview.length,
     // 순서 바꾸기는 새로 고른 사진에만 — 기존 사진은 그대로 앞에 남는다
-    uploadFixedItems: uploadExisting,
-    uploadDraggableItems: uploadPicked,
-    reorderUpload: (from, to) => reorderUploadAsset(from, to),
-    // 이미 올라간 사진도 순서를 바꾼다 (서버가 보낸 순서대로 저장한다)
-    reorderExisting: (from, to) => reorderExistingItem(from, to),
-    uploadMoveFixedAt: (i) => {
-      const last = uploadExisting.length - 1
-      return {
-        left: i > 0 ? () => reorderExistingItem(i, i - 1) : null,
-        right: i < last ? () => reorderExistingItem(i, i + 1) : null,
-      }
-    },
-    // 화살표로도 옮길 수 있게 (웹은 끌기가 잘 안 먹고, 폰에서도 한 칸씩 옮기는 게 편하다)
+    // 기존 사진과 새로 고른 사진을 한 줄로 — 끌거나 화살표로 자리를 바꾼다
+    uploadItems,
+    moveUpload: (from, to) => moveUploadItem(from, to),
     uploadMoveAt: (i) => {
-      const last = uploadPicked.length - 1
+      const last = uploadItems.length - 1
       return {
-        left: i > 0 ? () => reorderUploadAsset(i, i - 1) : null,
-        right: i < last ? () => reorderUploadAsset(i, i + 1) : null,
+        left: i > 0 ? () => moveUploadItem(i, i - 1) : null,
+        right: i < last ? () => moveUploadItem(i, i + 1) : null,
       }
     },
     uploadReorderHint: ' · 화살표로 순서 변경',

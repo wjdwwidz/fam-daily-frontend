@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native'
+import { useEffect, useState } from 'react'
+import { View, Text, Pressable, TextInput, ActivityIndicator, ScrollView } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import Avatar from '../components/Avatar.jsx'
@@ -7,6 +7,43 @@ import Photo from '../components/Photo.jsx'
 import VideoItem from '../components/VideoItem.jsx'
 
 import { useVm } from '../vm/useVm.js'
+
+// 사진·영상을 옆으로 넘겨 본다 (사전 상세와 같은 모양).
+// 한 장이면 그냥 한 장만 그린다.
+function MediaPager({ items }) {
+  const [width, setWidth] = useState(0)
+  const [index, setIndex] = useState(0)
+  const one = items.length === 1
+  const draw = (it) =>
+    it.type === 'video' ? <VideoItem uri={it.url} /> : <Photo uri={it.url} />
+
+  if (one) return draw(items[0])
+  return (
+    <View style={s('position:relative')} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={(e) => width && setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
+      >
+        {items.map((it, i) => (
+          <View key={i} style={{ width: width || '100%' }}>{draw(it)}</View>
+        ))}
+      </ScrollView>
+      {/* 몇 번째인지 */}
+      <View pointerEvents="none" style={s('position:absolute;right:10px;top:10px;background:rgba(23,48,59,0.55);border-radius:999px;padding:hair md')}>
+        <Text style={s('color:#fff;font-size:11px;font-weight:700')}>{index + 1}/{items.length}</Text>
+      </View>
+      {/* 아래 점 — 넘길 수 있다는 걸 알려준다 */}
+      <View pointerEvents="none" style={s('flex-direction:row;justify-content:center;gap:sm;margin-top:md')}>
+        {items.map((_, i) => (
+          <View key={i} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: i === index ? '#FF5E8A' : '#F0D6DF' }} />
+        ))}
+      </View>
+    </View>
+  )
+}
 
 // 댓글·답글 한 줄. 답글은 부모 아래에 들여써서 같은 모양으로 그린다.
 function CommentRow({ c }) {
@@ -123,12 +160,8 @@ export default function Media() {
         </View>
       )}
 
-      <View style={s('margin:0 5xl;gap:lg')}>
-        {m.items.map((it, i) =>
-          it.type === 'video'
-            ? <VideoItem key={i} uri={it.url} />
-            : <Photo key={i} uri={it.url} />
-        )}
+      <View style={s('margin:0 5xl')}>
+        <MediaPager items={m.items} />
       </View>
 
       {!!m.title && (
