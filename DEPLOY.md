@@ -24,7 +24,7 @@ Gradle·SDK가 깔린 전용 머신을 빌려야 하고, 무료 플랜은 순서
      `react-native-gesture-handler`, `react-native-reanimated`
    - JS만 있는 라이브러리는 해당 없음
 2. **`app.json`의 네이티브 설정**
-   - `version` (→ `runtimeVersion` 이 바뀐다), `plugins`, `android.package`,
+   - `plugins`, `android.package`,
      권한, 아이콘·스플래시, `scheme`(딥링크)
 3. **Expo SDK 버전** 올리기
 4. `android/` · `ios/` 직접 수정 (이 프로젝트는 CNG 라 그 폴더가 없다)
@@ -38,8 +38,9 @@ Gradle·SDK가 깔린 전용 머신을 빌려야 하고, 무료 플랜은 순서
 > `package.json` 에 넣은 새 패키지가 `android/`·`ios/` 코드를 들고 오면 → 새 APK.
 > 그 외 → `eas update`.
 
-헷갈리면 `eas update` 를 먼저 돌려도 된다. 네이티브가 필요한 변경이면 앱에서
-반영이 안 되거나 오류가 날 뿐, 되돌릴 수 없는 일은 아니다.
+헷갈리면 `eas update` 를 먼저 돌려도 된다. 네이티브가 바뀌었으면 런타임 버전(fingerprint)이
+달라져서, 설치된 앱에는 **전달되지 않을 뿐** 되돌릴 수 없는 일은 아니다.
+아래 [런타임 버전](#런타임-버전은-fingerprint)에서 확인하는 법을 본다.
 
 ## 명령어
 
@@ -53,7 +54,9 @@ gh pr create --base main --head <브랜치> && gh pr merge <번호> --merge
 # → Vercel 이 자동 배포
 
 # 앱 (JS 변경)
-npx eas-cli update --branch preview --message "무엇을 바꿨는지"
+npx eas-cli update --branch production --message "무엇을 바꿨는지"
+# → 설치된 APK 는 production 채널 → production 브랜치를 본다 (eas.json 의 preview 프로필도 channel 은 production).
+#   preview 브랜치에 올리면 가족들이 설치한 앱에는 닿지 않는다.
 # → 서버 주소는 .env.production 에서 읽는다 (eas.json 의 build.env 는 APK 빌드에만 쓰인다).
 #   서버 주소를 바꾼 직후엔 --clear-cache 를 붙인다 — 안 붙이면 예전 주소가 캐시에서 그대로 나간다.
 
@@ -69,18 +72,21 @@ npx eas-cli build -p android --profile preview
 앱·웹이 새 API 를 부르는데 서버에 그게 없으면 기능이 조용히 실패한다.
 반대 순서는 안전하다 — 서버에 새 엔드포인트가 있어도 아무도 안 부르면 그만이다.
 
-## ⚠️ `version` 을 함부로 올리지 말 것
+## 런타임 버전은 fingerprint
 
-`app.json` 의 `runtimeVersion` 이 `{ "policy": "appVersion" }` 이라
-**`version` 을 올리면 `runtimeVersion` 이 따라 바뀐다.**
+`app.json` 의 `runtimeVersion` 이 `{ "policy": "fingerprint" }` 다.
+네이티브에 영향을 주는 것(네이티브 패키지, `app.json` 네이티브 설정, SDK)으로 지문을 계산해
+그 값이 런타임 버전이 된다. **업데이트는 런타임 버전이 같은 설치본에만 전달된다.**
 
 ```
-설치된 APK   runtimeVersion 1.0.3
-새 업데이트   runtimeVersion 1.0.4   →  짝이 안 맞아 전달되지 않는다
+설치된 APK   runtimeVersion 1d8b102…
+새 업데이트   runtimeVersion 1d8b102…  →  전달된다
+새 업데이트   runtimeVersion 9f3a0c1…  →  네이티브가 바뀌었다. 새 APK 가 필요하다
 ```
 
-즉 **기존 설치본이 그 순간부터 업데이트를 못 받는다.**
-네이티브가 바뀌어 새 APK 를 배포할 때만 올린다.
+`eas update` 가 끝나면 플랫폼별 `Runtime version` 이 찍힌다.
+직전 업데이트와 같은지 `update:list` 로 비교한다. 다르면 그 업데이트는 기존 설치본에 닿지 않으므로
+`eas build` 로 새 APK 를 만들어 배포해야 한다.
 
 ## OTA 가 사용자에게 닿는 시점
 
@@ -105,7 +111,7 @@ curl -s -o /dev/null -w "%{http_code}\n" https://web-production-cb610.up.railway
 curl -s https://woorikkiri-jade.vercel.app | grep -oE "index-[a-f0-9]+\.js"
 
 # 앱 — 발행된 업데이트 목록
-npx eas-cli update:list --branch preview
+npx eas-cli update:list --branch production   # Runtime version 이 직전과 같은지도 여기서 본다
 
 # 앱 — 방금 만든 번들에 운영 서버 주소가 들어갔는지 (비어 있으면 localhost 로 붙는 업데이트다)
 strings dist/_expo/static/js/android/*.hbc | grep -o "https://web-production-cb610[^ ]*"
