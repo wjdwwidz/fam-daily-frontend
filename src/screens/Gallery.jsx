@@ -2,6 +2,7 @@ import { View, Text, Pressable, ScrollView, Image, ActivityIndicator } from 'rea
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import Photo from '../components/Photo.jsx'
+import Board from './Board.jsx'
 
 const GRID_GAP = 6
 
@@ -15,12 +16,24 @@ function toColumns(list, n) {
 
 import { useVm } from '../vm/useVm.js'
 
+// '게시판' 탭: 글(게시판)과 사진(일상)을 한 화면에서 전환한다. 들어오면 글이 먼저.
 export default function Gallery() {
   const vm = useVm()
   return (
     <View style={s('padding:screenTop screenX screenBottom')}>
-      <Text style={s('font-size:22.6px;font-weight:800;color:#17303B;letter-spacing:-0.5px;margin:sm hair lg')}>일상</Text>
+      {/* 제목이자 전환 스위처 (기록 탭과 같은 모양) */}
+      <View style={s('flex-direction:row;align-items:center;gap:2xl;margin:sm hair lg')}>
+        {vm.galleryTabsTop.map((t) => (
+          <Pressable key={t.key} onPress={t.pick}>
+            <Text style={s(`font-size:22.6px;font-weight:800;letter-spacing:-0.5px;color:${t.sel ? '#17303B' : '#C4CFD6'}`)}>{t.label}</Text>
+            <View style={s(`height:3px;border-radius:2px;margin-top:xs;background:${t.sel ? '#FF5E8A' : 'transparent'}`)} />
+          </Pressable>
+        ))}
+      </View>
 
+      {vm.isBoard && <Board />}
+
+      {vm.isPhotos && (<>
       {/* 폴더 탭 — 선택된 폴더가 앞으로, 나머지는 뒤로 넘어가 겹치는 느낌 */}
       <ScrollView
         horizontal
@@ -153,6 +166,7 @@ export default function Gallery() {
       {vm.galleryEmpty && (
         <Text style={s('text-align:center;padding:56px 5xl;color:#B4C1CA;font-size:12.8px;line-height:1.7')}>아직 올린 일상이 없어요.{'\n'}첫 일상을 남겨보세요</Text>
       )}
+      </>)}
     </View>
   )
 }

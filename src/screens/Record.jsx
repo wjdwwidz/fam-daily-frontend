@@ -4,26 +4,24 @@ import { s } from '../lib/style.js'
 
 import { useVm } from '../vm/useVm.js'
 import Dict from './Dict.jsx'
-import Board from './Board.jsx'
 import Bucket from './Bucket.jsx'
 import Calendar from './Calendar.jsx'
 
-// '기록' 탭: 사전·게시판·버킷리스트·달력을 한 화면에서 상단 세그먼트로 전환.
+// '기록' 탭: 사전·버킷리스트·달력을 한 화면에서 상단 세그먼트로 전환.
 // 각 하위 화면은 제목줄 없이 본문만 렌더하고, 헤더는 여기서 소유한다.
+// (게시판은 아래 '게시판' 탭으로 나가 있다)
 const SUBTABS = [
   { key: 'dict', label: '사전' },
-  { key: 'board', label: '게시판' },
   { key: 'bucket', label: '버킷리스트' },
   { key: 'calendar', label: '달력' },
 ]
 
 export default function Record() {
   const vm = useVm()
-  // 옛 이름('qna')을 기억하고 있으면 게시판으로 보낸다
+  // 게시판이 기록 탭에 있던 시절을 기억하고 있으면 사전으로 보낸다
   const saved = vm.recordTab || 'dict'
-  const tab = saved === 'qna' ? 'board' : saved
+  const tab = saved === 'qna' || saved === 'board' ? 'dict' : saved
   const isDict = tab === 'dict'
-  const isBoard = tab === 'board'
   const isCalendar = tab === 'calendar'
   // D-day 목록에서 들어온 달력은 서브탭 대신 '뒤로가기 + 달력' 으로 (돌아갈 곳이 D-day 라서)
   const solo = isCalendar && vm.recordSolo
@@ -61,14 +59,9 @@ export default function Record() {
           <Pressable onPress={vm.openSearch} style={s('width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid #FFE1EC;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#FF5E8A')}>
             <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#FF5E8A"><Circle cx={11} cy={11} r={6} /><Path d="M20 20 L16 16" /></Svg>
           </Pressable>
-        ) : isBoard ? (
-          <Pressable onPress={vm.openPostSheet} style={s('flex-direction:row;align-items:center;gap:sm;background:#FF5E8A;border-radius:13px;padding:btnY 2xl')}>
-            <Text style={s('color:#fff;font-size:14px;font-weight:800;line-height:1')}>＋</Text>
-            <Text style={s('color:#fff;font-size:12px;font-weight:700')}>새 글</Text>
-          </Pressable>
         ) : null}
       </View>
-      {isDict ? <Dict /> : isBoard ? <Board /> : isCalendar ? <Calendar /> : <Bucket />}
+      {isDict ? <Dict /> : isCalendar ? <Calendar /> : <Bucket />}
     </View>
   )
 }

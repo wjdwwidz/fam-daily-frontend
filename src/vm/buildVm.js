@@ -350,14 +350,14 @@ export function buildVm(app) {
     if (a.type === 'media') {
       return {
         ...base, highlight: '일상', suffix: ' 올림',
-        open: () => { const m = (st.groupMedia || []).find((x) => x.id === a.targetId); if (m) openMediaDetail(m); else go('gallery') },
+        open: () => { const m = (st.groupMedia || []).find((x) => x.id === a.targetId); if (m) openMediaDetail(m); else navTo({ screen: 'gallery', galleryTab: 'photos' }) },
       }
     }
     // 댓글: 댓글 내용을 보여주고, 누르면 그 일상 글로 (targetId 는 글)
     if (a.type === 'comment') {
       return {
         ...base, highlight: `"${clip(a.text)}"`, suffix: ' 댓글',
-        open: () => { const m = (st.groupMedia || []).find((x) => x.id === a.targetId); if (m) openMediaDetail(m); else go('gallery') },
+        open: () => { const m = (st.groupMedia || []).find((x) => x.id === a.targetId); if (m) openMediaDetail(m); else navTo({ screen: 'gallery', galleryTab: 'photos' }) },
       }
     }
     // 버킷리스트 — targetId 는 칸 번호. 누르면 그 칸으로 간다.
@@ -936,7 +936,7 @@ export function buildVm(app) {
         open: () => {
           const m = (st.groupMedia || []).find((x) => x.id === n.mediaId)
           if (m) openMediaDetail(m)
-          else go('gallery')
+          else navTo({ screen: 'gallery', galleryTab: 'photos' })
         },
       }
     }),
@@ -950,8 +950,8 @@ export function buildVm(app) {
       setState({ refreshing: true })
       try {
         if (scr === 'home') await Promise.all([loadMembers(gid), loadActivity(gid)])
-        else if (scr === 'gallery') await loadMedia(gid)
-        else if (scr === 'record') await (st.recordTab === 'board' ? loadPosts(gid) : loadWords(gid))
+        else if (scr === 'gallery') await ((st.galleryTab || 'board') === 'board' ? loadPosts(gid) : loadMedia(gid))
+        else if (scr === 'record') await loadWords(gid)
         else if (scr === 'members') await loadMembers(gid)
         else if (scr === 'media') await Promise.all([loadMedia(gid), loadComments(st.media?.id)])
         else if (scr === 'word') await loadWords(gid)
@@ -1024,7 +1024,17 @@ export function buildVm(app) {
     goMembers: () => navTo({ screen: 'members', membersFromLink: false }),
     goMembersDeep: () => navTo({ screen: 'members', membersFromLink: true }),
     // ── 가족 게시판 ───────────────────────────────────────────────
-    isBoard: scr === 'record' && (st.recordTab || 'dict') === 'board',
+    // '게시판' 탭 안에서 글/사진 전환 (기본은 글)
+    galleryTabsTop: [
+      { key: 'board', label: '게시판' },
+      { key: 'photos', label: '사진' },
+    ].map((x) => ({
+      ...x,
+      sel: (st.galleryTab || 'board') === x.key,
+      pick: () => setState({ galleryTab: x.key }),
+    })),
+    isBoard: scr === 'gallery' && (st.galleryTab || 'board') === 'board',
+    isPhotos: scr === 'gallery' && (st.galleryTab || 'board') === 'photos',
     boardPosts: (st.posts || []).map(shapePost),
     boardLoading: !!st.postsLoading,
     loadPosts: () => loadPosts(),

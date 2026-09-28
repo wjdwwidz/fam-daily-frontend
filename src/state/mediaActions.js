@@ -330,6 +330,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
         uploadJobs: [job, ...(p.uploadJobs || [])],
         uploadAssets: undefined, uploadCaption: undefined, uploadTakenFrom: null, uploadTakenTo: null, uploadPlace: undefined, uploadError: null,
       }))
+      setState({ galleryTab: 'photos' })
       go('gallery')
       runUploadJob(job)
       return
@@ -416,6 +417,7 @@ export function createMediaActions({ ref, setState, go, back, showToast }) {
       await api.deleteMedia(mediaId)
       await loadMedia(ref.current.currentGroup?.id)
       showToast('사진을 삭제했어요')
+      setState({ galleryTab: 'photos' })
       go('gallery')
     } catch (e) {
       showToast(e.message)

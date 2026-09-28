@@ -18,7 +18,7 @@ export default function Nav() {
     // 홈을 길게 누르면 가족 전환 시트
     { key: 'home', label: '홈', onPress: vm.goHome, onLongPress: vm.openSpaceSheet, color: vm.navHome },
     { key: 'record', label: '기록', onPress: vm.goRecord, color: vm.navRecord },
-    { key: 'gallery', label: '일상', onPress: vm.goGallery, color: vm.navGallery },
+    { key: 'gallery', label: '게시판', onPress: vm.goGallery, color: vm.navGallery },
     { key: 'members', label: '가족', onPress: vm.goMembers, color: vm.navMembers },
   ]
   return (
@@ -45,8 +45,9 @@ export default function Nav() {
         ))}
       </View>
 
+      {/* 글 쪽이면 새 글, 사진 쪽이면 사진 올리기 */}
       {vm.isGallery && (
-        <Pressable onPress={vm.goUpload} style={{ position: 'absolute', right: 18, bottom: 88, width: 60, height: 60, borderRadius: 22, backgroundColor: '#FF5E8A', alignItems: 'center', justifyContent: 'center', zIndex: 25, shadowColor: '#FF5E8A', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.45, shadowRadius: 17, elevation: 8 }}>
+        <Pressable onPress={vm.isBoard ? vm.openPostSheet : vm.goUpload} accessibilityLabel={vm.isBoard ? '새 글' : '사진 올리기'} style={{ position: 'absolute', right: 18, bottom: 88, width: 60, height: 60, borderRadius: 22, backgroundColor: '#FF5E8A', alignItems: 'center', justifyContent: 'center', zIndex: 25, shadowColor: '#FF5E8A', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.45, shadowRadius: 17, elevation: 8 }}>
           <Svg viewBox="0 0 24 24" width={26} height={26} fill="none" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 5 V19" /><Path d="M5 12 H19" /></Svg>
         </Pressable>
       )}
