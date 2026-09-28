@@ -16,7 +16,7 @@ function toColumns(list, n) {
 
 import { useVm } from '../vm/useVm.js'
 
-// '게시판' 탭: 글(게시판)과 사진(일상)을 한 화면에서 전환한다. 들어오면 글이 먼저.
+// '게시판' 탭: 글(게시판)과 사진(일상)을 한 화면에서 전환한다. 들어오면 사진이 먼저.
 export default function Gallery() {
   const vm = useVm()
   return (

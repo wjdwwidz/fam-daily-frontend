@@ -950,7 +950,7 @@ export function buildVm(app) {
       setState({ refreshing: true })
       try {
         if (scr === 'home') await Promise.all([loadMembers(gid), loadActivity(gid)])
-        else if (scr === 'gallery') await ((st.galleryTab || 'board') === 'board' ? loadPosts(gid) : loadMedia(gid))
+        else if (scr === 'gallery') await ((st.galleryTab || 'photos') === 'board' ? loadPosts(gid) : loadMedia(gid))
         else if (scr === 'record') await loadWords(gid)
         else if (scr === 'members') await loadMembers(gid)
         else if (scr === 'media') await Promise.all([loadMedia(gid), loadComments(st.media?.id)])
@@ -1024,17 +1024,17 @@ export function buildVm(app) {
     goMembers: () => navTo({ screen: 'members', membersFromLink: false }),
     goMembersDeep: () => navTo({ screen: 'members', membersFromLink: true }),
     // ── 가족 게시판 ───────────────────────────────────────────────
-    // '게시판' 탭 안에서 글/사진 전환 (기본은 글)
+    // '게시판' 탭 안에서 글/사진 전환 (기본은 사진)
     galleryTabsTop: [
       { key: 'board', label: '게시판' },
       { key: 'photos', label: '사진' },
     ].map((x) => ({
       ...x,
-      sel: (st.galleryTab || 'board') === x.key,
+      sel: (st.galleryTab || 'photos') === x.key,
       pick: () => setState({ galleryTab: x.key }),
     })),
-    isBoard: scr === 'gallery' && (st.galleryTab || 'board') === 'board',
-    isPhotos: scr === 'gallery' && (st.galleryTab || 'board') === 'photos',
+    isBoard: scr === 'gallery' && (st.galleryTab || 'photos') === 'board',
+    isPhotos: scr === 'gallery' && (st.galleryTab || 'photos') === 'photos',
     boardPosts: (st.posts || []).map(shapePost),
     boardLoading: !!st.postsLoading,
     loadPosts: () => loadPosts(),
