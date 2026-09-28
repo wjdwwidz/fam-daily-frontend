@@ -20,18 +20,17 @@ import Record from './screens/Record.jsx'
 import Word from './screens/Word.jsx'
 import Gallery from './screens/Gallery.jsx'
 import Media from './screens/Media.jsx'
-import QnaHistory from './screens/QnaHistory.jsx'
 import MoodHistory from './screens/MoodHistory.jsx'
 import Notifications from './screens/Notifications.jsx'
 import ActivityAll from './screens/ActivityAll.jsx'
 import DdayAll from './screens/DdayAll.jsx'
 import DayEvents from './screens/DayEvents.jsx'
+import PostDetail from './screens/PostDetail.jsx'
 import BucketItem from './screens/BucketItem.jsx'
 import Upload from './screens/Upload.jsx'
 import Members from './screens/Members.jsx'
 import Profile from './screens/Profile.jsx'
-import AnswerSheet from './overlays/AnswerSheet.jsx'
-import QuestionSheet from './overlays/QuestionSheet.jsx'
+import PostSheet from './overlays/PostSheet.jsx'
 import AddEventSheet from './overlays/AddEventSheet.jsx'
 import InviteSheet from './overlays/InviteSheet.jsx'
 import SearchOverlay from './overlays/SearchOverlay.jsx'
@@ -79,8 +78,8 @@ export default function FamilyPhonePop() {
     vm.isLogin ? Login : vm.isAuth ? Auth : vm.isSpaceSelect ? SpaceSelect : vm.isSignup ? Signup : vm.isSpace ? Space : vm.isCreateSpace ? CreateSpace :
     vm.isJoinSpace ? JoinSpace : vm.isHome ? Home : vm.isRecord ? Record : vm.isWord ? Word :
     vm.isGallery ? Gallery : vm.isMedia ? Media :
-    vm.isQnaHistory ? QnaHistory : vm.isMoodHistory ? MoodHistory : vm.isBucketItem ? BucketItem : vm.isUpload ? Upload :
-    vm.isNotifications ? Notifications : vm.isActivityAll ? ActivityAll : vm.isDdayAll ? DdayAll : vm.isDayEvents ? DayEvents :
+    vm.isMoodHistory ? MoodHistory : vm.isBucketItem ? BucketItem : vm.isUpload ? Upload :
+    vm.isNotifications ? Notifications : vm.isActivityAll ? ActivityAll : vm.isDdayAll ? DdayAll : vm.isDayEvents ? DayEvents : vm.isPost ? PostDetail :
     vm.isMembers ? Members : vm.isProfile ? Profile : Login
 
   return (
@@ -116,8 +115,7 @@ export default function FamilyPhonePop() {
         </PullToRefresh>
       </SwipeBack>
 
-      {vm.answerOpen && <AnswerSheet />}
-      {vm.questionOpen && <QuestionSheet />}
+      {vm.postSheetOpen && <PostSheet />}
       {vm.eventSheetOpen && <AddEventSheet />}
       {vm.inviteOpen && <InviteSheet />}
       {vm.searchOpen && <SearchOverlay />}

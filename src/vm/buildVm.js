@@ -1,6 +1,5 @@
 // 앱 전체 뷰모델 조립. app = useApp() 결과(상태·네비게이션·액션)를 받아
 // 화면들이 쓰는 vm 객체를 만든다. 화면은 useVm()으로 이걸 가져간다.
-import { QUESTION_BANK } from '../data/questionBank.js'
 import * as Updates from 'expo-updates'
 import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import * as Clipboard from 'expo-clipboard'
@@ -35,24 +34,13 @@ const fmtTime = (iso) => {
   h = h % 12 || 12
   return `${ap} ${h}:${min}`
 }
-// 백엔드 답변 → 화면 카드 형태
-const answerCard = (a) => {
-  const key = a.author?.nickname || a.author?.name || '?'
-  return {
-    id: a.id,
-    by: { name: a.author?.nickname || a.author?.name || '가족', ini: String(key).slice(0, 1), photoUrl: a.author?.photoUrl || null },
-    time: fmtTime(a.createdAt),
-    likes: 0,
-    text: a.text,
-  }
-}
 const CHO = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
 const BASE = { ㄲ: 'ㄱ', ㄸ: 'ㄷ', ㅃ: 'ㅂ', ㅆ: 'ㅅ', ㅉ: 'ㅈ' }
 const choOf = (str) => { const c = str.charCodeAt(0) - 0xac00; if (c < 0 || c > 11171) return str[0]; const ch = CHO[Math.floor(c / 588)]; return BASE[ch] || ch }
 
 export function buildVm(app) {
   const {
-    st, setState, go, navTo, back,
+    st, setState, go, navTo, back, askConfirm,
     variant = 'grid', initialScreen = 'login',
     logout, deleteAccount, kakaoLogin, saveProfile, pickProfilePhoto,
     doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName,
@@ -66,7 +54,9 @@ export function buildVm(app) {
     setEventDatePart, saveEvent, removeEvent,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
-    loadQna, submitAnswer, submitQuestion,
+    loadPosts, openPost, openPostSheet, closePostSheet, onPostDraft, savePost, removePost,
+    onPostCommentDraft, startPostReply, startEditPostComment, cancelPostCommentMode,
+    submitPostComment, removePostComment,
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem, reorderUploadAsset, moveUploadItem,
     addMediaDate, removeMediaDate, toggleMediaRange, setMediaDatePart,
     openPlaceSearch, closePlaceSearch, onPlaceQuery, pickPlace, removePlace,
@@ -76,8 +66,6 @@ export function buildVm(app) {
 
   const toggleMenu = (which) => setState((s2) => ({ menuOpen: s2.menuOpen === which ? null : which }))
 
-  // 공용 확인 모달: askConfirm({ title, message, yesText, danger, onYes })
-  const askConfirm = (cfg) => setState({ menuOpen: null, confirm: cfg })
   const closeConfirm = () => setState({ confirm: null })
   const confirmYes = () => {
     const onYes = st.confirm && st.confirm.onYes
@@ -343,7 +331,7 @@ export function buildVm(app) {
   // 문구: "{이름}님이 {prefix}{highlight}{suffix}"
   // 이모지를 한 글자로 세고, 잘릴 때도 끝에 붙은 이모지는 살린다 (lib/text.js)
   const clip = clipText
-  const toQna = () => navTo({ screen: 'record', recordTab: 'qna' })
+  const toBoard = () => navTo({ screen: 'record', recordTab: 'board' })
   const recentActivity = (st.groupActivity || []).map((a) => {
     const name = a.author?.nickname || a.author?.name || '가족'
     const base = {
@@ -388,8 +376,10 @@ export function buildVm(app) {
       return { ...base, prefix: '한마디 ', highlight: `"${emoji}${clip(a.text)}"`, suffix: ' 남김', open: () => go('moodhistory') }
     }
     // 질문 하나만 여는 화면은 없어서 문답 탭(오늘의 질문 + 지난 질문)으로
-    if (a.type === 'question') return { ...base, prefix: '질문 ', highlight: `"${clip(a.text)}"`, suffix: ' 등록', open: toQna }
-    return { ...base, highlight: `"${clip(a.text)}"`, suffix: '에 답변', open: toQna }
+    // 게시판 — 글은 글 화면으로, 댓글은 그 글로 (targetId 가 글 id)
+    if (a.type === 'post') return { ...base, highlight: `"${clip(a.text)}"`, suffix: ' 글 올림', open: () => openPost(a.targetId) }
+    if (a.type === 'postComment') return { ...base, highlight: `"${clip(a.text)}"`, suffix: ' 댓글', open: () => openPost(a.targetId) }
+    return { ...base, highlight: `"${clip(a.text)}"`, suffix: '', open: toBoard }
   })
   const gFilter = st.galleryFilter || 'all'
   const galleryMedia = gFilter === 'all' ? media : media.filter((m) => m.by && m.by.name === gFilter)
@@ -419,28 +409,41 @@ export function buildVm(app) {
     return { label: t.label, sel, bg: sel ? FOLDER_TAB_COLOR : '#fff', color: sel ? '#fff' : '#6A7E88', border: sel ? FOLDER_TAB_COLOR : '#FFE1EC', pick: () => setState({ galleryFilter: t.key }) }
   })
 
-  const qc = st.qnaCurrent
-  const todayQ = qc && qc.question
-    ? {
-        id: qc.question.id,
-        no: `${qc.no}/${qc.total}`,
-        q: qc.question.text,
-        progress: `${qc.memberCount}명 중 ${qc.answers.length}명이 답했어요`,
-        answered: qc.answers.map((a) => ({ ...answerCard(a), mine: !!myId && a.author?.userId === myId })),
-        empty: false,
-      }
-    : { id: null, no: '0/0', q: '', progress: '', answered: [], empty: true }
-  const qListAll = (st.qnaList && st.qnaList.questions) || []
-  const pastQs = qListAll.slice(1, 4).map((q) => ({ id: q.id, day: q.no, q: q.text, count: q.answerCount }))
-  const qBank = QUESTION_BANK
-  const qnaHistory = qListAll.map((q) => ({ id: q.id, no: q.no, q: q.text, count: q.answerCount }))
-  const qnaHistoryTotal = (st.qnaList && st.qnaList.total) || qnaHistory.length
-  // 아직 등록된 질문 중에 없는 추천 질문 하나 (새 질문 제안용)
-  const usedQ = new Set(qListAll.map((q) => q.q || q.text))
-  const suggestQuestion = () => {
-    const pool = qBank.filter((q) => !usedQ.has(q))
-    const src = pool.length ? pool : qBank
-    return src[(st.qnaCurrent?.total || 0) % src.length]
+  // ── 가족 게시판 ─────────────────────────────────────────────────
+  // 글 한 줄 (목록·상세 공통)
+  const shapePost = (p) => {
+    const name = p.author?.nickname || p.author?.name || '가족'
+    return {
+      id: p.id,
+      text: p.text || '',
+      time: `${fmtDate(p.createdAt)} ${fmtTime(p.createdAt)}`,
+      edited: !!p.edited,
+      mine: !!p.mine,
+      by: { name, ini: String(name).slice(0, 1), photoUrl: personPhoto(p.author) },
+      commentCount: p.commentCount || 0,
+      open: () => openPost(p.id),
+      edit: () => openPostSheet(p),
+      remove: () => removePost(p.id),
+    }
+  }
+
+  // 게시판 댓글 → 화면 형태. 답글은 replies 에 한 단계로 붙어 온다 (일상 댓글과 같다).
+  const shapePostComment = (c) => {
+    const name = c.author?.nickname || c.author?.name || '가족'
+    const obj = {
+      id: c.id,
+      deleted: !!c.deleted,
+      text: c.text || '',
+      time: `${fmtDate(c.createdAt)} ${fmtTime(c.createdAt)}`,
+      edited: !!c.edited,
+      mine: !!c.mine,
+      by: { name, ini: String(name).slice(0, 1), photoUrl: personPhoto(c.author) },
+      replies: (c.replies || []).map(shapePostComment),
+    }
+    obj.reply = () => startPostReply(obj)
+    obj.edit = () => startEditPostComment(obj)
+    obj.remove = () => removePostComment(c.id)
+    return obj
   }
 
   const ut = st.uploadType
@@ -496,7 +499,7 @@ export function buildVm(app) {
     isMembers: scr === 'members',
     isProfile: scr === 'profile',
     isRecord: scr === 'record', // 사전+문답 통합 탭
-    recordTab: st.recordTab || 'dict', // 'dict' | 'qna'
+    recordTab: st.recordTab || 'dict', // 'dict' | 'board' | 'bucket' | 'calendar'
     setRecordTab: (k) => setState({ recordTab: k, recordSolo: false }),
     // 달력만 단독으로 띄운 상태인지 (D-day 목록에서 들어왔을 때)
     recordSolo: !!st.recordSolo,
@@ -519,12 +522,12 @@ export function buildVm(app) {
         }
         // 다른 가족으로 전환: 이전 가족의 화면 상태를 비우고, 뒤로가기로 이전 가족 화면에 돌아가지 않게 히스토리도 비운다
         setState({
-          currentGroup: g, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [],
+          currentGroup: g, groupMembers: null, groupWords: [], posts: [], post: null, groupMedia: [],
           word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, groupActivity: [],
           moodPin: null,
           screen: 'home', _hist: [], spaceSheetOpen: false,
         })
-        loadMembers(g.id); loadWords(g.id); loadQna(g.id); loadMedia(g.id)
+        loadMembers(g.id); loadWords(g.id); loadPosts(g.id); loadMedia(g.id)
       },
     })),
     // 앱 안(가족 탭)에서 연 가족 선택 화면이면 뒤로가기는 이전 화면으로, 로그인 직후면 로그아웃
@@ -606,16 +609,12 @@ export function buildVm(app) {
     onJoinNickname: (t) => setState({ joinNickname: t, joinNickErr: false }),
     doJoinGroup,
     actionLoading: !!st.actionLoading,
-    showNav: ['home', 'record', 'dict', 'gallery', 'members', 'qna'].indexOf(scr) !== -1,
+    showNav: ['home', 'record', 'dict', 'gallery', 'members'].indexOf(scr) !== -1,
     members, dictGroups,
     galleryMedia, galleryTabs, galleryEmpty: galleryMedia.length === 0 && uploadJobs.length === 0,
     uploadJobs,
     // 모든 가족을 통틀어 올리는 중인 작업 수 (웹에서 탭 닫기 확인용)
     uploadingCount: (st.uploadJobs || []).filter((j) => j.status === 'uploading').length,
-    todayQ, pastQs,
-    qnaHistory, qnaHistoryTotal,
-    isQnaHistory: scr === 'qnahistory',
-    openQnaHistory: () => go('qnahistory'),
 
     // 버킷리스트 — 1~100 칸을 늘 다 그린다. 채운 칸만 서버에서 오고 나머지는 빈 칸.
     isBucketItem: scr === 'bucketitem',
@@ -740,7 +739,6 @@ export function buildVm(app) {
     ringMembers, activeMember, moodLoading,
     ringAvatarSize: AV,
     membersFromLink: !!st.membersFromLink,
-    answerOpen: !!st.answerOpen,
     // ── 달력 (가족 일정) ───────────────────────────────────────────
     prevMonth, nextMonth,
     openCalendar: () => {
@@ -945,7 +943,7 @@ export function buildVm(app) {
     loadMembers: () => loadMembers(st.currentGroup?.id),
     // 아래로 당겨서 새로고침 — 화면마다 새로 받는 것이 다르다.
     // 목록이 있는 화면에서만 켠다 (입력 화면에서 당기면 쓰던 내용이 날아간 것처럼 느껴진다).
-    canRefresh: ['home', 'gallery', 'record', 'members', 'media', 'word', 'qnahistory', 'spaceSelect'].includes(scr),
+    canRefresh: ['home', 'gallery', 'record', 'members', 'media', 'word', 'post', 'spaceSelect'].includes(scr),
     refreshing: !!st.refreshing,
     refresh: async () => {
       const gid = st.currentGroup?.id
@@ -953,11 +951,11 @@ export function buildVm(app) {
       try {
         if (scr === 'home') await Promise.all([loadMembers(gid), loadActivity(gid)])
         else if (scr === 'gallery') await loadMedia(gid)
-        else if (scr === 'record') await (st.recordTab === 'qna' ? loadQna(gid) : loadWords(gid))
+        else if (scr === 'record') await (st.recordTab === 'board' ? loadPosts(gid) : loadWords(gid))
         else if (scr === 'members') await loadMembers(gid)
         else if (scr === 'media') await Promise.all([loadMedia(gid), loadComments(st.media?.id)])
         else if (scr === 'word') await loadWords(gid)
-        else if (scr === 'qnahistory') await loadQna(gid)
+        else if (scr === 'post') await openPost(st.post?.id)
         else if (scr === 'spaceSelect') await refreshGroups()
       } finally {
         setState({ refreshing: false })
@@ -1025,22 +1023,33 @@ export function buildVm(app) {
     })(),
     goMembers: () => navTo({ screen: 'members', membersFromLink: false }),
     goMembersDeep: () => navTo({ screen: 'members', membersFromLink: true }),
-    // 문답 답변 남기기 (오늘의 질문에 대해)
-    answerDraft: st.answerDraft ?? '',
-    onAnswerInput: (text) => setState({ answerDraft: text }),
-    openAnswer: () => setState({ answerOpen: true, answerDraft: '', editingAnswerId: null }),
-    closeAnswer: () => setState({ answerOpen: false, editingAnswerId: null }),
-    startEditAnswer: (ans) => setState({ answerOpen: true, answerDraft: ans.text, editingAnswerId: ans.id }),
-    editingAnswer: !!st.editingAnswerId,
-    submitAnswer,
-    // 새 질문 내기
-    questionOpen: !!st.questionOpen,
-    questionDraft: st.questionDraft ?? '',
-    onQuestionInput: (text) => setState({ questionDraft: text }),
-    openQuestion: () => setState({ questionOpen: true, questionDraft: '' }),
-    closeQuestion: () => setState({ questionOpen: false }),
-    fillSuggestedQuestion: () => setState({ questionDraft: suggestQuestion() }),
-    submitQuestion,
+    // ── 가족 게시판 ───────────────────────────────────────────────
+    isBoard: scr === 'record' && (st.recordTab || 'dict') === 'board',
+    boardPosts: (st.posts || []).map(shapePost),
+    boardLoading: !!st.postsLoading,
+    loadPosts: () => loadPosts(),
+    // 글 하나
+    isPost: scr === 'post',
+    postLoading: !!st.postLoading,
+    postError: st.postError || null,
+    currentPost: st.post?.text !== undefined ? shapePost(st.post) : null,
+    postComments: (st.post?.comments || []).map(shapePostComment),
+    postCommentCount: st.post?.commentCount || 0,
+    // 글 쓰기·고치기 시트
+    postSheetOpen: !!st.postSheet,
+    postSheetIsEdit: !!st.postSheet?.id,
+    postDraft: st.postSheet?.text ?? '',
+    postSheetError: st.postSheetError || null,
+    postSaving: !!st.postSaving,
+    openPostSheet: () => openPostSheet(null),
+    closePostSheet, onPostDraft, savePost,
+    // 댓글 입력칸
+    postCommentDraft: st.postCommentDraft ?? '',
+    postCommentSaving: !!st.postCommentSaving,
+    postCommentError: st.postCommentError || null,
+    postReplyTo: st.postReplyTo || null,
+    postCommentEditing: !!st.postCommentEditingId,
+    onPostCommentDraft, cancelPostCommentMode, submitPostComment,
     goUpload: openUpload,
     // 새 일상 올리기 (사진·영상 여러 개가 글 하나)
     uploadCount: uploadPreview.length,

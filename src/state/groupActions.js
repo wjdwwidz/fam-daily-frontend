@@ -134,7 +134,7 @@ export function createGroupActions({ ref, setState }, afterAuth) {
       await api.deleteGroup(gid)
       setState((p) => ({
         groupDeleting: false,
-        currentGroup: null, groupMembers: null, groupWords: [], qnaCurrent: null, qnaList: null, groupMedia: [],
+        currentGroup: null, groupMembers: null, groupWords: [], posts: [], post: null, groupMedia: [],
         moodPin: null,
         word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, spaceSheetOpen: false, groupActivity: [], notifications: [], notificationsUnread: 0,
         groups: (p.groups || []).filter((g) => g.id !== gid),

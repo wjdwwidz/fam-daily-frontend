@@ -4,27 +4,26 @@ import { s } from '../lib/style.js'
 
 import { useVm } from '../vm/useVm.js'
 import Dict from './Dict.jsx'
-import Qna from './Qna.jsx'
+import Board from './Board.jsx'
 import Bucket from './Bucket.jsx'
 import Calendar from './Calendar.jsx'
 
-// '기록' 탭: 사전/문답을 하나의 화면 안에서 상단 세그먼트로 전환.
-// 각 하위 화면(Dict/Qna)은 제목줄 없이 본문만 렌더하고, 헤더는 여기서 소유한다.
-// 문답은 아직 다듬는 중이라 개발 중에만 보여준다 (배포본에서는 탭이 없다)
+// '기록' 탭: 사전·게시판·버킷리스트·달력을 한 화면에서 상단 세그먼트로 전환.
+// 각 하위 화면은 제목줄 없이 본문만 렌더하고, 헤더는 여기서 소유한다.
 const SUBTABS = [
   { key: 'dict', label: '사전' },
-  ...(__DEV__ ? [{ key: 'qna', label: '문답' }] : []),
+  { key: 'board', label: '게시판' },
   { key: 'bucket', label: '버킷리스트' },
   { key: 'calendar', label: '달력' },
 ]
 
 export default function Record() {
   const vm = useVm()
-  // 배포본에서 문답으로 들어오면(옛 화면 기억·최근 활동 링크) 사전으로 보낸다
+  // 옛 이름('qna')을 기억하고 있으면 게시판으로 보낸다
   const saved = vm.recordTab || 'dict'
-  const tab = saved === 'qna' && !__DEV__ ? 'dict' : saved
+  const tab = saved === 'qna' ? 'board' : saved
   const isDict = tab === 'dict'
-  const isQna = tab === 'qna'
+  const isBoard = tab === 'board'
   const isCalendar = tab === 'calendar'
   // D-day 목록에서 들어온 달력은 서브탭 대신 '뒤로가기 + 달력' 으로 (돌아갈 곳이 D-day 라서)
   const solo = isCalendar && vm.recordSolo
@@ -62,14 +61,14 @@ export default function Record() {
           <Pressable onPress={vm.openSearch} style={s('width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid #FFE1EC;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#FF5E8A')}>
             <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" color="#FF5E8A"><Circle cx={11} cy={11} r={6} /><Path d="M20 20 L16 16" /></Svg>
           </Pressable>
-        ) : isQna ? (
-          <Pressable onPress={vm.openQuestion} style={s('flex-direction:row;align-items:center;gap:sm;background:#FF5E8A;border-radius:13px;padding:btnY 2xl')}>
+        ) : isBoard ? (
+          <Pressable onPress={vm.openPostSheet} style={s('flex-direction:row;align-items:center;gap:sm;background:#FF5E8A;border-radius:13px;padding:btnY 2xl')}>
             <Text style={s('color:#fff;font-size:14px;font-weight:800;line-height:1')}>＋</Text>
-            <Text style={s('color:#fff;font-size:12px;font-weight:700')}>새 질문</Text>
+            <Text style={s('color:#fff;font-size:12px;font-weight:700')}>새 글</Text>
           </Pressable>
         ) : null}
       </View>
-      {isDict ? <Dict /> : isQna ? <Qna /> : isCalendar ? <Calendar /> : <Bucket />}
+      {isDict ? <Dict /> : isBoard ? <Board /> : isCalendar ? <Calendar /> : <Bucket />}
     </View>
   )
 }

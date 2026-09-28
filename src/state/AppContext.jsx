@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { createAuthActions } from './authActions.js'
 import { createGroupActions } from './groupActions.js'
 import { createWordActions } from './wordActions.js'
-import { createQnaActions } from './qnaActions.js'
+import { createBoardActions } from './boardActions.js'
 import { createMediaActions } from './mediaActions.js'
 import { createBucketActions } from './bucketActions.js'
 import { createCalendarActions } from './calendarActions.js'
@@ -36,8 +36,8 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
       const h = p._hist || []
       if (h.length) return { screen: h[h.length - 1], _hist: h.slice(0, -1), ...leaveWord }
       // 히스토리가 없으면 화면별 기본 이전 화면으로 폴백
-      // 사전/문답은 '기록' 탭으로 병합됨 — 옛 화면명('dict','qna')으로 보내면 라우팅에서 떨어진다
-      const map = { word: 'record', media: 'gallery', upload: 'home', members: 'home', qnahistory: 'record', moodhistory: 'home', notifications: 'home', activity: 'home', bucketitem: 'record', spaceSelect: 'login', space: 'spaceSelect', createSpace: 'space', joinSpace: 'space', signup: 'login' }
+      // 사전·게시판은 '기록' 탭으로 묶여 있다 — 옛 화면명으로 보내면 라우팅에서 떨어진다
+      const map = { word: 'record', media: 'gallery', upload: 'home', members: 'home', qnahistory: 'record', post: 'record', moodhistory: 'home', notifications: 'home', activity: 'home', bucketitem: 'record', spaceSelect: 'login', space: 'spaceSelect', createSpace: 'space', joinSpace: 'space', signup: 'login' }
       return { screen: map[cur0(p)] || 'home', ...leaveWord }
     })
 
@@ -68,11 +68,15 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
     setTimeout(() => setState((p) => (p.toast === text ? { toast: null } : {})), ms)
   }
 
-  const core = { st, setState, ref, go, navTo, back, showToast }
+  // 공용 확인 모달: askConfirm({ title, message, yesText, danger, onYes })
+  // 화면(vm)과 액션 양쪽에서 쓰므로 여기에 둔다.
+  const askConfirm = (cfg) => setState({ menuOpen: null, confirm: cfg })
+
+  const core = { st, setState, ref, go, navTo, back, showToast, askConfirm }
   const auth = createAuthActions(core)
   const groups = createGroupActions(core, auth.afterAuth)
   const words = createWordActions(core)
-  const qna = createQnaActions(core)
+  const board = createBoardActions(core)
   const media = createMediaActions(core)
   const bucket = createBucketActions(core)
   const calendar = createCalendarActions(core)
@@ -82,7 +86,7 @@ export function AppProvider({ initialScreen = 'login', variant = 'grid', childre
     auth.restoreSession()
   }, [])
 
-  const value = { ...core, back, initialScreen, variant, ...auth, ...groups, ...words, ...qna, ...media, ...bucket, ...calendar }
+  const value = { ...core, back, askConfirm, initialScreen, variant, ...auth, ...groups, ...words, ...board, ...media, ...bucket, ...calendar }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

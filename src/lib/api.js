@@ -4,7 +4,7 @@ import { API_BASE, getToken, clearToken } from './api/client.js'
 import { authApi } from './api/auth.js'
 import { groupsApi } from './api/groups.js'
 import { wordsApi } from './api/words.js'
-import { qnaApi } from './api/qna.js'
+import { boardApi } from './api/board.js'
 import { mediaApi, putToSignedUrl, assetContentType } from './api/media.js'
 import { calendarApi } from './api/calendar.js'
 import { uploadImage } from './api/uploads.js'
@@ -16,7 +16,7 @@ export const api = {
   ...authApi,
   ...groupsApi,
   ...wordsApi,
-  ...qnaApi,
+  ...boardApi,
   ...mediaApi,
   ...calendarApi,
   putToSignedUrl,
