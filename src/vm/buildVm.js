@@ -54,7 +54,8 @@ export function buildVm(app) {
     setEventDatePart, saveEvent, removeEvent,
     loadWords, startEditWord, startAddWord, onWordTerm, onWordReading, onWordMeaning, onWordExample, removeWordPhoto, pickWordPhoto, saveWord, deleteWord,
     refreshGroups,
-    loadPosts, openPost, openPostSheet, closePostSheet, onPostDraft, savePost, removePost,
+    loadPosts, loadMorePosts, togglePinned, openPost,
+    openPostSheet, closePostSheet, onPostDraft, onPostTitle, togglePostNotice, savePost, removePost,
     onPostCommentDraft, startPostReply, startEditPostComment, cancelPostCommentMode,
     submitPostComment, removePostComment,
     loadMedia, pickUploadPhoto, onUploadCaption, submitUpload, openUpload, startEditMedia, removeMedia, removeUploadItem, reorderUploadAsset, moveUploadItem,
@@ -421,10 +422,14 @@ export function buildVm(app) {
       edited: !!p.edited,
       mine: !!p.mine,
       by: { name, ini: String(name).slice(0, 1), photoUrl: personPhoto(p.author) },
+      title: p.title || '',
+      pinned: !!p.pinned,
       commentCount: p.commentCount || 0,
       open: () => openPost(p.id),
       edit: () => openPostSheet(p),
       remove: () => removePost(p.id),
+      // 공지는 가족 누구나 올리고 내린다
+      togglePin: () => togglePinned(p.id, !p.pinned),
     }
   }
 
@@ -1037,8 +1042,15 @@ export function buildVm(app) {
     isBoard: scr === 'gallery' && (st.galleryTab || 'photos') === 'board',
     isPhotos: scr === 'gallery' && (st.galleryTab || 'photos') === 'photos',
     boardPosts: (st.posts || []).map(shapePost),
+    boardPinned: (st.pinnedPosts || []).map(shapePost),
     boardLoading: !!st.postsLoading,
+    boardMoreLoading: !!st.postsMoreLoading,
+    boardHasMore: !!st.postsCursor,
     loadPosts: () => loadPosts(),
+    // 목록 끝이 가까워지면 다음 쪽 (무한 스크롤)
+    onNearBottom: () => {
+      if (scr === 'gallery' && (st.galleryTab || 'board') === 'board') loadMorePosts()
+    },
     // 글 하나
     isPost: scr === 'post',
     postLoading: !!st.postLoading,
@@ -1050,6 +1062,9 @@ export function buildVm(app) {
     postSheetOpen: !!st.postSheet,
     postSheetIsEdit: !!st.postSheet?.id,
     postDraft: st.postSheet?.text ?? '',
+    postTitleDraft: st.postSheet?.title ?? '',
+    postIsNotice: !!st.postSheet?.pinned,
+    onPostTitle, togglePostNotice,
     postSheetError: st.postSheetError || null,
     postSaving: !!st.postSaving,
     openPostSheet: () => openPostSheet(null),

@@ -67,6 +67,25 @@ export default function PostSheet() {
           <Text style={s('font-size:16px;font-weight:800;color:#17303B;margin-top:sm;line-height:1.4')}>
             {edit ? '어떻게 고칠까요?' : '가족에게 하고 싶은 말은?'}
           </Text>
+          {/* 공지로 올리면 제목이 생긴다 (목록 맨 위에 제목으로 선다) */}
+          <Pressable onPress={vm.togglePostNotice} hitSlop={6} style={s('flex-direction:row;align-items:center;gap:md;margin-top:xl;cursor:pointer')}>
+            <View style={s(`width:20px;height:20px;border-radius:6px;align-items:center;justify-content:center;border:1.5px solid ${vm.postIsNotice ? '#FF5E8A' : '#E7D3DC'};background:${vm.postIsNotice ? '#FF5E8A' : 'transparent'}`)}>
+              {vm.postIsNotice && (
+                <Svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 13 L10 18 L19 7" /></Svg>
+              )}
+            </View>
+            <Text style={s('font-size:12px;font-weight:600;color:#8497A1')}>공지로 올리기</Text>
+          </Pressable>
+          {vm.postIsNotice && (
+            <TextInput
+              value={vm.postTitleDraft}
+              onChangeText={vm.onPostTitle}
+              maxLength={60}
+              placeholder="공지 제목"
+              placeholderTextColor="#9DB2BD"
+              style={s('width:100%;margin-top:md;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:xl 3xl;font-size:13.5px;font-weight:700;font-family:inherit;color:#17303B')}
+            />
+          )}
           <TextInput
             multiline
             textAlignVertical="top"

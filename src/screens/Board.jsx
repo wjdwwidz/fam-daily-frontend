@@ -16,10 +16,28 @@ export default function Board() {
   const posts = vm.boardPosts
   return (
     <View>
-      {!vm.boardLoading && posts.length === 0 && (
+      {!vm.boardLoading && posts.length === 0 && vm.boardPinned.length === 0 && (
         <View style={s('align-items:center;padding:8xl 0')}>
           <Text style={s('font-size:13px;color:#9DB2BD')}>아직 올라온 글이 없어요</Text>
           <Text style={s('font-size:11.5px;color:#C4CFD6;margin-top:sm')}>가족에게 하고 싶은 말을 남겨보세요</Text>
+        </View>
+      )}
+
+      {/* 공지 — 맨 위에 모아 둔다 (최대 3개) */}
+      {vm.boardPinned.length > 0 && (
+        <View style={s('gap:lg;margin-bottom:xl')}>
+          {vm.boardPinned.map((p) => (
+            <Pressable key={p.id} onPress={p.open} style={s('background:#FFF6FB;border:1px solid #FFD3E2;border-radius:18px;padding:2xl;cursor:pointer')}>
+              <View style={s('flex-direction:row;align-items:center;gap:sm')}>
+                <Text style={s('font-size:10.5px;font-weight:800;color:#fff;background:#FF5E8A;border-radius:999px;padding:hair md')}>공지</Text>
+                <Text numberOfLines={1} style={s('flex:1;font-size:13px;font-weight:800;color:#17303B')}>{p.title}</Text>
+              </View>
+              <Text numberOfLines={2} style={s('font-size:12.5px;color:#6A7E88;line-height:1.5;margin-top:md')}>{textWithoutLinks(p.text, p.links)}</Text>
+              <Text style={s('font-size:10.5px;color:#B4C1CA;margin-top:md')}>
+                {p.by.name} · {p.time}{p.commentCount > 0 ? ` · 댓글 ${p.commentCount}` : ''}
+              </Text>
+            </Pressable>
+          ))}
         </View>
       )}
 
@@ -50,6 +68,9 @@ export default function Board() {
             </Pressable>
           )
         })}
+        {vm.boardMoreLoading && (
+          <Text style={s('text-align:center;font-size:11.5px;color:#C4CFD6;padding:xl 0')}>불러오는 중…</Text>
+        )}
       </View>
     </View>
   )
