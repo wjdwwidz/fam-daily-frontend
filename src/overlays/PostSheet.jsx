@@ -1,15 +1,51 @@
-import { View, Text, Pressable, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
+import { useEffect, useState } from 'react'
+import { View, Text, Pressable, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { s } from '../lib/style.js'
+import { findUrls } from '../lib/links.js'
+import { boardApi } from '../lib/api/board.js'
+import LinkCard from '../components/LinkCard.jsx'
 
 import { useVm } from '../vm/useVm.js'
+
+// 글을 쓰는 동안 본문의 링크를 카드로 미리 보여준다.
+// 타자를 칠 때마다 부르지 않도록 잠깐 멈췄을 때 읽고, 한 번 읽은 주소는 기억해 둔다.
+// 보여주기용이다 — 저장할 때 서버가 같은 방법으로 다시 읽어 글에 붙인다.
+const previewCache = new Map()
+
+function useLinkPreviews(text) {
+  const [, setTick] = useState(0)
+  const urls = findUrls(text)
+  const key = urls.join(' ')
+  useEffect(() => {
+    const todo = urls.filter((u) => !previewCache.has(u))
+    if (!todo.length) return
+    let alive = true
+    const t = setTimeout(() => {
+      for (const u of todo) {
+        previewCache.set(u, null) // 읽는 중
+        boardApi.linkPreview(u)
+          .then((l) => previewCache.set(u, l))
+          .catch(() => previewCache.delete(u))
+          .finally(() => { if (alive) setTick((n) => n + 1) })
+      }
+      if (alive) setTick((n) => n + 1)
+    }, 700)
+    return () => { alive = false; clearTimeout(t) }
+  }, [key])
+  return {
+    links: urls.map((u) => previewCache.get(u)).filter(Boolean),
+    loading: urls.some((u) => previewCache.get(u) === null),
+  }
+}
 
 // 게시판 글 쓰기·고치기
 export default function PostSheet() {
   const vm = useVm()
   const insets = useSafeAreaInsets()
   const edit = vm.postSheetIsEdit
+  const preview = useLinkPreviews(vm.postDraft)
   return (
     <Pressable onPress={vm.closePostSheet} style={s('position:absolute;inset:0;background:rgba(23,48,59,0.5);z-index:45;flex-direction:row;align-items:flex-end;animation:sfade .18s ease')}>
       <KeyboardAvoidingView
@@ -41,6 +77,12 @@ export default function PostSheet() {
             placeholderTextColor="#9DB2BD"
             style={s('width:100%;min-height:140px;max-height:280px;margin-top:fieldGap;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-family:inherit;color:#17303B;resize:none')}
           />
+          {(preview.links.length > 0 || preview.loading) && (
+            <ScrollView style={{ maxHeight: 180, marginTop: 10 }} contentContainerStyle={s('gap:md')}>
+              {preview.links.map((l) => <LinkCard key={l.url} link={l} compact />)}
+              {preview.loading && <Text style={s('font-size:11px;color:#9DB2BD')}>링크를 읽는 중…</Text>}
+            </ScrollView>
+          )}
           {!!vm.postSheetError && (
             <Text style={s('font-size:12px;color:#E5484D;margin-top:md;text-align:center')}>{vm.postSheetError}</Text>
           )}

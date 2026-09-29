@@ -416,6 +416,7 @@ export function buildVm(app) {
     return {
       id: p.id,
       text: p.text || '',
+      links: p.links || [], // 본문 링크의 카드 정보 (본문 순서대로)
       time: `${fmtDate(p.createdAt)} ${fmtTime(p.createdAt)}`,
       edited: !!p.edited,
       mine: !!p.mine,

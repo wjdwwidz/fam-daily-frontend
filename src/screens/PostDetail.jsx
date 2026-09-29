@@ -2,6 +2,8 @@ import { View, Text, Pressable, TextInput, ActivityIndicator } from 'react-nativ
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import Avatar from '../components/Avatar.jsx'
+import LinkCard from '../components/LinkCard.jsx'
+import { splitByLinks } from '../lib/links.js'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -83,7 +85,14 @@ export default function PostDetail() {
               <Text style={s('font-size:11px;color:#9DB2BD')}>{p.time}{p.edited ? ' · 수정됨' : ''}</Text>
             </View>
           </View>
-          <Text style={s('font-size:14px;color:#2B3A43;line-height:1.7;margin-top:2xl;white-space:pre-wrap')}>{p.text}</Text>
+          {/* 블로그처럼 — 본문에서 링크가 있던 자리에 카드를 끼운다 */}
+          <View style={s('gap:lg;margin-top:2xl')}>
+            {splitByLinks(p.text, p.links).map((part, i) =>
+              part.type === 'link'
+                ? <LinkCard key={i} link={part.link} />
+                : <Text key={i} style={s('font-size:14px;color:#2B3A43;line-height:1.7;white-space:pre-wrap')}>{part.text}</Text>,
+            )}
+          </View>
 
           <View style={s('height:1px;background:#FFE1EC;margin:4xl 0 3xl')} />
 
