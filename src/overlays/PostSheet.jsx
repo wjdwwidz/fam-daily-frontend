@@ -40,35 +40,40 @@ function useLinkPreviews(text) {
   }
 }
 
-// 게시판 글 쓰기·고치기
+// 게시판 글 쓰기·고치기 — 화면을 꽉 채운다 (길게 쓰는 자리라서).
+// 위에 닫기·올리기를 붙여 두고, 본문 칸이 남은 높이를 모두 쓴다.
 export default function PostSheet() {
   const vm = useVm()
   const insets = useSafeAreaInsets()
   const edit = vm.postSheetIsEdit
   const preview = useLinkPreviews(vm.postDraft)
+  const canSave = !vm.postSaving && !!vm.postDraft.trim()
   return (
-    <Pressable onPress={vm.closePostSheet} style={s('position:absolute;inset:0;background:rgba(23,48,59,0.5);z-index:45;flex-direction:row;align-items:flex-end;animation:sfade .18s ease')}>
+    <View style={s('position:absolute;inset:0;background:#fff;z-index:45;animation:sfade .18s ease')}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={insets.top}
-        style={{ width: '100%' }}
+        style={{ flex: 1 }}
       >
-        <Pressable onPress={vm.stopEvt} style={s('width:100%;background:#fff;border-radius:26px 26px 0 0;padding:5xl 5xl 7xl;animation:sheetup .26s cubic-bezier(.4,0,.2,1)')}>
-          <View style={s('width:40px;height:4px;border-radius:2px;background:#EADCE2;margin:0 auto 4xl')} />
-          <View style={s('flex-direction:row;align-items:center;justify-content:space-between')}>
-            <Text style={s('font-size:11px;font-weight:700;color:#FF5E8A;letter-spacing:0.4px')}>{edit ? '글 수정' : '새 글'}</Text>
-            <Pressable onPress={vm.closePostSheet} hitSlop={12} style={s('width:28px;height:28px;border-radius:9px;align-items:center;justify-content:center')}>
-              <Svg viewBox="0 0 24 24" width={17} height={17} fill="none" stroke="#B7C3CC" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                <Path d="M6 6 L18 18" />
-                <Path d="M18 6 L6 18" />
-              </Svg>
-            </Pressable>
-          </View>
-          <Text style={s('font-size:16px;font-weight:800;color:#17303B;margin-top:sm;line-height:1.4')}>
-            {edit ? '어떻게 고칠까요?' : '가족에게 하고 싶은 말은?'}
-          </Text>
+        {/* 제목줄 — 닫기 · 무엇을 쓰는 중인지 · 올리기 */}
+        <View style={s('flex-direction:row;align-items:center;justify-content:space-between;gap:lg;padding:xl 5xl;border-bottom:1px solid #FFE1EC')}>
+          <Pressable onPress={vm.closePostSheet} hitSlop={12} style={s('width:32px;height:32px;border-radius:10px;align-items:center;justify-content:center;cursor:pointer')}>
+            <Svg viewBox="0 0 24 24" width={19} height={19} fill="none" stroke="#8497A1" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+              <Path d="M6 6 L18 18" />
+              <Path d="M18 6 L6 18" />
+            </Svg>
+          </Pressable>
+          <Text style={s('font-size:14px;font-weight:800;color:#17303B')}>{edit ? '글 수정' : '새 글'}</Text>
+          <Pressable onPress={vm.savePost} disabled={!canSave} style={s(`height:34px;padding:0 xl;border-radius:12px;align-items:center;justify-content:center;cursor:pointer;background:${canSave ? '#FF5E8A' : '#F3C6D5'}`)}>
+            <Text style={s('font-size:12.5px;font-weight:700;color:#fff')}>
+              {vm.postSaving ? '올리는 중…' : edit ? '수정' : '올리기'}
+            </Text>
+          </Pressable>
+        </View>
+
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={s('padding:2xl 5xl 7xl;flex-grow:1')} keyboardShouldPersistTaps="handled">
           {/* 공지로 올리면 제목이 생긴다 (목록 맨 위에 제목으로 선다) */}
-          <Pressable onPress={vm.togglePostNotice} hitSlop={6} style={s('flex-direction:row;align-items:center;gap:md;margin-top:xl;cursor:pointer')}>
+          <Pressable onPress={vm.togglePostNotice} hitSlop={6} style={s('flex-direction:row;align-items:center;gap:md;cursor:pointer')}>
             <View style={s(`width:20px;height:20px;border-radius:6px;align-items:center;justify-content:center;border:1.5px solid ${vm.postIsNotice ? '#FF5E8A' : '#E7D3DC'};background:${vm.postIsNotice ? '#FF5E8A' : 'transparent'}`)}>
               {vm.postIsNotice && (
                 <Svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="#fff" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round"><Path d="M5 13 L10 18 L19 7" /></Svg>
@@ -83,7 +88,7 @@ export default function PostSheet() {
               maxLength={60}
               placeholder="공지 제목"
               placeholderTextColor="#9DB2BD"
-              style={s('width:100%;margin-top:md;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:xl 3xl;font-size:13.5px;font-weight:700;font-family:inherit;color:#17303B')}
+              style={s('width:100%;margin-top:xl;border:none;outline:none;font-size:17px;font-weight:800;font-family:inherit;color:#17303B;padding:md 0')}
             />
           )}
           <TextInput
@@ -92,26 +97,21 @@ export default function PostSheet() {
             value={vm.postDraft}
             onChangeText={vm.onPostDraft}
             maxLength={2000}
-            placeholder="자유롭게 남겨보세요"
+            placeholder="가족에게 하고 싶은 말을 자유롭게 남겨보세요"
             placeholderTextColor="#9DB2BD"
-            style={s('width:100%;min-height:140px;max-height:280px;margin-top:fieldGap;border:1px solid #FFE1EC;outline:none;background:#FFF6FB;border-radius:14px;padding:2xl 3xl;font-size:13.5px;font-family:inherit;color:#17303B;resize:none')}
+            style={s('width:100%;flex:1;min-height:220px;margin-top:md;border:none;outline:none;background:transparent;font-size:14px;line-height:1.7;font-family:inherit;color:#17303B;resize:none')}
           />
           {(preview.links.length > 0 || preview.loading) && (
-            <ScrollView style={{ maxHeight: 180, marginTop: 10 }} contentContainerStyle={s('gap:md')}>
+            <View style={s('gap:md;margin-top:xl')}>
               {preview.links.map((l) => <LinkCard key={l.url} link={l} compact />)}
               {preview.loading && <Text style={s('font-size:11px;color:#9DB2BD')}>링크를 읽는 중…</Text>}
-            </ScrollView>
+            </View>
           )}
           {!!vm.postSheetError && (
-            <Text style={s('font-size:12px;color:#E5484D;margin-top:md;text-align:center')}>{vm.postSheetError}</Text>
+            <Text style={s('font-size:12px;color:#E5484D;margin-top:xl;text-align:center')}>{vm.postSheetError}</Text>
           )}
-          <Pressable onPress={vm.savePost} disabled={vm.postSaving} style={s(`margin-top:ctaTop;height:54px;border-radius:17px;background:#FF5E8A;align-items:center;justify-content:center;cursor:pointer;opacity:${vm.postSaving ? 0.7 : 1}`)}>
-            <Text style={s('font-size:14px;font-weight:700;color:#fff')}>
-              {vm.postSaving ? '올리는 중…' : edit ? '수정하기' : '올리기'}
-            </Text>
-          </Pressable>
-        </Pressable>
+        </ScrollView>
       </KeyboardAvoidingView>
-    </Pressable>
+    </View>
   )
 }

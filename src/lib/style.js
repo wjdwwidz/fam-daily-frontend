@@ -10,7 +10,7 @@ const FONT_BUMP = 1
 
 const DROP = new Set([
   'cursor', 'transition', 'animation', 'filter', 'backdropFilter', 'webkitBackdropFilter',
-  'whiteSpace', 'textOverflow', 'boxSizing', 'outline', 'userSelect', 'pointerEvents',
+  'whiteSpace', 'textOverflow', 'boxSizing', 'userSelect', 'pointerEvents',
   'webkitTapHighlightColor', 'webkitOverflowScrolling', 'objectFit', 'resize', 'scrollbarWidth',
   'backgroundImage', 'webkitBackgroundClip', 'backgroundClip', 'webkitTextFillColor',
 ])
@@ -191,6 +191,9 @@ export function s(str) {
       }
       case 'aspectRatio': raw.aspectRatio = /\//.test(val) ? val.split('/').reduce((a, b) => parseFloat(a) / parseFloat(b)) : parseFloat(val); continue
       case 'fontWeight': raw.fontWeight = String(px(val)); continue
+      // 웹에서 입력칸을 누르면 브라우저가 파란 테두리를 그린다.
+      // RN Web 은 outline 대신 outlineStyle 을 읽으므로 그쪽으로 넘긴다.
+      case 'outline': if (/^none$/i.test(String(val).trim())) raw.outlineStyle = 'none'; continue
       default:
         if (DROP.has(key)) continue
         // 방향 지정 마진/패딩(marginTop, marginBottom, paddingLeft…)도 토큰 해석
