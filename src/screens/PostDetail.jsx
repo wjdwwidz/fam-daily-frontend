@@ -2,6 +2,8 @@ import { View, Text, Pressable, TextInput, ActivityIndicator } from 'react-nativ
 import Svg, { Path } from 'react-native-svg'
 import { s } from '../lib/style.js'
 import Avatar from '../components/Avatar.jsx'
+import LinkCard from '../components/LinkCard.jsx'
+import { splitByLinks } from '../lib/links.js'
 
 import { useVm } from '../vm/useVm.js'
 
@@ -54,15 +56,22 @@ export default function PostDetail() {
         <Pressable onPress={vm.back} style={s('width:40px;height:40px;border-radius:13px;background:#fff;border:1px solid #FFE1EC;box-shadow:0 10px 24px rgba(255,94,138,0.13);align-items:center;justify-content:center;cursor:pointer')}>
           <Svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="#17303B" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M14.5 5 L7.5 12 L14.5 19" /></Svg>
         </Pressable>
-        {/* 내가 쓴 글만 고치고 지운다 */}
-        {!!p?.mine && (
+        {/* 공지는 가족 누구나 올리고 내린다. 고치고 지우는 건 쓴 사람만 */}
+        {!!p && (
           <View style={s('flex-direction:row;align-items:center;gap:2xl')}>
+            <Pressable onPress={p.togglePin} hitSlop={8}>
+              <Text style={s(`font-size:12.5px;font-weight:700;color:${p.pinned ? '#FF5E8A' : '#8497A1'}`)}>
+                {p.pinned ? '공지 내리기' : '공지로'}
+              </Text>
+            </Pressable>
+            {!!p.mine && (<>
             <Pressable onPress={p.edit} hitSlop={8}>
               <Text style={s('font-size:12.5px;font-weight:700;color:#8497A1')}>수정</Text>
             </Pressable>
             <Pressable onPress={p.remove} hitSlop={8}>
               <Text style={s('font-size:12.5px;font-weight:700;color:#E5848D')}>삭제</Text>
             </Pressable>
+            </>)}
           </View>
         )}
       </View>
@@ -83,7 +92,20 @@ export default function PostDetail() {
               <Text style={s('font-size:11px;color:#9DB2BD')}>{p.time}{p.edited ? ' · 수정됨' : ''}</Text>
             </View>
           </View>
-          <Text style={s('font-size:14px;color:#2B3A43;line-height:1.7;margin-top:2xl;white-space:pre-wrap')}>{p.text}</Text>
+          {!!p.title && (
+            <View style={s('flex-direction:row;align-items:center;gap:sm;margin-top:2xl')}>
+              <Text style={s('font-size:10.5px;font-weight:800;color:#fff;background:#FF5E8A;border-radius:999px;padding:hair md')}>공지</Text>
+              <Text style={s('flex:1;font-size:15px;font-weight:800;color:#17303B')}>{p.title}</Text>
+            </View>
+          )}
+          {/* 블로그처럼 — 본문에서 링크가 있던 자리에 카드를 끼운다 */}
+          <View style={s('gap:lg;margin-top:2xl')}>
+            {splitByLinks(p.text, p.links).map((part, i) =>
+              part.type === 'link'
+                ? <LinkCard key={i} link={part.link} />
+                : <Text key={i} style={s('font-size:14px;color:#2B3A43;line-height:1.7;white-space:pre-wrap')}>{part.text}</Text>,
+            )}
+          </View>
 
           <View style={s('height:1px;background:#FFE1EC;margin:4xl 0 3xl')} />
 

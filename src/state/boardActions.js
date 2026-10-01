@@ -10,15 +10,52 @@ const MAX_POST_COMMENT = 300
 export function createBoardActions({ ref, setState, go, back, showToast, askConfirm }) {
   const gid = () => ref.current.currentGroup?.id
 
+  // 첫 쪽 — 공지와 최신 글. 끝까지 내리면 loadMorePosts 가 다음 쪽을 잇는다.
   const loadPosts = async (groupId = gid()) => {
     if (!groupId) return
     setState({ postsLoading: true })
     try {
-      const rows = await api.posts(groupId)
+      const res = await api.posts(groupId)
       if (gid() !== groupId) return
-      setState({ posts: rows || [], postsLoading: false })
+      setState({
+        pinnedPosts: res.pinned || [],
+        posts: res.posts || [],
+        postsCursor: res.nextCursor || null,
+        postsLoading: false,
+      })
     } catch {
       setState({ postsLoading: false })
+    }
+  }
+
+  // 다음 쪽 — 이미 부르는 중이거나 끝까지 봤으면 아무 일도 안 한다
+  const loadMorePosts = async () => {
+    const cur = ref.current
+    const groupId = gid()
+    if (!groupId || !cur.postsCursor || cur.postsMoreLoading) return
+    setState({ postsMoreLoading: true })
+    try {
+      const res = await api.posts(groupId, 20, cur.postsCursor)
+      if (gid() !== groupId) return
+      setState((p) => ({
+        posts: [...(p.posts || []), ...(res.posts || [])],
+        postsCursor: res.nextCursor || null,
+        postsMoreLoading: false,
+      }))
+    } catch {
+      setState({ postsMoreLoading: false })
+    }
+  }
+
+  // 공지로 올리기·내리기
+  const togglePinned = async (postId, pinned) => {
+    try {
+      const saved = await api.pinPost(postId, pinned)
+      await loadPosts()
+      if (ref.current.post?.id === postId) setState({ post: saved })
+      showToast(pinned ? '공지로 올렸어요' : '공지에서 내렸어요')
+    } catch (e) {
+      showToast(e.message)
     }
   }
 
@@ -42,10 +79,26 @@ export function createBoardActions({ ref, setState, go, back, showToast, askConf
 
   // ── 글 쓰기·고치기 시트 ───────────────────────────────────────────
   const openPostSheet = (post) =>
-    setState({ postSheet: { id: post?.id || null, text: post?.text || '' }, postSheetError: null })
+    setState({
+      postSheet: {
+        id: post?.id || null,
+        text: post?.text || '',
+        title: post?.title || '',
+        pinned: !!post?.pinned,
+      },
+      postSheetError: null,
+    })
   const closePostSheet = () => setState({ postSheet: null, postSheetError: null })
   const onPostDraft = (text) =>
     setState((p) => ({ postSheet: { ...p.postSheet, text }, postSheetError: null }))
+  const onPostTitle = (title) =>
+    setState((p) => ({ postSheet: { ...p.postSheet, title }, postSheetError: null }))
+  // 공지를 끄면 제목도 함께 지운다 (서버도 같은 규칙)
+  const togglePostNotice = () =>
+    setState((p) => ({
+      postSheet: { ...p.postSheet, pinned: !p.postSheet?.pinned },
+      postSheetError: null,
+    }))
 
   const savePost = () => runOnce('savePost', async () => {
     const sheet = ref.current.postSheet
@@ -62,9 +115,18 @@ export function createBoardActions({ ref, setState, go, back, showToast, askConf
     }
     setState({ postSaving: true, postSheetError: null })
     try {
+      const body = {
+        text,
+        pinned: !!sheet.pinned,
+        ...(sheet.pinned ? { title: (sheet.title || '').trim() } : {}),
+      }
+      if (sheet.pinned && !body.title) {
+        setState({ postSaving: false, postSheetError: '공지는 제목을 적어주세요.' })
+        return
+      }
       const saved = sheet.id
-        ? await api.updatePost(sheet.id, text)
-        : await api.createPost(groupId, text)
+        ? await api.updatePost(sheet.id, body)
+        : await api.createPost(groupId, body)
       await loadPosts(groupId)
       // 보고 있던 글을 고쳤으면 그 화면도 새 내용으로
       if (ref.current.post?.id === saved.id) setState({ post: saved })
@@ -157,8 +219,8 @@ export function createBoardActions({ ref, setState, go, back, showToast, askConf
     })
 
   return {
-    loadPosts, openPost,
-    openPostSheet, closePostSheet, onPostDraft, savePost, removePost,
+    loadPosts, loadMorePosts, togglePinned, openPost,
+    openPostSheet, closePostSheet, onPostDraft, onPostTitle, togglePostNotice, savePost, removePost,
     onPostCommentDraft, startPostReply, startEditPostComment, cancelPostCommentMode,
     submitPostComment, removePostComment,
   }

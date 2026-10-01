@@ -100,7 +100,12 @@ export default function FamilyPhonePop() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             scrollEventThrottle={16}
-            onScroll={(e) => { atTopRef.current = e.nativeEvent.contentOffset.y <= 0 }}
+            onScroll={(e) => {
+              const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent
+              atTopRef.current = contentOffset.y <= 0
+              // 끝이 가까워지면 다음 쪽을 잇는다 (게시판 무한 스크롤)
+              if (contentSize.height - contentOffset.y - layoutMeasurement.height < 400) vm.onNearBottom?.()
+            }}
             refreshControl={
               Platform.OS === 'web' || !canRefresh
                 ? undefined
