@@ -46,3 +46,7 @@ yarn-error.*
 .env*
 # 운영 서버 주소(공개 값)만 담는다 — eas update 가 이걸 읽어야 운영 서버에 붙는다
 !.env.production
+
+# Playwright
+/test-results/
+/playwright-report/
