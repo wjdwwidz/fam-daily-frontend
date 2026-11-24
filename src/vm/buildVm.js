@@ -133,7 +133,8 @@ export function buildVm(app) {
     return {
       key: `summary-${m.month}`,
       month: m.month,
-      title: `${mon}월의 우리 가족`,
+      // 로컬 테스트로 이번 달 요약을 볼 때만 '진행 중' 이 붙는다 (서버 SUMMARY_SHOW_CURRENT_MONTH)
+      title: `${mon}월의 우리 가족${m.inProgress ? ' · 진행 중' : ''}`,
       text: m.text,
       meta: `기록 ${m.activityCount}개를 모아 정리했어요${at ? ` · ${at.getMonth() + 1}/${at.getDate()} 갱신` : ''}`,
     }
