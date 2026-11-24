@@ -10,6 +10,10 @@ export const groupsApi = {
   deleteGroup: (id) => request(`/groups/${id}`, { method: 'DELETE' }),
   // 홈 '최근 활동' — 사전 추가·일상·질문·답변을 서버가 최신순으로 섞어 준다
   groupActivity: (id, limit = 5) => request(`/groups/${id}/activity?limit=${limit}`),
+  // 홈 '이번 달 우리 가족' 요약 — 서버가 새벽마다 만들어 둔 것. { summary: null } 이면 카드를 숨긴다
+  groupSummary: (id) => request(`/groups/${id}/summary`),
+  // 지난 요약 모아보기 (알림 화면) — 활동이 있던 달만, 최근 달부터
+  groupSummaries: (id) => request(`/groups/${id}/summaries`),
   // 알림 — 내 글의 댓글·내 댓글의 답글 (안 읽은 수 포함). seen 은 '읽음' 표시
   notifications: (id, limit = 30) => request(`/groups/${id}/notifications?limit=${limit}`),
   markNotificationsSeen: (id) => request(`/groups/${id}/notifications/seen`, { method: 'POST' }),

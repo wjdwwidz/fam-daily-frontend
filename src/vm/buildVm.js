@@ -47,7 +47,7 @@ export function buildVm(app) {
     loadBucket, openBucket, onBucketDraft, toggleBucketDone,
     openBucketPicker, closeBucketPicker, pickBucketMedia, unlinkBucketMedia, saveBucket, clearBucket, reorderBucket,
     startBucketMedia, cancelBucketLink, setBucketDatePart, toggleBucketRow,
-    cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity, loadNotifications,
+    cancelEditGroupName, sendMood, openInvite, deleteGroup, loadActivity, loadSummary, loadSummaryHistory, markSummarySeen, loadNotifications,
     loadDday, prevMonth, nextMonth, goThisMonth, showDate, setCalYear, setCalMonth,
     toggleEventDday, setDdayMode, toggleEventRepeat,
     openEvent, closeEvent, onEventTitle, pickEventCategory, toggleEventRange,
@@ -125,6 +125,27 @@ export function buildVm(app) {
 
   const v = variant === 'grid' ? 'grid' : 'cards'
   const scr = st.screen || initialScreen || 'login'
+
+  // 월간 요약 한 건을 화면용으로 — 제목, 본문, '기록 n개를 모아 정리 · 갱신일'
+  const summaryCard = (m) => {
+    const mon = Number(String(m.month).slice(5))
+    const at = m.updatedAt ? new Date(m.updatedAt) : null
+    return {
+      key: `summary-${m.month}`,
+      month: m.month,
+      title: `${mon}월의 우리 가족`,
+      text: m.text,
+      meta: `기록 ${m.activityCount}개를 모아 정리했어요${at ? ` · ${at.getMonth() + 1}/${at.getDate()} 갱신` : ''}`,
+    }
+  }
+  // 요약 페이지 열기. 최신 요약(배너에 뜬 것)을 열면 '봤다'로 기억한다
+  const openSummaryOf = (m) => {
+    if (!m) return
+    if (st.monthlySummary && m.month === st.monthlySummary.month) markSummarySeen()
+    setState({ summaryView: m })
+    go('summary')
+  }
+  const unreadCount = (st.notificationsUnread || 0) + (st.summaryBanner ? 1 : 0)
 
   // 실제 그룹 구성원(백엔드) → 홈 링/멤버 화면용 형태.
   // getGroup 로딩 전이면 그룹 목록의 요약 멤버로 폴백, 그것도 없으면 최소 '나' 하나.
@@ -913,6 +934,30 @@ export function buildVm(app) {
     recentActivity,
     activityLoading: !!st.activityLoading,
     loadActivity: () => loadActivity(st.currentGroup?.id),
+    // 월간 요약 — 홈에는 카드로 두지 않는다. 처음엔 홈 위 배너로 알리고,
+    // 본 뒤에는 알림(종) 화면의 '가족 요약' 에서 지난 달까지 모아 본다.
+    loadSummary: () => loadSummary(st.currentGroup?.id),
+    loadSummaryHistory: () => loadSummaryHistory(st.currentGroup?.id),
+    // 홈 위 배너 — 이 기기에서 아직 안 본 요약이 있을 때만
+    summaryBannerText: (() => {
+      const m = st.monthlySummary
+      if (!m || !st.summaryBanner) return null
+      const mon = Number(String(m.month).slice(5))
+      if (st.summaryBanner === 'updated') return `${mon}월 요약이 새로 정리됐어요`
+      return m.isPreviousMonth ? `${mon}월 돌아보기가 도착했어요!` : `${mon}월 요약이 도착했어요!`
+    })(),
+    // 알림 화면의 '가족 요약' 목록. 아직 안 본 최신 요약에는 분홍 점
+    summaryItems: (st.summaryHistory || []).map((m) => ({
+      ...summaryCard(m),
+      unread: !!st.summaryBanner && st.monthlySummary?.month === m.month,
+      open: () => openSummaryOf(m),
+    })),
+    // 요약 페이지에 보여줄 것 — 알림에서 고른 달, 없으면 배너의 최신 요약
+    summaryPage: st.summaryView || st.monthlySummary ? summaryCard(st.summaryView || st.monthlySummary) : null,
+    isSummary: scr === 'summary',
+    // 배너를 누르면 최신 요약을 연다 (onPress 가 넘기는 이벤트는 받지 않는다)
+    openSummary: () => openSummaryOf(st.monthlySummary),
+    dismissSummaryBanner: () => markSummarySeen(),
     // 최근 활동 '더보기' — 홈은 5개, 이 화면은 넉넉히 받아 온다
     isActivityAll: scr === 'activity',
     openActivityAll: () => go('activity'),
@@ -925,8 +970,9 @@ export function buildVm(app) {
     refreshNotificationCount: () => loadNotifications(st.currentGroup?.id),
     notificationsLoading: !!st.notificationsLoading,
     // 종 모양 옆 숫자 — 9 를 넘으면 '9+' (자리를 넘치지 않게)
-    notificationBadge: (st.notificationsUnread || 0) > 9 ? '9+' : String(st.notificationsUnread || 0),
-    hasNotifications: (st.notificationsUnread || 0) > 0,
+    // 안 본 월간 요약도 하나로 센다 (배너를 열거나 닫으면 빠진다)
+    notificationBadge: unreadCount > 9 ? '9+' : String(unreadCount),
+    hasNotifications: unreadCount > 0,
     notifications: (st.notifications || []).map((n) => {
       const name = n.author?.nickname || n.author?.name || '가족'
       return {
@@ -955,7 +1001,7 @@ export function buildVm(app) {
       const gid = st.currentGroup?.id
       setState({ refreshing: true })
       try {
-        if (scr === 'home') await Promise.all([loadMembers(gid), loadActivity(gid)])
+        if (scr === 'home') await Promise.all([loadMembers(gid), loadActivity(gid), loadSummary(gid)])
         else if (scr === 'gallery') await ((st.galleryTab || 'photos') === 'board' ? loadPosts(gid) : loadMedia(gid))
         else if (scr === 'record') await loadWords(gid)
         else if (scr === 'members') await loadMembers(gid)
