@@ -23,6 +23,7 @@ import Media from './screens/Media.jsx'
 import MoodHistory from './screens/MoodHistory.jsx'
 import Notifications from './screens/Notifications.jsx'
 import ActivityAll from './screens/ActivityAll.jsx'
+import Summary from './screens/Summary.jsx'
 import DdayAll from './screens/DdayAll.jsx'
 import DayEvents from './screens/DayEvents.jsx'
 import PostDetail from './screens/PostDetail.jsx'
@@ -36,6 +37,7 @@ import InviteSheet from './overlays/InviteSheet.jsx'
 import SearchOverlay from './overlays/SearchOverlay.jsx'
 import ConfirmDialog from './overlays/ConfirmDialog.jsx'
 import Toast from './overlays/Toast.jsx'
+import SummaryBanner from './overlays/SummaryBanner.jsx'
 import PhotoViewer from './overlays/PhotoViewer.jsx'
 import SpaceSheet from './overlays/SpaceSheet.jsx'
 
@@ -79,7 +81,7 @@ export default function FamilyPhonePop() {
     vm.isJoinSpace ? JoinSpace : vm.isHome ? Home : vm.isRecord ? Record : vm.isWord ? Word :
     vm.isGallery ? Gallery : vm.isMedia ? Media :
     vm.isMoodHistory ? MoodHistory : vm.isBucketItem ? BucketItem : vm.isUpload ? Upload :
-    vm.isNotifications ? Notifications : vm.isActivityAll ? ActivityAll : vm.isDdayAll ? DdayAll : vm.isDayEvents ? DayEvents : vm.isPost ? PostDetail :
+    vm.isNotifications ? Notifications : vm.isActivityAll ? ActivityAll : vm.isSummary ? Summary : vm.isDdayAll ? DdayAll : vm.isDayEvents ? DayEvents : vm.isPost ? PostDetail :
     vm.isMembers ? Members : vm.isProfile ? Profile : Login
 
   return (
@@ -128,6 +130,8 @@ export default function FamilyPhonePop() {
       {vm.spaceSheetOpen && <SpaceSheet />}
       {vm.confirmOpen && <ConfirmDialog />}
       {vm.photoViewerOpen && <PhotoViewer />}
+      {/* 홈에서만 — 아직 안 본 요약이 있으면 위쪽에 '요약이 도착했어요' */}
+      {vm.isHome && !vm.booting && !!vm.summaryBannerText && <SummaryBanner />}
       {!!vm.toast && <Toast />}
     </View>
   )

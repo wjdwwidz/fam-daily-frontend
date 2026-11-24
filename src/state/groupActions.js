@@ -1,4 +1,5 @@
 import { api } from '../lib/api.js'
+import { getSeen, setSeen } from '../lib/seenStore.js'
 import { runOnce } from './runOnce.js'
 
 // 홈 '최근 활동' 에 보여줄 개수 (더보기 화면은 훨씬 많이 받아 간다)
@@ -124,6 +125,43 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     }
   }
 
+  // 홈 '이번 달 우리 가족' 요약. 실패하면 들고 있던 요약을 그대로 둔다 (홈의 다른 부분은 그대로 보여야 하니 조용히).
+  const loadSummary = async (groupId) => {
+    if (!groupId) return
+    try {
+      const r = await api.groupSummary(groupId)
+      if (ref.current.currentGroup?.id !== groupId) return
+      const summary = r?.summary || null
+      setState({ monthlySummary: summary })
+      if (!summary) return setState({ summaryBanner: null })
+      // 이 기기에서 이 요약을 이미 봤는지 — 'YYYY-MM|갱신시각' 으로 기억한다.
+      // 처음 보는 달이면 '도착', 같은 달인데 새로 정리됐으면 '새로 정리', 봤으면 배너 없음.
+      const seen = await getSeen(`summary_${groupId}`)
+      const [seenMonth, seenAt] = (seen || '').split('|')
+      const at = String(summary.updatedAt)
+      const banner = seenMonth !== summary.month ? 'arrived' : seenAt !== at ? 'updated' : null
+      setState({ summaryBanner: banner })
+    } catch {}
+  }
+
+  // 알림 화면의 '가족 요약' 목록. 실패하면 들고 있던 목록을 그대로 둔다.
+  const loadSummaryHistory = async (groupId) => {
+    if (!groupId) return
+    try {
+      const r = await api.groupSummaries(groupId)
+      if (ref.current.currentGroup?.id !== groupId) return
+      setState({ summaryHistory: r?.items || [] })
+    } catch {}
+  }
+
+  // 요약 배너를 닫거나 요약을 열면 '봤다'고 기억한다 (같은 요약으로는 다시 안 뜬다)
+  const markSummarySeen = async () => {
+    const gid = ref.current.currentGroup?.id
+    const summary = ref.current.monthlySummary
+    setState({ summaryBanner: null })
+    if (gid && summary) await setSeen(`summary_${gid}`, `${summary.month}|${String(summary.updatedAt)}`)
+  }
+
   // 가족 공간 삭제(방장만) → 이 가족의 화면 상태를 비우고 가족 선택 화면으로.
   // 뒤로가기로 지운 가족 화면에 돌아가지 않게 히스토리도 비운다.
   const deleteGroup = async () => {
@@ -136,7 +174,7 @@ export function createGroupActions({ ref, setState }, afterAuth) {
         groupDeleting: false,
         currentGroup: null, groupMembers: null, groupWords: [], posts: [], post: null, groupMedia: [],
         moodPin: null,
-        word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, spaceSheetOpen: false, groupActivity: [], notifications: [], notificationsUnread: 0,
+        word: null, media: null, menuOpen: null, galleryFilter: 'all', photoViewer: null, spaceSheetOpen: false, groupActivity: [], monthlySummary: null, summaryBanner: null, summaryHistory: [], summaryView: null, notifications: [], notificationsUnread: 0,
         groups: (p.groups || []).filter((g) => g.id !== gid),
         screen: 'spaceSelect', _hist: [],
       }))
@@ -179,5 +217,5 @@ export function createGroupActions({ ref, setState }, afterAuth) {
     }
   }
 
-  return { doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName, cancelEditGroupName, deleteGroup, loadActivity, loadNotifications, sendMood, openInvite }
+  return { doCreateGroup, doJoinGroup, loadMembers, loadHistory, saveGroupName, cancelEditGroupName, deleteGroup, loadActivity, loadSummary, loadSummaryHistory, markSummarySeen, loadNotifications, sendMood, openInvite }
 }

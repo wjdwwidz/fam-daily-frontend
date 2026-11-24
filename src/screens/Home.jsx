@@ -22,7 +22,7 @@ export default function Home() {
   // 구성원 상세에만 mood 가 들어 있다 (가족 목록 API 에는 없다).
   const groupId = vm.currentGroup?.id
   // 홈에 올 때마다 최근 활동·구성원과 함께 알림 개수(종 모양 뱃지)도 새로 받는다
-  useEffect(() => { vm.loadActivity(); vm.loadMembers(); vm.refreshNotificationCount(); vm.loadDday() }, [groupId])
+  useEffect(() => { vm.loadActivity(); vm.loadSummary(); vm.loadMembers(); vm.refreshNotificationCount(); vm.loadDday() }, [groupId])
   return (
     <View style={s('padding:screenTop screenX screenBottom')}>
       <View style={s('display:flex;align-items:flex-start;justify-content:space-between;margin:sm 0 lg')}>
